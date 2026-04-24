@@ -3,27 +3,35 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3041",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "next start -p 3041",
+    "lint": "next lint",
+    "server": "tsx watch server/live.ts",
+    "server:once": "tsx server/live.ts"
   },
   "dependencies": {
+    "@google/genai": "^1.50.1",
     "@remotion/player": "4.0.282",
+    "dotenv": "^17.4.2",
     "lucide-react": "^0.454.0",
+    "nanoid": "^5.1.9",
     "next": "^16.2.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "remotion": "4.0.282",
-    "simple-icons": "^13.14.0"
+    "simple-icons": "^13.14.0",
+    "ws": "^8.20.0"
   },
   "devDependencies": {
     "@types/node": "^22",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/ws": "^8.18.1",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

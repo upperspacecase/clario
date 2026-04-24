@@ -1,14 +1,11 @@
 "use client";
 
 import { IPhoneMockup } from "./ui/iphone-mockup";
-import { CallScreen } from "./CallScreen";
+import { CallScreen, type CallScreenProps } from "./CallScreen";
 
-export const PhoneStage: React.FC = () => {
+export const PhoneStage: React.FC<CallScreenProps> = (props) => {
   return (
     <div className="relative mx-auto w-full max-w-[440px] overflow-visible">
-      {/* Responsive scale: natural size is 417x876. We scale to fit the
-         container width; transformOrigin sits top-center so the phone
-         stays centered and the stage height matches the scaled height. */}
       <div
         className="phone-stage"
         style={{
@@ -24,7 +21,7 @@ export const PhoneStage: React.FC = () => {
           screenBg="var(--bg-cream)"
           safeAreaOverrides={{ top: 34, bottom: 10 }}
         >
-          <CallScreen />
+          <CallScreen {...props} />
         </IPhoneMockup>
       </div>
     </div>

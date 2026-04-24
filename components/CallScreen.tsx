@@ -1,23 +1,88 @@
 "use client";
 
-import { Mic, PhoneOff, Signal, Wifi, BatteryMedium } from "lucide-react";
+import { useEffect, useRef } from "react";
+import {
+  Mic,
+  PhoneOff,
+  Signal,
+  Wifi,
+  BatteryMedium,
+  Loader2,
+} from "lucide-react";
 import { WaveformPlayer } from "./WaveformPlayer";
+import type { CallPhase, Utterance } from "./use-live-session";
 
-type Line = { who: "CLARIO" | "YOU"; text: string };
+export type CallScreenProps = {
+  phase: CallPhase;
+  utterances: Utterance[];
+  elapsed: number;
+  level: number;
+  onEnd: () => void;
+};
 
-const lines: Line[] = [
-  { who: "CLARIO", text: "Hola, ¿en qué puedo ayudarte hoy?" },
+const DEMO_UTTERANCES: Utterance[] = [
+  { who: "agent", text: "Hola, ¿en qué puedo ayudarte hoy?" },
   {
-    who: "YOU",
+    who: "user",
     text: "Tengo una pequeña empresa. Necesito ayuda para organizar mejor mis clientes y las reseñas en línea.",
   },
   {
-    who: "CLARIO",
+    who: "agent",
     text: "Entendido. Con cinco minutos puedo identificar las herramientas que mejor se adaptan a tu negocio…",
   },
 ];
 
-export const CallScreen: React.FC = () => {
+function mmss(s: number) {
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${String(r).padStart(2, "0")}`;
+}
+
+function phaseStatus(phase: CallPhase, elapsed: number): string {
+  switch (phase) {
+    case "idle":
+      return "Tap call to start";
+    case "requesting_mic":
+      return "Mic permission…";
+    case "connecting":
+      return "Connecting…";
+    case "live":
+      return `On call · ${mmss(elapsed)}`;
+    case "ending":
+      return "Ending…";
+    case "report_generating":
+      return "Writing report…";
+    case "report_ready":
+      return "Report ready";
+    case "error":
+      return "Error";
+  }
+}
+
+export const CallScreen: React.FC<CallScreenProps> = ({
+  phase,
+  utterances,
+  elapsed,
+  onEnd,
+}) => {
+  const isLive =
+    phase === "live" ||
+    phase === "ending" ||
+    phase === "report_generating" ||
+    phase === "report_ready";
+
+  const showGenerating = phase === "report_generating" || phase === "ending";
+
+  const rendered = isLive ? utterances : DEMO_UTTERANCES;
+  const status = phaseStatus(phase, elapsed);
+
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [rendered]);
+
   return (
     <div
       className="flex h-full w-full flex-col"
@@ -26,7 +91,6 @@ export const CallScreen: React.FC = () => {
         color: "var(--ink)",
       }}
     >
-      {/* Status bar (tucked under dynamic island) */}
       <div
         className="flex items-center justify-between px-6 pb-2 pt-1 text-[13px] font-bold"
         style={{ color: "var(--ink)" }}
@@ -39,13 +103,20 @@ export const CallScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* Call header */}
       <div className="flex flex-col items-center gap-2 px-6 pt-4">
         <div
           className="flex h-14 w-14 items-center justify-center rounded-full"
           style={{ background: "var(--olive)" }}
         >
-          <Mic size={22} strokeWidth={2.25} className="text-[var(--bg-cream)]" />
+          {showGenerating ? (
+            <Loader2
+              size={22}
+              strokeWidth={2.25}
+              className="animate-spin text-[var(--bg-cream)]"
+            />
+          ) : (
+            <Mic size={22} strokeWidth={2.25} className="text-[var(--bg-cream)]" />
+          )}
         </div>
         <p
           className="font-display text-[22px] font-bold leading-none"
@@ -56,27 +127,44 @@ export const CallScreen: React.FC = () => {
         <div className="flex items-center gap-2">
           <span
             className="inline-block h-[7px] w-[7px] rounded-full"
-            style={{ background: "#2BAE66" }}
+            style={{
+              background:
+                phase === "live"
+                  ? "#2BAE66"
+                  : phase === "error"
+                    ? "var(--terracotta)"
+                    : "var(--olive)",
+            }}
           />
           <span
             className="text-[12px] font-bold uppercase tracking-label"
             style={{ color: "var(--ink-soft)" }}
           >
-            On call · 0:05
+            {status}
           </span>
         </div>
       </div>
 
-      {/* Waveform */}
       <div className="mt-5 px-6">
         <WaveformPlayer />
       </div>
 
-      {/* Live transcript */}
-      <div className="mt-3 flex-1 overflow-hidden px-6">
+      <div
+        ref={scrollRef}
+        className="mt-3 flex-1 overflow-y-auto px-6 pb-2"
+        style={{ scrollBehavior: "smooth" }}
+      >
         <div className="space-y-3">
-          {lines.map((line, i) => {
-            const isAgent = line.who === "CLARIO";
+          {rendered.length === 0 && isLive && (
+            <p
+              className="text-center text-[12px]"
+              style={{ color: "var(--ink-faint)" }}
+            >
+              Listening…
+            </p>
+          )}
+          {rendered.map((line, i) => {
+            const isAgent = line.who === "agent";
             return (
               <div
                 key={i}
@@ -102,7 +190,7 @@ export const CallScreen: React.FC = () => {
                         : "rgba(248, 242, 230, 0.85)",
                     }}
                   >
-                    {line.who}
+                    {isAgent ? "CLARIO" : "YOU"}
                   </p>
                   {line.text}
                 </div>
@@ -112,15 +200,20 @@ export const CallScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* End-call button */}
-      <div className="flex items-center justify-center pb-6 pt-4">
+      <div className="flex items-center justify-center pb-6 pt-3">
         <button
           type="button"
           aria-label="End call"
-          className="flex h-14 w-14 items-center justify-center rounded-full shadow-[0_6px_14px_rgba(192,90,62,0.45)] transition-transform duration-150 hover:scale-105"
+          onClick={onEnd}
+          disabled={!isLive || phase === "ending"}
+          className="flex h-14 w-14 items-center justify-center rounded-full shadow-[0_6px_14px_rgba(192,90,62,0.45)] transition-transform duration-150 hover:scale-105 disabled:opacity-50"
           style={{ background: "var(--terracotta)" }}
         >
-          <PhoneOff size={22} strokeWidth={2.5} className="text-[var(--bg-cream)]" />
+          <PhoneOff
+            size={22}
+            strokeWidth={2.5}
+            className="text-[var(--bg-cream)]"
+          />
         </button>
       </div>
     </div>
