@@ -24,7 +24,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="relative">{children}</body>
+      <body className="relative overflow-x-hidden" suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }

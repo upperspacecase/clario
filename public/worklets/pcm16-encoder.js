@@ -1,50 +1,31 @@
-// AudioWorklet: resamples the mic to 16 kHz mono PCM16 LE and posts
-// base64-encoded chunks ~every 40 ms to the main thread.
-// Also emits a lightweight RMS level every frame for the UI meter.
+// AudioWorklet: takes browser-native sample-rate mono input, averages +
+// decimates down to 16 kHz, converts to PCM16 LE, and posts raw frames
+// (~40 ms = 640 samples, 1280 bytes) as transferable ArrayBuffers to
+// the main thread. The main thread does base64 + WS send.
+//
+// Note: `btoa` is NOT available inside AudioWorkletGlobalScope.
+// Encoding happens on the main thread.
 
 class Pcm16Encoder extends AudioWorkletProcessor {
   constructor() {
     super();
-    this.buffer = [];
-    this.samplesPerChunk = 16000 * 0.04; // 40 ms at 16 kHz = 640 samples
-    this.ratio = sampleRate / 16000; // browser sampleRate is global
-    this.readIndex = 0;
+    this.inRate = sampleRate; // global in worklet scope
+    this.outRate = 16000;
+    this.ratio = this.inRate / this.outRate;
+    this.samplesPerChunk = 640; // 40 ms at 16 kHz
+    this.accumulator = [];
+    this.decimateSum = 0;
+    this.decimateCount = 0;
+    this.decimateProgress = 0;
   }
 
-  downsample(input) {
-    // Linear decimation — fine for speech, bounded quality acceptable for demo.
-    const out = [];
-    let i = 0;
-    while (i < input.length) {
-      const idx = Math.floor(i);
-      if (idx >= input.length) break;
-      out.push(input[idx]);
-      i += this.ratio;
-    }
-    return out;
-  }
-
-  floatTo16BE(float32) {
-    // PCM16 little-endian
+  floatToPcm16(float32) {
     const out = new Int16Array(float32.length);
     for (let i = 0; i < float32.length; i++) {
       let s = Math.max(-1, Math.min(1, float32[i]));
       out[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
     }
     return out;
-  }
-
-  base64(int16) {
-    const bytes = new Uint8Array(int16.buffer);
-    let binary = "";
-    const chunk = 0x8000;
-    for (let i = 0; i < bytes.length; i += chunk) {
-      binary += String.fromCharCode.apply(
-        null,
-        bytes.subarray(i, Math.min(i + chunk, bytes.length))
-      );
-    }
-    return btoa(binary);
   }
 
   rms(float32) {
@@ -57,19 +38,30 @@ class Pcm16Encoder extends AudioWorkletProcessor {
     const input = inputs[0];
     if (!input || !input[0]) return true;
     const mono = input[0];
+    if (mono.length === 0) return true;
 
-    // Emit level for UI
     this.port.postMessage({ type: "level", value: this.rms(mono) });
 
-    // Downsample to 16 kHz and buffer
-    const down = this.downsample(mono);
-    for (let i = 0; i < down.length; i++) this.buffer.push(down[i]);
+    for (let i = 0; i < mono.length; i++) {
+      this.decimateSum += mono[i];
+      this.decimateCount++;
+      this.decimateProgress += 1;
+      if (this.decimateProgress >= this.ratio) {
+        this.accumulator.push(this.decimateSum / this.decimateCount);
+        this.decimateSum = 0;
+        this.decimateCount = 0;
+        this.decimateProgress -= this.ratio;
+      }
+    }
 
-    while (this.buffer.length >= this.samplesPerChunk) {
-      const chunk = this.buffer.splice(0, this.samplesPerChunk);
-      const pcm = this.floatTo16BE(chunk);
-      const b64 = this.base64(pcm);
-      this.port.postMessage({ type: "audio", data: b64 });
+    while (this.accumulator.length >= this.samplesPerChunk) {
+      const chunk = this.accumulator.splice(0, this.samplesPerChunk);
+      const pcm = this.floatToPcm16(chunk);
+      // Send the raw backing ArrayBuffer as a transferable (zero-copy).
+      this.port.postMessage(
+        { type: "audio", buffer: pcm.buffer },
+        [pcm.buffer]
+      );
     }
     return true;
   }

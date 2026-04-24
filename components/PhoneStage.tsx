@@ -18,7 +18,7 @@ export const PhoneStage: React.FC<CallScreenProps> = (props) => {
         <IPhoneMockup
           model="14-pro"
           color="space-black"
-          screenBg="var(--bg-cream)"
+          screenBg="#0a0a0a"
           safeAreaOverrides={{ top: 34, bottom: 10 }}
         >
           <CallScreen {...props} />

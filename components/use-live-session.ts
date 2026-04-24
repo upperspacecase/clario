@@ -3,6 +3,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PlaybackQueue } from "./playback-queue";
 
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(
+      null,
+      Array.from(bytes.subarray(i, Math.min(i + chunk, bytes.length)))
+    );
+  }
+  return btoa(binary);
+}
+
 export type CallPhase =
   | "idle"
   | "requesting_mic"
@@ -29,7 +42,8 @@ export function useLiveSession({ wsUrl }: Options) {
 
   const wsRef = useRef<WebSocket | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
+  const micCtxRef = useRef<AudioContext | null>(null);
+  const playCtxRef = useRef<AudioContext | null>(null);
   const workletRef = useRef<AudioWorkletNode | null>(null);
   const playbackRef = useRef<PlaybackQueue | null>(null);
   const startTimeRef = useRef<number>(0);
@@ -66,13 +80,15 @@ export function useLiveSession({ wsUrl }: Options) {
       await playbackRef.current.close();
       playbackRef.current = null;
     }
-    if (audioCtxRef.current) {
-      try {
-        await audioCtxRef.current.close();
-      } catch {
-        /* ignore */
+    for (const ref of [micCtxRef, playCtxRef]) {
+      if (ref.current) {
+        try {
+          await ref.current.close();
+        } catch {
+          /* ignore */
+        }
+        ref.current = null;
       }
-      audioCtxRef.current = null;
     }
   }, []);
 
@@ -95,15 +111,44 @@ export function useLiveSession({ wsUrl }: Options) {
       streamRef.current = stream;
 
       setPhase("connecting");
+
+      // ONE AudioContext at the browser's native sample rate (usually
+      // 48 kHz). The AudioWorklet downsamples to 16 kHz via averaging
+      // (see /worklets/pcm16-encoder.js). Forcing a non-native rate on
+      // the context is known to break createMediaStreamSource() in some
+      // Chrome builds, so we don't do that.
       const ctx = new AudioContext();
-      audioCtxRef.current = ctx;
-      await ctx.audioWorklet.addModule("/worklets/pcm16-encoder.js");
+      micCtxRef.current = ctx;
+      if (ctx.state !== "running") {
+        try {
+          await ctx.resume();
+        } catch {
+          /* ignore */
+        }
+      }
+      console.log(
+        `[CLIENT] AudioContext rate=${ctx.sampleRate} state=${ctx.state}`
+      );
+
+      await ctx.audioWorklet.addModule(
+        `/worklets/pcm16-encoder.js?v=${Date.now()}`
+      );
       const source = ctx.createMediaStreamSource(stream);
       const worklet = new AudioWorkletNode(ctx, "pcm16-encoder");
       workletRef.current = worklet;
       source.connect(worklet);
-      // worklet only posts messages — do NOT connect to destination.
 
+      // CRITICAL: connect the worklet's output into a muted gain → destination.
+      // A worklet with no downstream connection can have its process()
+      // throttled or paused on some Chromium versions, which silently
+      // stops audio from flowing to the WS. The gain at 0 keeps the
+      // graph active without producing audible output.
+      const silentGain = ctx.createGain();
+      silentGain.gain.value = 0;
+      worklet.connect(silentGain).connect(ctx.destination);
+
+      // Same context drives playback too. Gemini sends 24 kHz PCM;
+      // AudioBuffer at 24 kHz is automatically resampled to ctx rate on play.
       const playback = new PlaybackQueue(ctx);
       playbackRef.current = playback;
 
@@ -172,11 +217,23 @@ export function useLiveSession({ wsUrl }: Options) {
         // No-op; report_status messages drive the next phase.
       };
 
+      let audioFramesSent = 0;
       worklet.port.onmessage = (ev: MessageEvent) => {
-        const data = ev.data as { type: string; data?: string; value?: number };
-        if (data.type === "audio" && data.data) {
+        const data = ev.data as {
+          type: string;
+          buffer?: ArrayBuffer;
+          value?: number;
+        };
+        if (data.type === "audio" && data.buffer) {
           if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: "audio", data: data.data }));
+            const b64 = arrayBufferToBase64(data.buffer);
+            ws.send(JSON.stringify({ type: "audio", data: b64 }));
+            audioFramesSent++;
+            if (audioFramesSent === 1) {
+              console.log("[CLIENT] first audio frame sent to WS");
+            } else if (audioFramesSent % 50 === 0) {
+              console.log(`[CLIENT] audio frames sent: ${audioFramesSent}`);
+            }
           }
         } else if (data.type === "level" && typeof data.value === "number") {
           setLevel(data.value);

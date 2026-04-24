@@ -2,8 +2,18 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Download, Loader2, RefreshCw } from "lucide-react";
-import type { GeneratedReport } from "@/server/session-store";
+import {
+  ArrowLeft,
+  Download,
+  Loader2,
+  RefreshCw,
+  AlertTriangle,
+  Eye,
+} from "lucide-react";
+import type {
+  GeneratedReport,
+  ReportBlock,
+} from "@/server/session-store";
 
 type ApiReport = {
   id: string;
@@ -11,7 +21,6 @@ type ApiReport = {
   reportStatus: "pending" | "generating" | "ready" | "failed";
   reportError: string | null;
   report: GeneratedReport | null;
-  transcript: { who: "agent" | "user"; text: string; ts: number }[];
 };
 
 const API_BASE =
@@ -32,8 +41,7 @@ export const ReportView: React.FC<{ sessionId: string }> = ({ sessionId }) => {
         setErr(`Server returned ${res.status}`);
         return;
       }
-      const json = (await res.json()) as ApiReport;
-      setData(json);
+      setData(await res.json());
       setErr(null);
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
@@ -54,12 +62,6 @@ export const ReportView: React.FC<{ sessionId: string }> = ({ sessionId }) => {
     };
   }, [fetchOnce]);
 
-  useEffect(() => {
-    if (data?.reportStatus === "ready" || data?.reportStatus === "failed") {
-      // stop polling by returning a no-op interval; handled above with cancel
-    }
-  }, [data?.reportStatus]);
-
   const download = useCallback(() => {
     if (!data?.report) return;
     const html = renderStandaloneHtml(data.report);
@@ -74,12 +76,9 @@ export const ReportView: React.FC<{ sessionId: string }> = ({ sessionId }) => {
 
   if (err && !data) {
     return (
-      <div className="rounded-lg border border-[color:var(--olive-soft)] bg-[var(--bg-card)] p-6">
+      <StatusBox tone="error">
         <p className="font-bold">Could not load report.</p>
-        <p
-          className="mt-2 text-[14px]"
-          style={{ color: "var(--ink-soft)" }}
-        >
+        <p className="mt-2 text-[14px]" style={{ color: "var(--ink-soft)" }}>
           {err}. Make sure the Node server is running on :3043.
         </p>
         <button
@@ -90,13 +89,17 @@ export const ReportView: React.FC<{ sessionId: string }> = ({ sessionId }) => {
         >
           <RefreshCw size={14} strokeWidth={2.5} /> Retry
         </button>
-      </div>
+      </StatusBox>
     );
   }
 
-  if (!data || data.reportStatus === "pending" || data.reportStatus === "generating") {
+  if (
+    !data ||
+    data.reportStatus === "pending" ||
+    data.reportStatus === "generating"
+  ) {
     return (
-      <div className="flex items-center gap-3 rounded-lg border border-[color:var(--olive-soft)] bg-[var(--bg-card)] p-6">
+      <StatusBox>
         <Loader2
           size={18}
           strokeWidth={2.5}
@@ -108,31 +111,35 @@ export const ReportView: React.FC<{ sessionId: string }> = ({ sessionId }) => {
             ? "Writing your report…"
             : "Waiting for the call to finish…"}
         </p>
-      </div>
+      </StatusBox>
     );
   }
 
   if (data.reportStatus === "failed") {
     return (
-      <div className="rounded-lg border border-[color:var(--terracotta)] bg-[var(--bg-card)] p-6">
-        <p className="font-bold">Report generation failed.</p>
-        <p
-          className="mt-2 text-[14px]"
-          style={{ color: "var(--ink-soft)" }}
-        >
+      <StatusBox tone="error">
+        <p className="font-bold">We couldn&apos;t write a report.</p>
+        <p className="mt-2 text-[14px]" style={{ color: "var(--ink-soft)" }}>
           {data.reportError ?? "Unknown error."}
         </p>
-      </div>
+        <Link
+          href="/"
+          className="mt-4 inline-flex items-center gap-2 rounded-full px-4 py-2 text-[14px] font-bold text-[var(--bg-cream)]"
+          style={{ background: "var(--terracotta)" }}
+        >
+          <ArrowLeft size={14} strokeWidth={2.5} /> Try again
+        </Link>
+      </StatusBox>
     );
   }
 
   const r = data.report!;
 
   return (
-    <article className="space-y-10">
+    <article className="space-y-8">
       <a ref={anchorRef} className="hidden" aria-hidden />
 
-      <header className="flex flex-col gap-4">
+      <header className="flex flex-col gap-5">
         <Link
           href="/"
           className="inline-flex items-center gap-2 text-[13px] font-bold uppercase tracking-label"
@@ -148,9 +155,9 @@ export const ReportView: React.FC<{ sessionId: string }> = ({ sessionId }) => {
             letterSpacing: "-0.015em",
           }}
         >
-          Your Clario report
+          {r.title}
         </h1>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={download}
@@ -168,144 +175,277 @@ export const ReportView: React.FC<{ sessionId: string }> = ({ sessionId }) => {
         </div>
       </header>
 
-      <Section title="Executive summary">
-        <p>{r.executiveSummary}</p>
-      </Section>
-
-      <Section title="Business snapshot">
-        <p>{r.businessSnapshot}</p>
-      </Section>
-
-      <Section title="Top problems">
-        <ol className="space-y-8">
-          {r.topProblems.map((p, i) => (
-            <li
-              key={i}
-              className="rounded-xl border border-[color:var(--olive-soft)] bg-[var(--bg-card)] p-6"
-            >
-              <p
-                className="text-[11px] font-bold uppercase tracking-label"
-                style={{ color: "var(--olive)" }}
-              >
-                Problem {i + 1}
-              </p>
-              <h3
-                className="mt-1 font-display text-[22px] font-bold leading-tight"
-                style={{ color: "var(--ink)" }}
-              >
-                {p.problem}
-              </h3>
-              <p
-                className="mt-3 text-[14px]"
-                style={{ color: "var(--ink-soft)" }}
-              >
-                {p.whyItMatters}
-              </p>
-              <ul className="mt-5 space-y-3">
-                {p.recommendations.map((t, j) => (
-                  <li
-                    key={j}
-                    className="rounded-lg border border-[color:var(--olive-soft)] p-4"
-                    style={{ background: "var(--bg-cream)" }}
-                  >
-                    <div className="flex flex-wrap items-baseline gap-x-3">
-                      <a
-                        href={t.url}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="font-bold underline"
-                        style={{ color: "var(--ink)" }}
-                      >
-                        {t.name}
-                      </a>
-                      {t.startingPrice && (
-                        <span
-                          className="text-[12px]"
-                          style={{ color: "var(--ink-faint)" }}
-                        >
-                          {t.startingPrice}
-                        </span>
-                      )}
-                    </div>
-                    <p
-                      className="mt-1 text-[14px]"
-                      style={{ color: "var(--ink-soft)" }}
-                    >
-                      {t.why}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-              <div
-                className="mt-5 rounded-lg p-4"
-                style={{
-                  background: "var(--terracotta)",
-                  color: "var(--bg-cream)",
-                }}
-              >
-                <p className="text-[11px] font-bold uppercase tracking-label opacity-80">
-                  This week
-                </p>
-                <p className="mt-1 text-[14px]">{p.nextStepThisWeek}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </Section>
-
-      <Section title="30-day plan">
-        <ol className="space-y-3">
-          {r.thirtyDayPlan.map((item) => (
-            <li
-              key={item.priority}
-              className="flex gap-4 rounded-lg border border-[color:var(--olive-soft)] p-4"
-            >
-              <div
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-bold text-[var(--bg-cream)]"
-                style={{ background: "var(--olive)" }}
-              >
-                {item.priority}
-              </div>
-              <div>
-                <p className="font-bold">{item.action}</p>
-                <p
-                  className="mt-1 text-[14px]"
-                  style={{ color: "var(--ink-soft)" }}
-                >
-                  {item.why}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </Section>
-
-      <Section title="Longer-term watch-items">
-        <ul className="list-disc space-y-2 pl-5">
-          {r.watchItems.map((w, i) => (
-            <li key={i}>{w}</li>
-          ))}
-        </ul>
-      </Section>
+      <div className="space-y-8">
+        {r.blocks.map((block, i) => (
+          <Block key={i} block={block} />
+        ))}
+      </div>
     </article>
   );
 };
 
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
-  title,
-  children,
-}) => (
-  <section className="space-y-4">
-    <h2
-      className="font-display text-[28px] font-bold"
-      style={{ color: "var(--ink)" }}
-    >
-      {title}
-    </h2>
-    <div className="space-y-3 text-[15px] leading-[1.6]" style={{ color: "var(--ink-soft)" }}>
-      {children}
-    </div>
-  </section>
+/* ----------------------- Block renderers ----------------------- */
+
+const Block: React.FC<{ block: ReportBlock }> = ({ block }) => {
+  switch (block.type) {
+    case "heading":
+      return (
+        <h2
+          className="font-display text-[28px] font-bold"
+          style={{ color: "var(--ink)" }}
+        >
+          {block.text}
+        </h2>
+      );
+
+    case "paragraph":
+      return (
+        <p
+          className="text-[16px] leading-[1.65]"
+          style={{ color: "var(--ink-soft)" }}
+        >
+          {block.text}
+        </p>
+      );
+
+    case "bullets":
+      return (
+        <ul className="list-disc space-y-2 pl-5">
+          {(block.items ?? []).map((item, i) => (
+            <li
+              key={i}
+              className="text-[15px] leading-[1.6]"
+              style={{ color: "var(--ink-soft)" }}
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
+      );
+
+    case "problem":
+      return (
+        <div
+          className="rounded-xl p-6"
+          style={{
+            background: "var(--bg-card)",
+            border: "1px solid var(--olive-soft)",
+          }}
+        >
+          <p
+            className="text-[11px] font-bold uppercase tracking-label"
+            style={{ color: "var(--olive)" }}
+          >
+            Problem
+          </p>
+          <h3
+            className="mt-1 font-display text-[22px] font-bold leading-tight"
+            style={{ color: "var(--ink)" }}
+          >
+            {block.title}
+          </h3>
+          {block.body && (
+            <p
+              className="mt-3 text-[15px] leading-[1.6]"
+              style={{ color: "var(--ink-soft)" }}
+            >
+              {block.body}
+            </p>
+          )}
+        </div>
+      );
+
+    case "tools":
+      return (
+        <div className="space-y-3">
+          {block.intro && (
+            <p
+              className="text-[15px] leading-[1.6]"
+              style={{ color: "var(--ink-soft)" }}
+            >
+              {block.intro}
+            </p>
+          )}
+          <ul className="space-y-3">
+            {(block.tools ?? []).map((t, i) => (
+              <li
+                key={i}
+                className="rounded-lg p-4"
+                style={{
+                  background: "var(--bg-cream)",
+                  border: "1px solid var(--olive-soft)",
+                }}
+              >
+                <div className="flex flex-wrap items-baseline gap-x-3">
+                  {t.url ? (
+                    <a
+                      href={t.url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="font-bold underline"
+                      style={{ color: "var(--ink)" }}
+                    >
+                      {t.name}
+                    </a>
+                  ) : (
+                    <span
+                      className="font-bold"
+                      style={{ color: "var(--ink)" }}
+                    >
+                      {t.name}
+                    </span>
+                  )}
+                  {t.price && (
+                    <span
+                      className="text-[12px]"
+                      style={{ color: "var(--ink-faint)" }}
+                    >
+                      {t.price}
+                    </span>
+                  )}
+                </div>
+                <p
+                  className="mt-1 text-[14px] leading-[1.55]"
+                  style={{ color: "var(--ink-soft)" }}
+                >
+                  {t.why}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+
+    case "actions":
+      return (
+        <div className="space-y-3">
+          {block.title && (
+            <h3
+              className="font-display text-[22px] font-bold"
+              style={{ color: "var(--ink)" }}
+            >
+              {block.title}
+            </h3>
+          )}
+          <ol className="space-y-3">
+            {(block.actions ?? []).map((a, i) => (
+              <li
+                key={i}
+                className="flex gap-4 rounded-lg p-4"
+                style={{ border: "1px solid var(--olive-soft)" }}
+              >
+                <div
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12px] font-bold text-[var(--bg-cream)]"
+                  style={{ background: "var(--olive)" }}
+                >
+                  {i + 1}
+                </div>
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-baseline gap-x-3">
+                    <p className="font-bold" style={{ color: "var(--ink)" }}>
+                      {a.action}
+                    </p>
+                    {a.when && (
+                      <span
+                        className="text-[11px] font-bold uppercase tracking-label"
+                        style={{ color: "var(--olive)" }}
+                      >
+                        {a.when}
+                      </span>
+                    )}
+                  </div>
+                  <p
+                    className="mt-1 text-[14px] leading-[1.55]"
+                    style={{ color: "var(--ink-soft)" }}
+                  >
+                    {a.why}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      );
+
+    case "callout": {
+      const tones = {
+        "next-step": {
+          bg: "var(--terracotta)",
+          fg: "var(--bg-cream)",
+          label: "This week",
+          Icon: null as null,
+        },
+        note: {
+          bg: "var(--bg-card)",
+          fg: "var(--ink)",
+          label: "Note",
+          Icon: null as null,
+        },
+        watch: {
+          bg: "var(--bg-card)",
+          fg: "var(--ink)",
+          label: "Watch",
+          Icon: Eye,
+        },
+      } as const;
+      const tone = tones[block.tone ?? "note"];
+      const IconCmp =
+        (block.tone ?? "note") === "watch"
+          ? Eye
+          : block.tone === "next-step"
+            ? null
+            : AlertTriangle;
+      return (
+        <div
+          className="rounded-lg p-4"
+          style={{
+            background: tone.bg,
+            color: tone.fg,
+            border:
+              block.tone === "next-step"
+                ? "none"
+                : "1px solid var(--olive-soft)",
+          }}
+        >
+          <div className="flex items-start gap-3">
+            {IconCmp && (
+              <IconCmp
+                size={16}
+                strokeWidth={2.5}
+                className="mt-0.5 shrink-0"
+              />
+            )}
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-label opacity-80">
+                {tone.label}
+              </p>
+              <p className="mt-1 text-[15px] leading-[1.55]">{block.text}</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+  }
+};
+
+/* ----------------------- Helpers ----------------------- */
+
+const StatusBox: React.FC<{
+  tone?: "error";
+  children: React.ReactNode;
+}> = ({ tone, children }) => (
+  <div
+    className="flex flex-col gap-3 rounded-lg p-6"
+    style={{
+      background: "var(--bg-card)",
+      border:
+        tone === "error"
+          ? "1px solid var(--terracotta)"
+          : "1px solid var(--olive-soft)",
+    }}
+  >
+    {children}
+  </div>
 );
 
 function escapeHtml(s: string): string {
@@ -319,66 +459,79 @@ function escapeHtml(s: string): string {
 
 function renderStandaloneHtml(r: GeneratedReport): string {
   const css = `
-    body { font-family: -apple-system, system-ui, sans-serif; background: #F8F2E6; color: #1E1A14; max-width: 760px; margin: 40px auto; padding: 0 20px; line-height: 1.55; }
-    h1 { font-size: 42px; margin: 0 0 8px; letter-spacing: -0.01em; }
-    h2 { font-size: 24px; margin-top: 36px; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #F8F2E6; color: #1E1A14; max-width: 760px; margin: 40px auto; padding: 0 20px; line-height: 1.6; }
+    h1 { font-size: 42px; margin: 0 0 12px; letter-spacing: -0.01em; }
+    h2 { font-size: 26px; margin: 30px 0 10px; }
     h3 { font-size: 20px; margin: 0 0 8px; }
-    .card { background: #FBF7EB; border: 1px solid rgba(162,138,67,0.34); border-radius: 12px; padding: 20px; margin: 12px 0; }
-    .week { background: #C05A3E; color: #F8F2E6; padding: 14px; border-radius: 10px; margin-top: 14px; }
+    .card { background: #FBF7EB; border: 1px solid rgba(162,138,67,0.34); border-radius: 12px; padding: 20px; margin: 16px 0; }
+    .callout-next { background: #C05A3E; color: #F8F2E6; padding: 16px; border-radius: 10px; margin: 16px 0; }
+    .callout-note, .callout-watch { background: #FBF7EB; border: 1px solid rgba(162,138,67,0.34); padding: 14px; border-radius: 10px; margin: 16px 0; }
     .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #A28A43; }
     a { color: #1E1A14; }
-    ol, ul { padding-left: 20px; }
-    li { margin-bottom: 10px; }
+    ol, ul { padding-left: 22px; }
+    li { margin-bottom: 8px; }
+    .action-row { display: flex; gap: 10px; }
+    .action-row strong { color: #1E1A14; }
   `;
 
-  const probHtml = r.topProblems
-    .map(
-      (p, i) => `
-    <div class="card">
-      <p class="label">Problem ${i + 1}</p>
-      <h3>${escapeHtml(p.problem)}</h3>
-      <p>${escapeHtml(p.whyItMatters)}</p>
-      <ul>
-        ${p.recommendations
+  const renderBlock = (b: ReportBlock): string => {
+    switch (b.type) {
+      case "heading":
+        return `<h2>${escapeHtml(b.text ?? "")}</h2>`;
+      case "paragraph":
+        return `<p>${escapeHtml(b.text ?? "")}</p>`;
+      case "bullets":
+        return `<ul>${(b.items ?? [])
+          .map((i) => `<li>${escapeHtml(i)}</li>`)
+          .join("")}</ul>`;
+      case "problem":
+        return `<div class="card"><p class="label">Problem</p><h3>${escapeHtml(b.title ?? "")}</h3>${b.body ? `<p>${escapeHtml(b.body)}</p>` : ""}</div>`;
+      case "tools":
+        return `${b.intro ? `<p>${escapeHtml(b.intro)}</p>` : ""}<ul>${(b.tools ?? [])
+          .map((t) => {
+            const link = t.url
+              ? `<a href="${escapeHtml(t.url)}"><strong>${escapeHtml(t.name)}</strong></a>`
+              : `<strong>${escapeHtml(t.name)}</strong>`;
+            const price = t.price ? ` · ${escapeHtml(t.price)}` : "";
+            return `<li>${link}${price}<br/>${escapeHtml(t.why)}</li>`;
+          })
+          .join("")}</ul>`;
+      case "actions":
+        return `${b.title ? `<h3>${escapeHtml(b.title)}</h3>` : ""}<ol>${(b.actions ?? [])
           .map(
-            (t) => `<li>
-              <a href="${escapeHtml(t.url)}"><strong>${escapeHtml(t.name)}</strong></a>${
-                t.startingPrice ? ` · ${escapeHtml(t.startingPrice)}` : ""
-              }<br/>${escapeHtml(t.why)}
-            </li>`
+            (a) =>
+              `<li><strong>${escapeHtml(a.action)}</strong>${a.when ? ` <em>(${escapeHtml(a.when)})</em>` : ""} — ${escapeHtml(a.why)}</li>`
           )
-          .join("")}
-      </ul>
-      <div class="week"><strong>THIS WEEK:</strong> ${escapeHtml(p.nextStepThisWeek)}</div>
-    </div>`
-    )
-    .join("");
+          .join("")}</ol>`;
+      case "callout": {
+        const cls =
+          b.tone === "next-step"
+            ? "callout-next"
+            : b.tone === "watch"
+              ? "callout-watch"
+              : "callout-note";
+        const label =
+          b.tone === "next-step"
+            ? "This week"
+            : b.tone === "watch"
+              ? "Watch"
+              : "Note";
+        return `<div class="${cls}"><p class="label" style="opacity:.8">${label}</p><p>${escapeHtml(b.text ?? "")}</p></div>`;
+      }
+    }
+  };
 
   return `<!doctype html>
 <html lang="${escapeHtml(r.language)}">
 <head>
   <meta charset="utf-8"/>
-  <title>Clario report</title>
+  <title>${escapeHtml(r.title)}</title>
   <style>${css}</style>
 </head>
 <body>
-  <h1>Your Clario report</h1>
+  <h1>${escapeHtml(r.title)}</h1>
   <p class="label">Language · ${escapeHtml(r.language.toUpperCase())}</p>
-  <h2>Executive summary</h2>
-  <p>${escapeHtml(r.executiveSummary)}</p>
-  <h2>Business snapshot</h2>
-  <p>${escapeHtml(r.businessSnapshot)}</p>
-  <h2>Top problems</h2>
-  ${probHtml}
-  <h2>30-day plan</h2>
-  <ol>${r.thirtyDayPlan
-    .map(
-      (a) =>
-        `<li><strong>${escapeHtml(a.action)}</strong> — ${escapeHtml(a.why)}</li>`
-    )
-    .join("")}</ol>
-  <h2>Longer-term watch-items</h2>
-  <ul>${r.watchItems.map((w) => `<li>${escapeHtml(w)}</li>`).join("")}</ul>
+  ${r.blocks.map(renderBlock).join("\n  ")}
 </body>
 </html>`;
 }

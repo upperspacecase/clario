@@ -1,10 +1,51 @@
-// In-memory session store for the prototype.
-// One Node process = one store. Not durable. Fine for a demo.
-
 export type TranscriptLine = {
   who: "agent" | "user";
   text: string;
   ts: number;
+};
+
+/* ------------------------------------------------------------------ */
+/* Block-based report — the model composes any sequence of blocks.     */
+/* Each block has a discriminator `type`; other fields are optional   */
+/* and interpreted per type by the renderer.                           */
+/* ------------------------------------------------------------------ */
+
+export type ToolRec = {
+  name: string;
+  why: string;
+  url?: string;
+  price?: string;
+};
+
+export type ActionItem = {
+  action: string;
+  why: string;
+  when?: string;
+};
+
+export type ReportBlock = {
+  type:
+    | "heading"
+    | "paragraph"
+    | "bullets"
+    | "problem"
+    | "tools"
+    | "actions"
+    | "callout";
+  text?: string; // heading, paragraph, callout
+  items?: string[]; // bullets
+  title?: string; // problem, actions
+  body?: string; // problem
+  intro?: string; // tools
+  tools?: ToolRec[]; // tools
+  actions?: ActionItem[]; // actions
+  tone?: "next-step" | "note" | "watch"; // callout
+};
+
+export type GeneratedReport = {
+  language: string;
+  title: string;
+  blocks: ReportBlock[];
 };
 
 export type SessionState = {
@@ -16,25 +57,6 @@ export type SessionState = {
   report: GeneratedReport | null;
   reportStatus: "pending" | "generating" | "ready" | "failed";
   reportError?: string;
-};
-
-export type GeneratedReport = {
-  language: string;
-  executiveSummary: string;
-  businessSnapshot: string;
-  topProblems: {
-    problem: string;
-    whyItMatters: string;
-    recommendations: {
-      name: string;
-      why: string;
-      url: string;
-      startingPrice?: string;
-    }[];
-    nextStepThisWeek: string;
-  }[];
-  thirtyDayPlan: { priority: number; action: string; why: string }[];
-  watchItems: string[];
 };
 
 const store = new Map<string, SessionState>();
@@ -61,7 +83,6 @@ export const sessionStore = {
   appendTranscript(id: string, line: TranscriptLine) {
     const s = store.get(id);
     if (!s) return;
-    // Merge consecutive chunks from the same speaker into the same line
     const last = s.transcript[s.transcript.length - 1];
     if (last && last.who === line.who && line.ts - last.ts < 1500) {
       last.text += line.text;

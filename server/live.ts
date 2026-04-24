@@ -125,9 +125,15 @@ wss.on("connection", async (ws) => {
   const session = sessionStore.create(sessionId);
   let liveSession: Session | null = null;
   let endTriggered = false;
+  let kickoffSent = false;
+  let audioFramesFromClient = 0;
+  let audioFramesToGemini = 0;
+  let audioFramesFromGemini = 0;
 
   console.log(`[SERVER] WS connected session=${sessionId}`);
   send(ws, { type: "session", id: sessionId });
+
+  const MIN_USER_CHARS = 120;
 
   const finalizeReport = async (reason: string) => {
     if (endTriggered) return;
@@ -135,6 +141,29 @@ wss.on("connection", async (ws) => {
 
     sessionStore.markEnded(sessionId);
     send(ws, { type: "end_signal", reason });
+
+    // Guard: refuse to fabricate a report from an empty or near-empty
+    // transcript. The report schema forces 3 problems, which the model
+    // will hallucinate from silence if we let it.
+    const userChars = session.transcript
+      .filter((l) => l.who === "user")
+      .reduce((n, l) => n + l.text.trim().length, 0);
+
+    if (userChars < MIN_USER_CHARS) {
+      const msg = `Not enough said on the call to write a report (only ${userChars} characters of user speech captured). Try the call again and speak for a few minutes.`;
+      console.warn(
+        `[GEMINI-REPORT] session=${sessionId} skipped — user_chars=${userChars}`
+      );
+      sessionStore.setReportStatus(sessionId, "failed", msg);
+      send(ws, { type: "report_status", status: "failed", error: msg });
+      try {
+        liveSession?.close();
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+
     send(ws, { type: "report_status", status: "generating" });
     sessionStore.setReportStatus(sessionId, "generating");
 
@@ -173,11 +202,6 @@ wss.on("connection", async (ws) => {
           inputAudioTranscription: {},
           outputAudioTranscription: {},
           tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
-          contextWindowCompression: {
-            triggerTokens: "25600",
-            slidingWindow: {},
-          },
-          sessionResumption: {},
         },
         callbacks: {
           onopen: () => {
@@ -185,11 +209,69 @@ wss.on("connection", async (ws) => {
             send(ws, { type: "ready" });
           },
           onmessage: async (msg: LiveServerMessage) => {
+            // Debug: surface the shape of every non-audio message.
+            const summary = {
+              setupComplete: !!msg.setupComplete,
+              hasModelTurn: !!msg.serverContent?.modelTurn,
+              modelTurnParts: msg.serverContent?.modelTurn?.parts?.length ?? 0,
+              input: !!msg.serverContent?.inputTranscription,
+              output: !!msg.serverContent?.outputTranscription,
+              interrupted: !!msg.serverContent?.interrupted,
+              turnComplete: !!msg.serverContent?.turnComplete,
+              toolCall: !!msg.toolCall,
+              goAway: !!msg.goAway,
+            };
+            if (
+              summary.setupComplete ||
+              summary.input ||
+              summary.output ||
+              summary.turnComplete ||
+              summary.toolCall ||
+              summary.goAway
+            ) {
+              console.log(
+                `[GEMINI-LIVE] msg session=${sessionId}`,
+                JSON.stringify(summary)
+              );
+            }
+
+            // Send the kickoff as soon as Gemini acknowledges setup.
+            // Anything sent before setupComplete is silently dropped.
+            if (msg.setupComplete && !kickoffSent && liveSession) {
+              kickoffSent = true;
+              try {
+                liveSession.sendClientContent({
+                  turns: [
+                    {
+                      role: "user",
+                      parts: [
+                        {
+                          text: "[The call is now connected with the business owner. Greet them warmly in one or two short sentences and ask what their business does. Be conversational, not formal.]",
+                        },
+                      ],
+                    },
+                  ],
+                  turnComplete: true,
+                });
+                console.log(
+                  `[GEMINI-LIVE] kickoff sent post-setup session=${sessionId}`
+                );
+              } catch (e) {
+                console.error("[GEMINI-LIVE] kickoff failed:", e);
+              }
+            }
+
             // Audio out (PCM16 24k LE base64)
             const parts = msg.serverContent?.modelTurn?.parts;
             if (parts) {
               for (const part of parts) {
                 if (part.inlineData?.data) {
+                  audioFramesFromGemini++;
+                  if (audioFramesFromGemini % 20 === 1) {
+                    console.log(
+                      `[GEMINI-LIVE] audio from gemini session=${sessionId} frames=${audioFramesFromGemini}`
+                    );
+                  }
                   send(ws, { type: "audio", data: part.inlineData.data });
                 }
               }
@@ -271,6 +353,7 @@ wss.on("connection", async (ws) => {
           },
         },
       });
+
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       console.error(`[GEMINI-LIVE] connect failed session=${sessionId}:`, msg);
@@ -293,10 +376,22 @@ wss.on("connection", async (ws) => {
     }
 
     if (msg.type === "audio" && liveSession) {
+      audioFramesFromClient++;
+      if (audioFramesFromClient === 1) {
+        console.log(
+          `[CLIENT] first audio frame received session=${sessionId}`
+        );
+      }
       try {
         liveSession.sendRealtimeInput({
           audio: { data: msg.data, mimeType: "audio/pcm;rate=16000" },
         });
+        audioFramesToGemini++;
+        if (audioFramesToGemini % 50 === 1) {
+          console.log(
+            `[GEMINI-LIVE] audio forwarded session=${sessionId} frames=${audioFramesToGemini}`
+          );
+        }
       } catch (e) {
         console.error("[GEMINI-LIVE] sendRealtimeInput failed:", e);
       }

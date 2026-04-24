@@ -2,9 +2,10 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Phone, ArrowRight } from "lucide-react";
 import { useLiveSession } from "./use-live-session";
 import { PhoneStage } from "./PhoneStage";
+import { WebGLShader } from "./ui/web-gl-shader";
+import { RotatingLanguages } from "./RotatingLanguages";
 
 const WS_URL =
   process.env.NEXT_PUBLIC_WS_URL ??
@@ -12,45 +13,20 @@ const WS_URL =
     ? `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.hostname}:3043`
     : "ws://localhost:3043");
 
-const PHASE_COPY: Record<string, { label: string; hint: string }> = {
-  idle: {
-    label: "Call now",
-    hint: "Five minutes. Answer in your own language. Get a written report.",
-  },
-  requesting_mic: {
-    label: "Connecting…",
-    hint: "Allow microphone access to start.",
-  },
-  connecting: {
-    label: "Connecting…",
-    hint: "Opening the line.",
-  },
-  live: {
-    label: "On call",
-    hint: "Speak naturally. End the call from the phone whenever you're done.",
-  },
-  ending: {
-    label: "Ending…",
-    hint: "Wrapping up the interview.",
-  },
-  report_generating: {
-    label: "Generating your report…",
-    hint: "This takes about 15–30 seconds.",
-  },
-  report_ready: {
-    label: "Report ready",
-    hint: "Opening your report.",
-  },
-  error: {
-    label: "Try again",
-    hint: "Something went wrong. Tap to retry.",
-  },
+const PHASE_HINT: Record<string, string> = {
+  idle: "Tap the green phone. Speak any language. Receive a written report.",
+  requesting_mic: "Allow microphone access in the browser to continue.",
+  connecting: "Opening the line…",
+  live: "Speak naturally. End the call from the phone whenever you're done.",
+  ending: "Wrapping up the interview.",
+  report_generating: "Writing your report — about 15–30 seconds.",
+  report_ready: "Opening your report…",
+  error: "Something went wrong. Tap the green phone again to retry.",
 };
 
 export const HomeHero: React.FC = () => {
   const router = useRouter();
   const live = useLiveSession({ wsUrl: WS_URL });
-  const copy = PHASE_COPY[live.phase] ?? PHASE_COPY.idle;
 
   useEffect(() => {
     if (live.phase === "report_ready" && live.sessionId) {
@@ -58,145 +34,86 @@ export const HomeHero: React.FC = () => {
     }
   }, [live.phase, live.sessionId, router]);
 
-  const ctaDisabled =
-    live.phase === "requesting_mic" ||
-    live.phase === "connecting" ||
-    live.phase === "ending" ||
-    live.phase === "report_generating";
-
-  const showCta = live.phase === "idle" || live.phase === "error";
+  const hint = PHASE_HINT[live.phase] ?? PHASE_HINT.idle;
 
   return (
-    <section className="mx-auto w-full max-w-content px-[clamp(20px,5vw,64px)] pt-[clamp(48px,8vw,96px)]">
-      <div className="grid gap-12 lg:grid-cols-[48fr_52fr] lg:gap-16">
-        <div className="lg:pt-4">
-          <p
-            className="text-[12px] font-bold uppercase tracking-label"
-            style={{ color: "var(--olive)" }}
-          >
-            Pre-launch · Early-access prototype
-          </p>
-          <h1
-            className="mt-6 font-display font-black"
-            style={{
-              fontSize: "clamp(44px, 5.6vw, 84px)",
-              lineHeight: 0.98,
-              letterSpacing: "-0.015em",
-              color: "var(--ink)",
-            }}
-          >
-            Five minutes
-            <br />
-            on the phone.
-            <br />
-            Tools that fit
-            <br />
-            your business.
-          </h1>
-          <p
-            className="mt-8 font-display italic"
-            style={{
-              fontSize: "clamp(20px, 2.2vw, 28px)",
-              lineHeight: 1.25,
-              color: "var(--ink-soft)",
-            }}
-          >
-            Cinco minutos al teléfono. Herramientas
-            <br className="hidden sm:block" />
-            que se adaptan a tu negocio.
-          </p>
+    <>
+      <WebGLShader />
 
-          <div className="mt-8">
-            {showCta ? (
-              <button
-                type="button"
-                onClick={live.start}
-                disabled={ctaDisabled}
-                className="group inline-flex items-center gap-3 rounded-full px-7 py-[18px] text-[16px] font-bold text-[var(--bg-cream)] transition-all duration-150 disabled:opacity-60"
-                style={{
-                  background: "var(--terracotta)",
-                  boxShadow: "0 10px 24px rgba(192, 90, 62, 0.35)",
-                }}
-                onMouseEnter={(e) => {
-                  if (!ctaDisabled)
-                    e.currentTarget.style.background =
-                      "var(--terracotta-hover)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "var(--terracotta)";
-                }}
-              >
-                <Phone size={18} strokeWidth={2.5} />
-                {copy.label}
-                <ArrowRight
-                  size={16}
-                  strokeWidth={2.5}
-                  className="transition-transform duration-150 group-hover:translate-x-0.5"
-                />
-              </button>
-            ) : (
-              <div
-                className="inline-flex items-center gap-3 rounded-full px-7 py-[18px] text-[16px] font-bold"
-                style={{
-                  background: "var(--bg-card)",
-                  border: "1px solid var(--olive-soft)",
-                  color: "var(--ink)",
-                }}
-              >
-                <span
-                  className="inline-block h-[8px] w-[8px] rounded-full"
-                  style={{
-                    background:
-                      live.phase === "live" ? "#2BAE66" : "var(--olive)",
-                    animation:
-                      live.phase === "live"
-                        ? "clario-rise 1.2s ease-in-out infinite alternate"
-                        : undefined,
-                  }}
-                />
-                {copy.label}
+      <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1320px] items-center px-[clamp(16px,4vw,48px)] py-[clamp(24px,5vw,72px)]">
+        <div className="grid w-full gap-8 lg:grid-cols-[1fr_1fr] lg:gap-14">
+          {/* LEFT: dark bordered text box */}
+          <div className="relative w-full self-center border border-[#27272a] bg-black/90 p-2 shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-md">
+            <div className="relative border border-[#27272a] bg-black px-[clamp(20px,3vw,40px)] py-[clamp(36px,6vw,72px)]">
+              <div className="mb-6 flex items-center justify-center gap-1.5">
+                <span className="relative flex h-3 w-3 items-center justify-center">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+                </span>
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-500">
+                  Prototype · Early access
+                </p>
               </div>
-            )}
 
-            <p
-              className="mt-3 text-[13px]"
-              style={{ color: "var(--ink-faint)" }}
-            >
-              {copy.hint}
-            </p>
-
-            {live.error && (
-              <p
-                className="mt-3 text-[13px]"
-                style={{ color: "var(--terracotta)" }}
+              <h1
+                className="mb-5 text-center font-extrabold tracking-tighter text-white"
+                style={{
+                  fontSize: "clamp(36px, 4.2vw, 60px)",
+                  lineHeight: 1.02,
+                  letterSpacing: "-0.03em",
+                }}
               >
-                {live.error}
+                Five minutes on the phone. Tools that fit your business.
+              </h1>
+
+              <p
+                className="mx-auto max-w-[440px] text-center italic text-white/60"
+                style={{
+                  fontSize: "clamp(14px, 1.4vw, 18px)",
+                  lineHeight: 1.4,
+                }}
+              >
+                Cinco minutos al teléfono. Herramientas que se adaptan a tu
+                negocio.
               </p>
-            )}
+
+              <p className="mx-auto mt-8 max-w-[420px] text-center text-[14px] leading-[1.6] text-white/55">
+                Clario is a voice agent for owners of small and mid-sized
+                businesses. Answer a few questions in your own language;
+                receive a written report of practical tools and next steps.
+              </p>
+
+              <p className="mx-auto mt-5 max-w-[420px] text-center text-[14px] leading-[1.6] text-white/75">
+                Supports 70+ languages, including{" "}
+                <RotatingLanguages />
+                .
+              </p>
+
+              <p className="mt-10 text-center text-[12px] uppercase tracking-[0.18em] text-white/40">
+                {hint}
+              </p>
+
+              {live.error && (
+                <p className="mt-3 text-center text-[12px] text-red-400">
+                  {live.error}
+                </p>
+              )}
+            </div>
           </div>
 
-          <p
-            className="mt-10 max-w-md text-[15px]"
-            style={{ color: "var(--ink-soft)", lineHeight: 1.55 }}
-          >
-            Clario is a voice agent for owners of small and mid-sized
-            businesses. Answer a short set of questions in your own language
-            — English, Spanish, Portuguese, Italian, Vietnamese, whatever
-            you run on — and receive a written report of practical tools and
-            next steps you can act on this week.
-          </p>
+          {/* RIGHT: phone */}
+          <div className="relative flex items-center justify-center">
+            <PhoneStage
+              phase={live.phase}
+              utterances={live.utterances}
+              elapsed={live.elapsed}
+              level={live.level}
+              onStart={live.start}
+              onEnd={live.end}
+            />
+          </div>
         </div>
-
-        <div className="lg:pt-6">
-          <PhoneStage
-            phase={live.phase}
-            utterances={live.utterances}
-            elapsed={live.elapsed}
-            level={live.level}
-            onEnd={live.end}
-          />
-        </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 };
