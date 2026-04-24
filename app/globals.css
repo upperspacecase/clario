@@ -62,3 +62,23 @@ body::before {
   outline-offset: 3px;
   border-radius: 4px;
 }
+
+/* Responsive iPhone stage: scale and reserve the scaled height so the
+   grid doesn't leave an empty block. Natural 417x876, scaled to the
+   stage's parent width. */
+.phone-stage {
+  transform: scale(1);
+  margin-bottom: 0;
+}
+@media (max-width: 1200px) {
+  .phone-stage { transform: scale(0.86); margin-bottom: -123px; }
+}
+@media (max-width: 1023px) {
+  .phone-stage { transform: scale(0.94); margin-bottom: -52px; }
+}
+@media (max-width: 480px) {
+  .phone-stage { transform: scale(0.82); margin-bottom: -158px; }
+}
+@media (max-width: 400px) {
+  .phone-stage { transform: scale(0.76); margin-bottom: -211px; }
+}
