@@ -16,10 +16,7 @@ import {
   type LiveServerMessage,
 } from "@google/genai";
 import { randomUUID } from "crypto";
-import {
-  buildSystemInstruction,
-  type CallLengthLabel,
-} from "./system-instruction.js";
+import { buildSystemInstruction } from "./system-instruction.js";
 import { TOOL_DECLARATIONS } from "./tools.js";
 import { sessionStore } from "./session-store.js";
 import { generateReport } from "./report.js";
@@ -147,14 +144,8 @@ wss.on("connection", async (ws, req) => {
   let clientFirstName = "there";
   let clientBusinessName = "your business";
   let clientWebsite = "";
-  let clientRole = "owner/operator";
-  let clientIndustry = "your industry";
   let clientTeamSize = "your team";
-  let clientCountry = "";
-  let clientCity = "";
-  let clientCallLengthPref: "quick" | "standard" | "deep" = "quick";
-  let checkpointTimer: NodeJS.Timeout | null = null;
-  let checkpointFired = false;
+  let clientLocation = "";
   const clientConnectedAtMs = Date.now();
 
   const reqUrl = new URL(req.url ?? "/", `http://localhost:${PORT}`);
@@ -200,18 +191,9 @@ wss.on("connection", async (ws, req) => {
         const businessName = (data.businessName ?? "").trim();
         if (businessName) clientBusinessName = businessName;
         clientWebsite = (data.website ?? "").trim();
-        const role = (data.role ?? data.callerRole ?? "").trim();
-        if (role) clientRole = role;
-        const industry = (data.industry ?? "").trim();
-        if (industry) clientIndustry = industry;
         const teamSize = (data.teamSize ?? "").trim();
         if (teamSize) clientTeamSize = teamSize;
-        clientCountry = (data.country ?? "").trim();
-        clientCity = (data.city ?? "").trim();
-        const pref = (data.callLengthPref ?? "").trim();
-        if (pref === "quick" || pref === "standard" || pref === "deep") {
-          clientCallLengthPref = pref;
-        }
+        clientLocation = (data.location ?? data.country ?? "").trim();
       }
       await docRef.update({
         voiceSessionId: voiceSessionUuid,
@@ -236,11 +218,6 @@ wss.on("connection", async (ws, req) => {
   const finalizeReport = async (reason: string) => {
     if (endTriggered) return;
     endTriggered = true;
-
-    if (checkpointTimer) {
-      clearTimeout(checkpointTimer);
-      checkpointTimer = null;
-    }
 
     sessionStore.markEnded(sessionId);
     send(ws, { type: "end_signal", reason });
@@ -289,50 +266,6 @@ wss.on("connection", async (ws, req) => {
     }
   };
 
-  function callLengthMeta(pref: "quick" | "standard" | "deep"): {
-    label: CallLengthLabel;
-    minutes: number;
-    checkpoint: number;
-  } {
-    if (pref === "deep") return { label: "Deep", minutes: 45, checkpoint: 30 };
-    if (pref === "standard") return { label: "Standard", minutes: 30, checkpoint: 20 };
-    return { label: "Quick", minutes: 15, checkpoint: 10 };
-  }
-
-  const scheduleCheckpoint = () => {
-    if (checkpointTimer) return;
-    if (clientCallLengthPref !== "standard" && clientCallLengthPref !== "deep") {
-      return;
-    }
-    const { checkpoint } = callLengthMeta(clientCallLengthPref);
-    const elapsedMs = Date.now() - clientConnectedAtMs;
-    const delayMs = Math.max(0, checkpoint * 60 * 1000 - elapsedMs);
-    checkpointTimer = setTimeout(() => {
-      if (checkpointFired || endTriggered || !liveSession) return;
-      checkpointFired = true;
-      try {
-        liveSession.sendClientContent({
-          turns: [
-            {
-              role: "user",
-              parts: [
-                {
-                  text: `[Internal cue: about ${checkpoint} minutes have elapsed. Move into Phase 5 — the mid-call checkpoint — with the user now.]`,
-                },
-              ],
-            },
-          ],
-          turnComplete: true,
-        });
-        console.log(
-          `[CHECKPOINT] sent at ${checkpoint}min session=${sessionId}`,
-        );
-      } catch (e) {
-        console.error("[CHECKPOINT] failed:", e);
-      }
-    }, delayMs);
-  };
-
   let reconnecting = false;
   const reconnectWithResume = async () => {
     if (reconnecting || endTriggered) return;
@@ -358,20 +291,13 @@ wss.on("connection", async (ws, req) => {
       console.log(
         `[GEMINI-LIVE] open session=${sessionId} model=${MODEL} voice=${VOICE} resume=${resumeHandle ? "yes" : "no"}`,
       );
-      const meta = callLengthMeta(clientCallLengthPref);
       const systemInstruction = buildSystemInstruction({
         agentName: AGENT_NAME,
         firstName: clientFirstName,
         businessName: clientBusinessName,
         website: clientWebsite,
-        role: clientRole,
-        industry: clientIndustry,
         teamSize: clientTeamSize,
-        country: clientCountry,
-        city: clientCity,
-        callLengthLabel: meta.label,
-        callLengthMinutes: meta.minutes,
-        checkpointMinute: meta.checkpoint,
+        location: clientLocation,
       });
       let myReconnectTriggered = false;
       const newSession = await ai.live.connect({
@@ -626,10 +552,7 @@ wss.on("connection", async (ws, req) => {
 
     if (msg.type === "start") {
       if (msg.language) sessionStore.setLanguage(sessionId, msg.language);
-      if (!liveSession) {
-        await openLive();
-        scheduleCheckpoint();
-      }
+      if (!liveSession) await openLive();
       return;
     }
 
@@ -677,10 +600,6 @@ wss.on("connection", async (ws, req) => {
 
   ws.on("close", async () => {
     console.log(`[SERVER] WS closed session=${sessionId}`);
-    if (checkpointTimer) {
-      clearTimeout(checkpointTimer);
-      checkpointTimer = null;
-    }
     await setupPromise.catch(() => undefined);
     if (!endTriggered) {
       // If user just closed the tab mid-call and we have some transcript,

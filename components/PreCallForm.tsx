@@ -2,18 +2,13 @@
 
 import { useState } from "react";
 import { Signal, Wifi, BatteryMedium } from "lucide-react";
-import type { CallLengthPref } from "@/lib/types";
 
 export type PreCallFormValues = {
   firstName: string;
   businessName: string;
   website: string;
-  country: string;
-  city: string;
-  role: string;
-  industry: string;
+  location: string;
   teamSize: string;
-  callLengthPref: CallLengthPref;
 };
 
 export type PreCallFormProps = {
@@ -22,37 +17,9 @@ export type PreCallFormProps = {
   errorMessage?: string | null;
 };
 
-const ROLES = [
-  "Owner",
-  "Founder",
-  "Operator",
-  "Manager",
-  "Team lead",
-  "Consultant",
-  "Other",
-];
-
-const INDUSTRIES = [
-  "Hospitality",
-  "Retail",
-  "Professional services",
-  "Health & wellness",
-  "Trades",
-  "E-commerce",
-  "Real estate",
-  "Education",
-  "Other",
-];
-
 const TEAM_SIZES = ["Just me", "2–5", "6–10", "11–25", "26–50", "50+"];
 
-const CALL_LENGTHS: { value: CallLengthPref; label: string }[] = [
-  { value: "quick", label: "Quick — 15 min" },
-  { value: "standard", label: "Standard — 30 min" },
-  { value: "deep", label: "Deep — 45 min" },
-];
-
-const COUNTRIES = [
+const LOCATIONS = [
   "Australia",
   "New Zealand",
   "United States",
@@ -83,12 +50,8 @@ const DEFAULTS: PreCallFormValues = {
   firstName: "",
   businessName: "",
   website: "",
-  country: "",
-  city: "",
-  role: "",
-  industry: "",
+  location: "",
   teamSize: "",
-  callLengthPref: "standard",
 };
 
 type FieldKey = keyof PreCallFormValues;
@@ -118,12 +81,8 @@ export const PreCallForm: React.FC<PreCallFormProps> = ({
       next.firstName = "2–30 characters.";
     }
     if (!values.businessName.trim()) next.businessName = "Required.";
-    if (!values.country) next.country = "Required.";
-    if (!values.city.trim()) next.city = "Required.";
-    if (!values.role) next.role = "Required.";
-    if (!values.industry) next.industry = "Required.";
+    if (!values.location) next.location = "Required.";
     if (!values.teamSize) next.teamSize = "Required.";
-    if (!values.callLengthPref) next.callLengthPref = "Required.";
     if (values.website.trim()) {
       const candidate = /^https?:\/\//i.test(values.website.trim())
         ? values.website.trim()
@@ -150,7 +109,6 @@ export const PreCallForm: React.FC<PreCallFormProps> = ({
       firstName: values.firstName.trim(),
       businessName: values.businessName.trim(),
       website: values.website.trim(),
-      city: values.city.trim(),
     });
   }
 
@@ -209,78 +167,18 @@ export const PreCallForm: React.FC<PreCallFormProps> = ({
               />
             </Field>
 
-            <Field
-              label="Website"
-              hint="Optional"
-              error={errors.website}
-            >
-              <input
-                type="url"
-                inputMode="url"
-                autoComplete="url"
-                placeholder="example.com"
-                className={inputClass(Boolean(errors.website))}
-                value={values.website}
-                onChange={(e) => update("website", e.target.value)}
-                disabled={submitting}
-              />
-            </Field>
-
-            <Field label="Country" error={errors.country}>
+            <Field label="Location" error={errors.location}>
               <select
                 autoComplete="country-name"
-                className={selectClass(Boolean(errors.country))}
-                value={values.country}
-                onChange={(e) => update("country", e.target.value)}
+                className={selectClass(Boolean(errors.location))}
+                value={values.location}
+                onChange={(e) => update("location", e.target.value)}
                 disabled={submitting}
               >
                 <option value="">Select…</option>
-                {COUNTRIES.map((c) => (
+                {LOCATIONS.map((c) => (
                   <option key={c} value={c}>
                     {c}
-                  </option>
-                ))}
-              </select>
-            </Field>
-
-            <Field label="City" error={errors.city}>
-              <input
-                type="text"
-                autoComplete="address-level2"
-                className={inputClass(Boolean(errors.city))}
-                value={values.city}
-                onChange={(e) => update("city", e.target.value)}
-                disabled={submitting}
-              />
-            </Field>
-
-            <Field label="Role" error={errors.role}>
-              <select
-                className={selectClass(Boolean(errors.role))}
-                value={values.role}
-                onChange={(e) => update("role", e.target.value)}
-                disabled={submitting}
-              >
-                <option value="">Select…</option>
-                {ROLES.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-            </Field>
-
-            <Field label="Industry" error={errors.industry}>
-              <select
-                className={selectClass(Boolean(errors.industry))}
-                value={values.industry}
-                onChange={(e) => update("industry", e.target.value)}
-                disabled={submitting}
-              >
-                <option value="">Select…</option>
-                {INDUSTRIES.map((i) => (
-                  <option key={i} value={i}>
-                    {i}
                   </option>
                 ))}
               </select>
@@ -302,24 +200,22 @@ export const PreCallForm: React.FC<PreCallFormProps> = ({
               </select>
             </Field>
 
-            <Field label="Call length" error={errors.callLengthPref}>
-              <select
-                className={selectClass(Boolean(errors.callLengthPref))}
-                value={values.callLengthPref}
-                onChange={(e) =>
-                  update(
-                    "callLengthPref",
-                    e.target.value as CallLengthPref,
-                  )
-                }
+            <Field
+              label="Website"
+              hint="Optional"
+              compact
+              error={errors.website}
+            >
+              <input
+                type="url"
+                inputMode="url"
+                autoComplete="url"
+                placeholder="example.com"
+                className={compactInputClass(Boolean(errors.website))}
+                value={values.website}
+                onChange={(e) => update("website", e.target.value)}
                 disabled={submitting}
-              >
-                {CALL_LENGTHS.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
+              />
             </Field>
 
             {errorMessage && (
@@ -334,11 +230,8 @@ export const PreCallForm: React.FC<PreCallFormProps> = ({
             disabled={submitting}
             className="flex h-12 w-full items-center justify-center rounded-md bg-[#22c55e] px-4 text-[12px] font-bold uppercase tracking-[0.14em] text-[#0a0a0a] shadow-[0_8px_18px_rgba(34,197,94,0.35)] transition-transform duration-150 hover:scale-[1.01] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {submitting ? "Connecting…" : "Continue to call"}
+            {submitting ? "Connecting…" : "Call now"}
           </button>
-          <p className="mt-2 text-center text-[10px] uppercase tracking-[0.18em] text-white/40">
-            Tap to schedule your call
-          </p>
         </div>
       </form>
     </div>
@@ -349,23 +242,37 @@ function Field({
   label,
   hint,
   error,
+  compact,
   children,
 }: {
   label: string;
   hint?: string;
   error?: string;
+  compact?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/55">
+    <label className={`flex flex-col ${compact ? "gap-0.5" : "gap-1"}`}>
+      <span
+        className={
+          compact
+            ? "text-[9px] font-semibold uppercase tracking-[0.14em] text-white/35"
+            : "text-[10px] font-bold uppercase tracking-[0.16em] text-white/55"
+        }
+      >
         {label}
       </span>
       {children}
       {error ? (
         <span className="text-[11px] text-red-400">{error}</span>
       ) : hint ? (
-        <span className="text-[11px] text-white/40">{hint}</span>
+        <span
+          className={
+            compact ? "text-[10px] text-white/30" : "text-[11px] text-white/40"
+          }
+        >
+          {hint}
+        </span>
       ) : null}
     </label>
   );
@@ -384,5 +291,13 @@ function selectClass(invalid: boolean): string {
     "h-10 w-full rounded-md border bg-black/60 px-3 text-[14px] text-white",
     "focus:outline-none focus:ring-2 focus:ring-[#22c55e]",
     invalid ? "border-red-500/70" : "border-white/12",
+  ].join(" ");
+}
+
+function compactInputClass(invalid: boolean): string {
+  return [
+    "h-8 w-full rounded-md border bg-black/40 px-2.5 text-[12px] text-white/80",
+    "placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-[#22c55e]/70",
+    invalid ? "border-red-500/70" : "border-white/8",
   ].join(" ");
 }

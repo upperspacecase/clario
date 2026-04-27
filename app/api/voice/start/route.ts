@@ -3,25 +3,18 @@ import { FieldValue } from "firebase-admin/firestore";
 import { nanoid } from "nanoid";
 import { adminDb } from "@/lib/firebase-admin";
 import { signVoiceSessionToken } from "@/lib/voice-token";
-import type { CallLengthPref } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const WS_BASE_URL = "wss://voice-agent-ws.fly.dev/";
 
-const VALID_CALL_LENGTHS: CallLengthPref[] = ["quick", "standard", "deep"];
-
 type StartBody = {
   firstName?: string;
   businessName?: string;
   website?: string;
-  country?: string;
-  city?: string;
-  role?: string;
-  industry?: string;
+  location?: string;
   teamSize?: string;
-  callLengthPref?: string;
 };
 
 function trimOrNull(v: string | undefined): string | null {
@@ -54,12 +47,8 @@ export async function POST(req: Request) {
 
     const firstName = trimOrNull(body.firstName);
     const businessName = trimOrNull(body.businessName);
-    const country = trimOrNull(body.country);
-    const city = trimOrNull(body.city);
-    const role = trimOrNull(body.role);
-    const industry = trimOrNull(body.industry);
+    const location = trimOrNull(body.location);
     const teamSize = trimOrNull(body.teamSize);
-    const callLengthRaw = trimOrNull(body.callLengthPref);
     const website =
       typeof body.website === "string" && body.website.trim().length > 0
         ? normalizeWebsite(body.website)
@@ -76,16 +65,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const required = {
-      firstName,
-      businessName,
-      country,
-      city,
-      role,
-      industry,
-      teamSize,
-      callLengthPref: callLengthRaw,
-    };
+    const required = { firstName, businessName, location, teamSize };
     const missing = Object.entries(required)
       .filter(([, v]) => !v)
       .map(([k]) => k);
@@ -103,18 +83,6 @@ export async function POST(req: Request) {
       );
     }
 
-    const callLengthPref = VALID_CALL_LENGTHS.includes(
-      callLengthRaw as CallLengthPref,
-    )
-      ? (callLengthRaw as CallLengthPref)
-      : null;
-    if (!callLengthPref) {
-      return NextResponse.json(
-        { error: "Invalid callLengthPref." },
-        { status: 400 },
-      );
-    }
-
     const shareId = nanoid(10);
     const docRef = adminDb().collection("assessments").doc();
     const assessmentId = docRef.id;
@@ -126,17 +94,14 @@ export async function POST(req: Request) {
       firstName,
       businessName,
       website,
-      country,
-      city,
-      role,
-      industry,
+      location,
       teamSize,
-      callLengthPref,
 
       // Mirror to legacy fields so the post-call confirm form prefills.
       clientName: firstName,
       clientEmail: null,
-      callerRole: role,
+      industry: null,
+      callerRole: null,
 
       status: "in_call",
       voiceSessionId: null,

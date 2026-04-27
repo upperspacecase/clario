@@ -23,8 +23,6 @@ export interface FourDayPlanItem {
   toolName: string;
 }
 
-export type CallLengthPref = "quick" | "standard" | "deep";
-
 export interface Assessment {
   id: string;
   shareId: string;
@@ -33,17 +31,14 @@ export interface Assessment {
   firstName: string | null;
   businessName: string | null;
   website: string | null;
-  country: string | null;
-  city: string | null;
-  role: string | null;
-  industry: string | null;
+  location: string | null;
   teamSize: string | null;
-  callLengthPref: CallLengthPref | null;
 
-  // Legacy / post-call fields. clientName mirrors firstName; callerRole
-  // mirrors role; clientEmail filled by the post-call confirm form.
+  // Legacy / post-call fields. clientName mirrors firstName; clientEmail,
+  // industry, and callerRole are filled by the post-call confirm form.
   clientName: string | null;
   clientEmail: string | null;
+  industry: string | null;
   callerRole: string | null;
 
   status: AssessmentStatus;
