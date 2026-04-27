@@ -27,7 +27,7 @@ export const Testimonials: React.FC = () => {
           {quotes.map((q, i) => (
             <figure
               key={i}
-              className="flex h-full flex-col justify-between border border-white/10 bg-white/5 p-8"
+              className="flex h-full flex-col justify-between border border-white/10 bg-white/5 p-6 sm:p-8"
             >
               <span
                 aria-hidden

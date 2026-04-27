@@ -97,15 +97,16 @@ body.page-light {
   aspect-ratio: 417 / 876;
   margin: 0 auto;
   position: relative;
+  overflow: hidden;
 }
 .phone-stage {
   position: absolute;
   top: 0;
-  left: 0;
+  left: 50%;
   width: 417px;
   height: 876px;
-  transform-origin: top left;
+  transform-origin: top center;
   /* Scale = container's inline width / natural width. Capped at 1 via min(). */
-  transform: scale(min(1, calc(100cqw / 417)));
+  transform: translateX(-50%) scale(min(1, calc(100cqw / 417)));
 }
 

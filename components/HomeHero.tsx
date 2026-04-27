@@ -134,7 +134,7 @@ export const HomeHero: React.FC = () => {
 
         <div
           id="phone"
-          className="relative flex scroll-mt-24 justify-center md:col-span-5"
+          className="relative mx-auto flex w-full max-w-[340px] scroll-mt-24 justify-center sm:max-w-[380px] md:col-span-5 md:max-w-none"
         >
           <PhoneStage>
             {mode === "form" ? (

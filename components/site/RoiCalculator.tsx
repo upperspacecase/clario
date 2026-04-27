@@ -33,7 +33,7 @@ const Slider: React.FC<{
         </span>
       </div>
       <RadixSlider.Root
-        className="relative flex h-5 w-full touch-none select-none items-center"
+        className="relative flex h-11 w-full touch-none select-none items-center"
         value={[value]}
         min={min}
         max={max}
@@ -109,38 +109,38 @@ export const RoiCalculator: React.FC = () => {
           </div>
 
           <div className="mt-12 grid grid-cols-1 gap-4 md:col-span-7 md:mt-0">
-            <div className="flex flex-col justify-center border border-white/10 bg-white/5 p-8">
+            <div className="flex flex-col justify-center border border-white/10 bg-white/5 p-5 sm:p-6 md:p-8">
               <span className="mb-2 font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-[#737373]">
                 Hours / Month
               </span>
-              <span className="font-serif text-4xl text-surface-container">
+              <span className="font-serif text-[clamp(28px,7vw,36px)] text-surface-container">
                 {Math.round(hoursPerMonth)}{" "}
-                <span className="font-sans text-lg text-[#737373]">hrs</span>
+                <span className="font-sans text-base text-[#737373] sm:text-lg">hrs</span>
               </span>
             </div>
-            <div className="flex flex-col justify-center border border-white/10 bg-white/5 p-8">
+            <div className="flex flex-col justify-center border border-white/10 bg-white/5 p-5 sm:p-6 md:p-8">
               <span className="mb-2 font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-[#737373]">
                 Cost / Month
               </span>
-              <span className="font-serif text-4xl text-surface-container">
+              <span className="font-serif text-[clamp(28px,7vw,36px)] text-surface-container">
                 {fmtUsd(costPerMonth)}
               </span>
             </div>
-            <div className="flex flex-col justify-center border border-white/10 bg-white/5 p-8">
+            <div className="flex flex-col justify-center border border-white/10 bg-white/5 p-5 sm:p-6 md:p-8">
               <span className="mb-2 font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-[#737373]">
                 Savings / Year
               </span>
-              <span className="font-serif text-4xl text-surface-container">
+              <span className="font-serif text-[clamp(28px,7vw,36px)] text-surface-container">
                 {fmtUsd(savingsPerYear)}
               </span>
             </div>
-            <div className="flex flex-col justify-center border border-primary-container/30 bg-secondary/10 p-8">
+            <div className="flex flex-col justify-center border border-primary-container/30 bg-secondary/10 p-5 sm:p-6 md:p-8">
               <span className="mb-2 font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-secondary-fixed-dim">
                 Our Service
               </span>
-              <span className="font-serif text-4xl text-secondary-fixed">
+              <span className="font-serif text-[clamp(28px,7vw,36px)] text-secondary-fixed">
                 {fmtUsd(SERVICE_COST)}{" "}
-                <span className="font-sans text-lg text-secondary-fixed-dim">
+                <span className="font-sans text-base text-secondary-fixed-dim sm:text-lg">
                   one-time
                 </span>
               </span>

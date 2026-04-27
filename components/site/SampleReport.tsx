@@ -20,7 +20,7 @@ export const SampleReport: React.FC = () => {
 
         <div className="relative mx-auto max-w-4xl rounded-lg border border-outline-variant bg-surface p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] sm:p-8 md:p-12">
           {/* Header */}
-          <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-outline-variant pb-6 sm:pb-8 md:mb-10">
+          <div className="mb-8 flex flex-col gap-4 border-b border-outline-variant pb-6 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:pb-8 md:mb-10">
             <div>
               <span className="mb-2 block font-[Inter] text-[13px] font-semibold uppercase tracking-widest text-outline">
                 Diagnostic Result
@@ -29,7 +29,7 @@ export const SampleReport: React.FC = () => {
                 Acme Studio Ops
               </h3>
             </div>
-            <div className="text-right">
+            <div className="sm:text-right">
               <span className="mb-1 block font-[Inter] text-[13px] font-semibold uppercase tracking-widest text-outline">
                 Friction Score
               </span>
@@ -108,7 +108,7 @@ export const SampleReport: React.FC = () => {
           {/* 30-day next steps — full width */}
           <div className="mt-10 border-t border-outline-variant pt-8">
             <Section label="30-day next steps">
-              <div className="grid grid-cols-1 gap-4 rounded border border-outline-variant/50 bg-surface-container-low p-6 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 rounded border border-outline-variant/50 bg-surface-container-low p-5 sm:p-6 md:grid-cols-3">
                 <Directive body="Implement async check-ins via shared doc on Tuesdays and Thursdays." />
                 <Directive body="Connect CRM to invoicing via Zapier — about 45 mins of setup." />
                 <Directive body="Reserve 9–11am as company-wide deep-work blocks." />
