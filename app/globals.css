@@ -91,7 +91,7 @@ body.page-light {
    wrapper to reserve the correct vertical space — no negative-margin
    hacks, no horizontal overflow. */
 .phone-frame {
-  container-type: inline-size;
+  --phone-scale: 1;
   width: 100%;
   max-width: 417px;
   aspect-ratio: 417 / 876;
@@ -106,20 +106,9 @@ body.page-light {
   width: 417px;
   height: 876px;
   transform-origin: top left;
-  /* Scale = container's inline width / natural width. Capped at 1 via min(). */
-  transform: scale(min(1, calc(100cqw / 417)));
-}
-
-/* Mobile fallback: container queries are unreliable here (the phone was
-   rendering at native 417px width and overflowing the viewport). Cap the
-   frame to viewport-minus-gutter and scale the stage from viewport units
-   directly, so the phone fits regardless of how cqw resolves. */
-@media (max-width: 767px) {
-  .phone-frame {
-    max-width: min(417px, calc(100vw - 40px));
-  }
-  .phone-stage {
-    transform: scale(min(1, calc((100vw - 40px) / 417)));
-  }
+  /* PhoneStage measures the frame's actual rendered width with a
+     ResizeObserver and updates --phone-scale. Reliable across all
+     viewports, panes, and browsers — no container queries needed. */
+  transform: scale(var(--phone-scale));
 }
 
