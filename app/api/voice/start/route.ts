@@ -9,26 +9,8 @@ export const dynamic = "force-dynamic";
 
 const WS_BASE_URL = "wss://voice-agent-ws.fly.dev/";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-export async function POST(req: Request) {
+export async function POST() {
   try {
-    const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
-    const clientName = String(body.clientName ?? "").trim();
-    const clientEmail = String(body.clientEmail ?? "").trim().toLowerCase();
-    const businessName = String(body.businessName ?? "").trim();
-    const industry = String(body.industry ?? "").trim();
-    const callerRole = String(body.callerRole ?? "").trim();
-
-    const fieldErrors: Record<string, string> = {};
-    if (!clientName) fieldErrors.clientName = "Required";
-    if (!clientEmail) fieldErrors.clientEmail = "Required";
-    else if (!EMAIL_RE.test(clientEmail)) fieldErrors.clientEmail = "Invalid email";
-    if (!businessName) fieldErrors.businessName = "Required";
-    if (Object.keys(fieldErrors).length > 0) {
-      return NextResponse.json({ error: "validation", fieldErrors }, { status: 400 });
-    }
-
     const shareId = nanoid(10);
     const docRef = adminDb().collection("assessments").doc();
     const assessmentId = docRef.id;
@@ -36,11 +18,11 @@ export async function POST(req: Request) {
     await docRef.set({
       id: assessmentId,
       shareId,
-      clientName,
-      clientEmail,
-      businessName,
-      industry: industry || null,
-      callerRole: callerRole || null,
+      clientName: null,
+      clientEmail: null,
+      businessName: null,
+      industry: null,
+      callerRole: null,
       status: "in_call",
       voiceSessionId: null,
       voiceSessionHandles: [],

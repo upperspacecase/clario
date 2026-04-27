@@ -6,7 +6,6 @@ import { useLiveSession } from "./use-live-session";
 import { PhoneStage } from "./PhoneStage";
 import { WebGLShader } from "./ui/web-gl-shader";
 import { RotatingLanguages } from "./RotatingLanguages";
-import { StartForm, type StartFormValues } from "./StartForm";
 
 const FALLBACK_WS_URL =
   process.env.NEXT_PUBLIC_WS_URL ??
@@ -15,14 +14,14 @@ const FALLBACK_WS_URL =
     : "ws://localhost:3043");
 
 const PHASE_HINT: Record<string, string> = {
-  idle: "Fill in the form on the left. Annie greets you by name when she connects.",
+  idle: "Tap the green phone. Annie picks up and asks about your business.",
   requesting_mic: "Allow microphone access in the browser to continue.",
   connecting: "Opening the line…",
   live: "Speak naturally. End the call from the phone whenever you're done.",
   ending: "Wrapping up the interview.",
   report_generating: "Writing your report — about 15–30 seconds.",
   report_ready: "Opening your report…",
-  error: "Something went wrong. Submit the form again to retry.",
+  error: "Something went wrong. Tap the green phone again to retry.",
 };
 
 type StartResponse = {
@@ -40,7 +39,7 @@ export const HomeHero: React.FC = () => {
   const [starting, setStarting] = useState(false);
   const previousPhaseRef = useRef(live.phase);
 
-  const handleStart = useCallback(async (values: StartFormValues) => {
+  const handleStart = useCallback(async () => {
     if (starting) return;
     setStarting(true);
     setStartError(null);
@@ -48,7 +47,6 @@ export const HomeHero: React.FC = () => {
       const res = await fetch("/api/voice/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -89,7 +87,6 @@ export const HomeHero: React.FC = () => {
 
   const hint = PHASE_HINT[live.phase] ?? PHASE_HINT.idle;
   const displayedError = live.error ?? startError;
-  const callActive = live.phase !== "idle" && live.phase !== "error";
 
   return (
     <>
@@ -143,25 +140,14 @@ export const HomeHero: React.FC = () => {
                 .
               </p>
 
-              {!callActive ? (
-                <div className="mx-auto mt-2 max-w-[420px]">
-                  <StartForm
-                    onSubmit={handleStart}
-                    submitting={starting}
-                    outerError={displayedError}
-                  />
-                </div>
-              ) : (
-                <>
-                  <p className="mt-10 text-center text-[12px] uppercase tracking-[0.18em] text-white/40">
-                    {hint}
-                  </p>
-                  {displayedError && (
-                    <p className="mt-3 text-center text-[12px] text-red-400">
-                      {displayedError}
-                    </p>
-                  )}
-                </>
+              <p className="mt-10 text-center text-[12px] uppercase tracking-[0.18em] text-white/40">
+                {starting ? "Connecting…" : hint}
+              </p>
+
+              {displayedError && (
+                <p className="mt-3 text-center text-[12px] text-red-400">
+                  {displayedError}
+                </p>
               )}
             </div>
           </div>
@@ -172,9 +158,7 @@ export const HomeHero: React.FC = () => {
               utterances={live.utterances}
               elapsed={live.elapsed}
               level={live.level}
-              onStart={() => {
-                /* phone tap is now disabled while idle — form drives the start */
-              }}
+              onStart={handleStart}
               onEnd={live.end}
             />
           </div>
