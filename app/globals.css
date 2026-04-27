@@ -110,3 +110,16 @@ body.page-light {
   transform: scale(min(1, calc(100cqw / 417)));
 }
 
+/* Mobile fallback: container queries are unreliable here (the phone was
+   rendering at native 417px width and overflowing the viewport). Cap the
+   frame to viewport-minus-gutter and scale the stage from viewport units
+   directly, so the phone fits regardless of how cqw resolves. */
+@media (max-width: 767px) {
+  .phone-frame {
+    max-width: min(417px, calc(100vw - 40px));
+  }
+  .phone-stage {
+    transform: scale(min(1, calc((100vw - 40px) / 417)));
+  }
+}
+
