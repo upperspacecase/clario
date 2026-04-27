@@ -57,10 +57,11 @@ export const RoiCalculator: React.FC = () => {
   const [teamSize, setTeamSize] = useState(12);
   const [hourlyCost, setHourlyCost] = useState(45);
 
-  const { hoursPerMonth, costPerMonth } = useMemo(() => {
+  const { hoursPerMonth, costPerMonth, savingsPerYear } = useMemo(() => {
     const hoursPerMonth = hoursLost * teamSize * WEEKS_PER_MONTH;
     const costPerMonth = hoursPerMonth * hourlyCost;
-    return { hoursPerMonth, costPerMonth };
+    const savingsPerYear = costPerMonth * 12;
+    return { hoursPerMonth, costPerMonth, savingsPerYear };
   }, [hoursLost, teamSize, hourlyCost]);
 
   return (
@@ -123,6 +124,14 @@ export const RoiCalculator: React.FC = () => {
               </span>
               <span className="font-serif text-4xl text-surface-container">
                 {fmtUsd(costPerMonth)}
+              </span>
+            </div>
+            <div className="flex flex-col justify-center border border-white/10 bg-white/5 p-8">
+              <span className="mb-2 font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-[#737373]">
+                Savings / Year
+              </span>
+              <span className="font-serif text-4xl text-surface-container">
+                {fmtUsd(savingsPerYear)}
               </span>
             </div>
             <div className="flex flex-col justify-center border border-primary-container/30 bg-secondary/10 p-8">
