@@ -20,16 +20,16 @@ export const HowItWorks: React.FC = () => {
   return (
     <section
       id="how-it-works"
-      className="border-t border-white/5 bg-[#0f0f0f] py-[120px]"
+      className="border-t border-white/5 bg-[#0f0f0f] py-[64px] md:py-[120px]"
     >
-      <div className="mx-auto max-w-[1120px] px-8">
-        <div className="mb-20 text-center">
-          <h2 className="font-serif text-[40px] leading-[1.2] text-surface-container">
+      <div className="mx-auto max-w-[1120px] px-5 md:px-8">
+        <div className="mb-14 text-center md:mb-20">
+          <h2 className="font-serif text-[clamp(28px,5vw,40px)] leading-[1.2] text-surface-container">
             Simple next steps, not software chaos.
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 gap-16 md:grid-cols-3 md:gap-8">
+        <div className="grid grid-cols-1 gap-14 md:grid-cols-3 md:gap-8">
           {steps.map((step) => (
             <div key={step.n} className="relative border-l border-white/10 pl-6">
               <div className="pointer-events-none absolute -left-6 -top-10 select-none font-serif text-[100px] leading-none text-primary-container opacity-20">

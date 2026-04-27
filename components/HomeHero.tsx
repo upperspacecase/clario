@@ -75,21 +75,21 @@ export const HomeHero: React.FC = () => {
   const displayedError = live.error ?? startError;
 
   return (
-    <section className="relative overflow-hidden bg-[#121212] bg-grain py-[160px] text-surface-container">
-      <div className="relative z-10 mx-auto grid max-w-[1120px] grid-cols-1 items-center gap-8 px-8 md:grid-cols-12">
+    <section className="relative overflow-hidden bg-[#121212] bg-grain py-[72px] text-surface-container md:py-[160px]">
+      <div className="relative z-10 mx-auto grid max-w-[1120px] grid-cols-1 items-center gap-12 px-5 md:grid-cols-12 md:gap-8 md:px-8">
         <div className="pr-0 md:col-span-7 md:pr-12">
-          <h1 className="mb-6 font-serif text-[clamp(40px,6vw,64px)] leading-[1.1] tracking-[-0.02em] text-surface-container">
+          <h1 className="mb-5 font-serif text-[clamp(34px,6vw,64px)] leading-[1.1] tracking-[-0.02em] text-surface-container md:mb-6">
             Get hours back for what matters most.
           </h1>
 
-          <p className="mb-8 max-w-xl font-[Inter] text-lg leading-[1.6] text-[#a3a3a3]">
+          <p className="mb-7 max-w-xl font-[Inter] text-base leading-[1.6] text-[#a3a3a3] md:mb-8 md:text-lg">
             Manual admin, missed follow-up, duplicate work, and disconnected
             tools quietly drain hours from you and your team every day. We help
             you find where time is being lost, which workflows are worth
             improving, what tools fit best, and what to do next.
           </p>
 
-          <div className="mb-6 flex flex-col gap-4 sm:flex-row">
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:gap-4">
             <a
               href="#phone"
               className="bg-primary-container px-8 py-4 text-center font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-on-primary-fixed transition-opacity hover:opacity-80"
@@ -124,7 +124,7 @@ export const HomeHero: React.FC = () => {
 
         <div
           id="phone"
-          className="relative mt-16 flex scroll-mt-24 justify-center md:col-span-5 md:mt-0"
+          className="relative flex scroll-mt-24 justify-center md:col-span-5"
         >
           <PhoneStage
             phase={live.phase}

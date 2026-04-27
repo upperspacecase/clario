@@ -1,11 +1,11 @@
 export const FinalCta: React.FC = () => {
   return (
-    <section className="relative overflow-hidden border-t border-white/5 bg-[#0f0f0f] bg-grain py-[140px] text-surface-container">
-      <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-8 text-center">
-        <h2 className="mb-6 font-serif text-[clamp(40px,5vw,56px)] leading-[1.1] tracking-[-0.02em] text-surface-container">
+    <section className="relative overflow-hidden border-t border-white/5 bg-[#0f0f0f] bg-grain py-[80px] text-surface-container md:py-[140px]">
+      <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-5 text-center md:px-8">
+        <h2 className="mb-6 font-serif text-[clamp(32px,5vw,56px)] leading-[1.1] tracking-[-0.02em] text-surface-container">
           Get your hours back.
         </h2>
-        <p className="mb-10 font-[Inter] text-lg leading-[1.6] text-[#a3a3a3]">
+        <p className="mb-8 font-[Inter] text-base leading-[1.6] text-[#a3a3a3] md:mb-10 md:text-lg">
           If your business is losing time to repetitive work, the first step is
           to see it clearly. Hours gives you a practical audit and a clear path
           forward.

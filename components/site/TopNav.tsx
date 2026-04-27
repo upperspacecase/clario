@@ -16,7 +16,7 @@ export const TopNav: React.FC = () => {
   const startHref = isHome ? "#phone" : "/#phone";
 
   return (
-    <nav className="fixed left-0 top-0 z-50 flex w-full max-w-full items-center justify-between border-b border-white/10 bg-[#0a0a0a] px-8 py-5 shadow-none">
+    <nav className="fixed left-0 top-0 z-50 flex h-[80px] w-full max-w-full items-center justify-between border-b border-white/10 bg-[#0a0a0a] px-5 md:px-8">
       <Link href="/" className="flex items-center" aria-label="hrs home">
         <Image
           src="/hrs-logo-light.png"

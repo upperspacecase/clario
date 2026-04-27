@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import * as RadixSlider from "@radix-ui/react-slider";
 
 const AUDIT_COST = 6000;
 
@@ -20,39 +21,32 @@ const Slider: React.FC<{
   display: string;
   onChange: (v: number) => void;
 }> = ({ label, value, min, max, step = 1, display, onChange }) => {
-  const pct = ((value - min) / (max - min)) * 100;
   return (
     <div>
-      <div className="mb-2 flex justify-between">
+      <div className="mb-3 flex items-baseline justify-between">
         <label className="font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-[#a3a3a3]">
           {label}
         </label>
-        <span className="text-base text-primary-container">{display}</span>
+        <span className="font-[Inter] text-base text-primary-container">
+          {display}
+        </span>
       </div>
-      <div className="relative h-3">
-        <div
-          className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2"
-          style={{ background: "rgba(255,255,255,0.2)" }}
+      <RadixSlider.Root
+        className="relative flex h-5 w-full touch-none select-none items-center"
+        value={[value]}
+        min={min}
+        max={max}
+        step={step}
+        onValueChange={(v) => onChange(v[0] ?? min)}
+        aria-label={label}
+      >
+        <RadixSlider.Track className="relative h-[2px] w-full grow rounded-full bg-white/15">
+          <RadixSlider.Range className="absolute h-full rounded-full bg-primary-container" />
+        </RadixSlider.Track>
+        <RadixSlider.Thumb
+          className="block h-4 w-4 rounded-full bg-primary-container shadow-[0_0_0_1px_rgba(0,0,0,0.5),0_2px_6px_rgba(0,0,0,0.4)] transition-transform duration-150 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121212] active:scale-95"
         />
-        <div
-          className="absolute left-0 top-1/2 h-px -translate-y-1/2"
-          style={{
-            width: `${pct}%`,
-            background: "#c9a96e",
-          }}
-        />
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="hrs-slider absolute inset-0 m-0 w-full"
-          style={{ background: "transparent" }}
-          aria-label={label}
-        />
-      </div>
+      </RadixSlider.Root>
     </div>
   );
 };
@@ -72,10 +66,10 @@ export const RoiCalculator: React.FC = () => {
   }, [hoursLost, teamSize, hourlyCost, targetPct]);
 
   return (
-    <section className="relative border-t border-white/5 bg-[#121212] py-[120px] text-surface-container">
-      <div className="mx-auto max-w-[1120px] px-8">
-        <div className="mb-16 md:w-2/3">
-          <h2 className="mb-6 font-serif text-[40px] leading-[1.2] text-surface-container">
+    <section className="relative border-t border-white/5 bg-[#121212] py-[64px] text-surface-container md:py-[120px]">
+      <div className="mx-auto max-w-[1120px] px-5 md:px-8">
+        <div className="mb-12 md:mb-16 md:w-2/3">
+          <h2 className="mb-6 font-serif text-[clamp(28px,5vw,40px)] leading-[1.2] text-surface-container">
             What are those lost hours really costing you?
           </h2>
           <p className="font-[Inter] text-base leading-[1.6] text-[#a3a3a3]">

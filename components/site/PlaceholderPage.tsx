@@ -10,7 +10,7 @@ export const PlaceholderPage: React.FC<{
     <>
       <TopNav />
       <main className="relative z-10 min-h-screen bg-[#121212] bg-grain pt-[80px] text-surface-container">
-        <section className="mx-auto flex min-h-[calc(100vh-160px)] max-w-[1120px] flex-col justify-center px-8 py-[120px]">
+        <section className="mx-auto flex min-h-[calc(100dvh-160px)] max-w-[1120px] flex-col justify-center px-5 py-[64px] md:px-8 md:py-[120px]">
           <span className="mb-6 inline-block w-fit rounded-full border border-primary-container px-4 py-1.5 font-[Inter] text-[13px] font-semibold uppercase tracking-widest text-primary-container">
             {eyebrow}
           </span>

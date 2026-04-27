@@ -2,11 +2,11 @@ export const SampleReport: React.FC = () => {
   return (
     <section
       id="sample-report"
-      className="relative overflow-hidden border-t border-outline-variant/30 bg-background py-[120px] text-on-background"
+      className="relative overflow-hidden border-t border-outline-variant/30 bg-background py-[64px] text-on-background md:py-[120px]"
     >
-      <div className="relative z-10 mx-auto max-w-[1120px] px-8">
-        <div className="mx-auto mb-16 max-w-2xl text-center">
-          <h2 className="mb-6 font-serif text-[40px] leading-[1.2] text-on-surface">
+      <div className="relative z-10 mx-auto max-w-[1120px] px-5 md:px-8">
+        <div className="mx-auto mb-12 max-w-2xl text-center md:mb-16">
+          <h2 className="mb-6 font-serif text-[clamp(28px,5vw,40px)] leading-[1.2] text-on-surface">
             See what your report looks like
           </h2>
           <p className="font-[Inter] text-lg leading-[1.6] text-on-surface-variant">
@@ -18,9 +18,9 @@ export const SampleReport: React.FC = () => {
           </p>
         </div>
 
-        <div className="relative mx-auto max-w-4xl rounded-lg border border-outline-variant bg-surface p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] md:p-12">
+        <div className="relative mx-auto max-w-4xl rounded-lg border border-outline-variant bg-surface p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] sm:p-8 md:p-12">
           {/* Header */}
-          <div className="mb-10 flex items-end justify-between border-b border-outline-variant pb-8">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-outline-variant pb-6 sm:pb-8 md:mb-10">
             <div>
               <span className="mb-2 block font-[Inter] text-[13px] font-semibold uppercase tracking-widest text-outline">
                 Diagnostic Result
