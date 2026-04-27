@@ -2,7 +2,7 @@
 # Runs on an isolated machine, terminates TLS at the edge, forwards to :8080.
 # Auto-stops when idle to stay within the free allowance.
 
-app = "voice-agent"
+app = "voice-agent-ws"
 primary_region = "sjc"
 
 [build]
