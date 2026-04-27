@@ -1,5 +1,4 @@
 import { HomeHero } from "@/components/HomeHero";
-import { TopNav } from "@/components/site/TopNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { RoiCalculator } from "@/components/site/RoiCalculator";
 import { HowItWorks } from "@/components/site/HowItWorks";
@@ -10,8 +9,7 @@ import { FinalCta } from "@/components/site/FinalCta";
 export default function Page() {
   return (
     <>
-      <TopNav />
-      <main className="relative z-10 pt-[80px]">
+      <main className="relative z-10">
         <HomeHero />
         <RoiCalculator />
         <HowItWorks />
