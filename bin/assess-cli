@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Wrapper that lets the GetHours pipeline orchestrator call `assess-cli` from
+# any cwd. Resolves the repo root from this script's location (following
+# symlinks via realpath, since this is symlinked into ~/.local/bin), then
+# cd's into the repo so node module resolution finds firebase-admin/dotenv,
+# and runs the TypeScript entry via tsx so we don't maintain a build step.
+# `runs/{id}/` paths the orchestrator passes are repo-relative by design.
+set -euo pipefail
+SCRIPT_PATH="$( realpath "${BASH_SOURCE[0]}" )"
+REPO_DIR="$( cd "$( dirname "$SCRIPT_PATH" )/.." && pwd -P )"
+cd "$REPO_DIR"
+exec npx --no-install tsx cli/assess-cli.ts "$@"

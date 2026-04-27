@@ -7,3 +7,6 @@ out
 .DS_Store
 tsconfig.tsbuildinfo
 .firebase/
+
+# Local pipeline artifacts (assess-cli fetch / orchestrator outputs)
+runs/

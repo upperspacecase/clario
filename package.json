@@ -2,13 +2,18 @@
   "name": "hours",
   "version": "0.1.0",
   "private": true,
+  "bin": {
+    "assess-cli": "bin/assess-cli"
+  },
   "scripts": {
     "dev": "next dev -p 3041",
     "build": "next build",
     "start": "next start -p 3041",
     "lint": "next lint",
     "server": "tsx watch server/live.ts",
-    "server:once": "tsx server/live.ts"
+    "server:once": "tsx server/live.ts",
+    "assess-cli": "tsx cli/assess-cli.ts",
+    "seed:config": "tsx scripts/seed-config.ts"
   },
   "dependencies": {
     "@google/genai": "^1.50.1",
