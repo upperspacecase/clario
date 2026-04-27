@@ -1,0 +1,24 @@
+{
+  "app_name": "Clario",
+  "tagline": "A voice agent that helps restaurant owners in non-English-speaking countries understand which AI tools can actually help them run their restaurant, in their own language.",
+  "specific_customer": "Independent restaurant owners in non-English-speaking countries (e.g., Spain, Mexico, Italy, Brazil, Vietnam) running 1-3 locations, aged 35-60, who have heard of AI but feel locked out by language and jargon.",
+  "problem": "Restaurant owners outside the English-speaking world can't access practical AI guidance. Consultants are expensive, ChatGPT assumes English and tech fluency, and generic AI content targets enterprises. They know AI could help with bookings, supply waste, menu translation, and reviews, but don't know where to start.",
+  "differentiator": "Accessible and cost-effective. You call Clario, speak in your own language, describe your restaurant's real problems, and get a plain-language report of 3-5 AI tools you can use this week, with next steps. No reading, no jargon, no English required.",
+  "founding_hypothesis": "We believe restaurant owners in non-English-speaking countries will use Clario because it's the most accessible and cost-effective way to understand which AI tools can actually help their restaurant, better than hiring a local IT consultant, asking ChatGPT in broken English, or ignoring AI entirely. We'll know we're right if 10 restaurant owners complete a voice call in their native language and 3 request the follow-up report within 5 days of a targeted Facebook/WhatsApp post.",
+  "signal": {
+    "target_behavior": "10 voice calls completed in native language + 3 follow-up report requests",
+    "timeframe_days": 5,
+    "channel": "Targeted Facebook/WhatsApp post in a Spanish-speaking restaurant owner community"
+  },
+  "named_alternatives": {
+    "products": ["ChatGPT", "Fiverr consultants", "Local marketing agencies"],
+    "workarounds": ["Asking a tech-savvy family member", "Chamber of commerce seminars", "Doing nothing"]
+  },
+  "landing_page_regions": [
+    "Hero (headline + subhead + CTA: call now / leave your number)",
+    "Remotion demo (voice waveform + live transcript in Spanish + AI tool cards appearing)",
+    "Logo strip (AI tools they'll likely get recommended: OpenTable, Square, Canva, WhatsApp Business, Google Reviews — with 'Not affiliated. Tools Clario may recommend.' caveat)",
+    "Footer (3-5 text links)"
+  ],
+  "stack": "Next.js + TypeScript + Tailwind + Remotion"
+}

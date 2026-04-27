@@ -1,8 +1,8 @@
-# Fly.io config for the Clario WS/HTTP server.
+# Fly.io config for the voice-agent WS/HTTP server.
 # Runs on an isolated machine, terminates TLS at the edge, forwards to :8080.
 # Auto-stops when idle to stay within the free allowance.
 
-app = "clario-ws"
+app = "voice-agent"
 primary_region = "sjc"
 
 [build]

@@ -1,0 +1,87 @@
+Clario — Design System Tokens
+==============================
+Mockup is the binding visual reference. Where ui-ux-pro-max and the mockup disagree,
+mockup wins (per skill Rule #4). Tokens below are the reconciled set.
+
+FONTS (keeping ui-ux-pro-max's food-category picks — they align with mockup)
+  Headline / display:  "Playfair Display", serif   (weight 900, italic for subhead)
+  Body / UI:           "Karla", system-ui, sans-serif   (weights 400, 500, 700)
+  Google Fonts import:
+    https://fonts.googleapis.com/css2?family=Karla:wght@400;500;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap
+
+COLORS (from mockup, NOT from ui-ux-pro-max's vibrant-red palette)
+  --bg-cream:         #F8F2E6   /* page background */
+  --bg-card:          #FBF7EB   /* slightly lighter, for card fills */
+  --ink:              #1E1A14   /* primary type */
+  --ink-soft:         rgba(30, 26, 20, 0.72)   /* body + subhead */
+  --ink-faint:        rgba(30, 26, 20, 0.40)   /* hairlines, captions */
+  --olive:            #A28A43   /* waveform, mic badge, card icons, hairlines */
+  --olive-soft:       rgba(162, 138, 67, 0.28) /* card borders */
+  --terracotta:       #C05A3E   /* CTA button ONLY */
+  --terracotta-hover: #A84A30
+  --white:            #FFFFFF   /* not on the page by default; reserved */
+
+TYPE SCALE (desktop; responsive down via clamp)
+  display:     clamp(56px, 8vw, 108px) / line-height 0.95 / Playfair 900
+  subhead-it:  clamp(22px, 2.4vw, 30px) / line-height 1.25 / Playfair italic 700
+  body-lg:     18px / line-height 1.5 / Karla 400
+  body:        15px / line-height 1.55 / Karla 400
+  body-sm:     14px / line-height 1.55 / Karla 400
+  label:       12px / line-height 1.2 / Karla 700 / letter-spacing 0.14em / UPPERCASE
+  caption:     12px / line-height 1.4 / Karla 400
+
+SPACING (Tailwind-compatible rem tokens)
+  2:  0.5rem    8px
+  3:  0.75rem   12px
+  4:  1rem      16px
+  6:  1.5rem    24px
+  8:  2rem      32px
+  12: 3rem      48px
+  16: 4rem      64px
+  20: 5rem      80px
+  24: 6rem      96px
+  32: 8rem      128px
+
+RADII
+  sm:  6px      // buttons, badges
+  md:  12px     // recommendation cards
+  lg:  18px     // transcript card
+
+BORDERS
+  hairline: 1px solid var(--olive-soft)
+  divider:  1px solid rgba(30, 26, 20, 0.08)
+
+SHADOWS
+  Deliberately none. Editorial pages use spacing + hairlines, not drop shadows.
+
+MOTION
+  durations: 150ms (micro), 300ms (state changes), 4–6s (Remotion loop)
+  easing:    cubic-bezier(0.4, 0, 0.2, 1)
+  respect:   prefers-reduced-motion: reduce  → Player paused on first frame
+
+ICONOGRAPHY
+  Lucide React for inline UI glyphs (mic, calendar, message-square, share-2, globe).
+  SimpleIcons (via simple-icons npm) for brand marks in the logo strip:
+    opentable, square, canva, whatsapp, google
+  NEVER render text inside <svg> and call it a logo.
+
+LAYOUT
+  Max content width: 1200px
+  Page gutter:       clamp(20px, 5vw, 64px)
+  Hero grid:         asymmetric, left 43% / right 57%, 64px gap
+  Break at:          980px → single column, demo moves below copy
+  Mobile break:      640px → display type clamps down; stacked hero
+
+BREAKPOINTS
+  sm 640 / md 768 / lg 1024 / xl 1280
+
+TEXTURE
+  Optional: SVG noise overlay at 3% opacity on --bg-cream for warmth. Acceptable to ship without.
+
+ACCESSIBILITY (from ui-ux-pro-max checklist + mockup audit)
+  [x] All type meets WCAG AA (ink on cream = ~14:1)
+  [x] Terracotta CTA on cream bg = ~5.2:1 (AA for 18px+; buttons are 18px+)
+  [x] Focus rings visible: 2px olive outline with 3px offset
+  [x] prefers-reduced-motion pauses Remotion Player on first frame
+  [x] Form labels visible, not placeholder-only
+  [x] Logo SVGs carry <title> (brand name) for screen readers

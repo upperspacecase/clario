@@ -1,0 +1,4 @@
+GitHub: https://github.com/upperspacecase/clario
+Vercel (aliased): https://src-azure-phi.vercel.app
+Vercel (deployment): https://src-4kl5xgxfb-taytoddpattisongmailcoms-projects.vercel.app
+Deployed: 2026-04-24 14:50 local
