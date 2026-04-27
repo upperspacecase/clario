@@ -4,25 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLiveSession } from "./use-live-session";
 import { PhoneStage } from "./PhoneStage";
-import { WebGLShader } from "./ui/web-gl-shader";
-import { RotatingLanguages } from "./RotatingLanguages";
 
 const FALLBACK_WS_URL =
   process.env.NEXT_PUBLIC_WS_URL ??
   (typeof window !== "undefined"
     ? `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.hostname}:3043`
     : "ws://localhost:3043");
-
-const PHASE_HINT: Record<string, string> = {
-  idle: "Tap the green phone. Annie picks up and asks about your business.",
-  requesting_mic: "Allow microphone access in the browser to continue.",
-  connecting: "Opening the line…",
-  live: "Speak naturally. End the call from the phone whenever you're done.",
-  ending: "Wrapping up the interview.",
-  report_generating: "Writing your report — about 15–30 seconds.",
-  report_ready: "Opening your report…",
-  error: "Something went wrong. Tap the green phone again to retry.",
-};
 
 type StartResponse = {
   assessmentId: string;
@@ -85,85 +72,69 @@ export const HomeHero: React.FC = () => {
     }
   }, [assessmentId, live.phase, live.sessionId, router]);
 
-  const hint = PHASE_HINT[live.phase] ?? PHASE_HINT.idle;
   const displayedError = live.error ?? startError;
 
   return (
-    <>
-      <WebGLShader />
+    <section className="relative overflow-hidden bg-[#121212] bg-grain py-[160px] text-surface-container">
+      <div className="relative z-10 mx-auto grid max-w-[1120px] grid-cols-1 items-center gap-8 px-8 md:grid-cols-12">
+        <div className="pr-0 md:col-span-7 md:pr-12">
+          <span className="mb-8 inline-block rounded-full border border-primary-container px-4 py-1.5 font-[Inter] text-[13px] font-semibold uppercase tracking-widest text-primary-container">
+            OPERATIONAL TIME AUDIT
+          </span>
 
-      <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1320px] items-center px-[clamp(16px,4vw,48px)] py-[clamp(24px,5vw,72px)]">
-        <div className="grid w-full gap-8 lg:grid-cols-[1fr_1fr] lg:gap-14">
-          <div className="relative w-full self-center border border-[#27272a] bg-black/90 p-2 shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-md">
-            <div className="relative border border-[#27272a] bg-black px-[clamp(20px,3vw,40px)] py-[clamp(36px,6vw,72px)]">
-              <div className="mb-6 flex items-center justify-center gap-1.5">
-                <span className="relative flex h-3 w-3 items-center justify-center">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
-                </span>
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-green-500">
-                  Prototype · Early access
-                </p>
-              </div>
+          <h1 className="mb-6 font-serif text-[clamp(40px,6vw,64px)] leading-[1.1] tracking-[-0.02em] text-surface-container">
+            Free up time for what matters most.
+          </h1>
 
-              <h1
-                className="mb-5 text-center font-extrabold tracking-tighter text-white"
-                style={{
-                  fontSize: "clamp(36px, 4.2vw, 60px)",
-                  lineHeight: 1.02,
-                  letterSpacing: "-0.03em",
-                }}
-              >
-                Twelve minutes on the phone. The tools that give you back your time.
-              </h1>
+          <p className="mb-8 max-w-lg font-[Inter] text-lg leading-[1.6] text-[#a3a3a3]">
+            We help business owners and operators identify structural time leaks.
+            Regain hours lost to friction and poorly designed systems.
+          </p>
 
-              <p
-                className="mx-auto max-w-[440px] text-center italic text-white/60"
-                style={{
-                  fontSize: "clamp(14px, 1.4vw, 18px)",
-                  lineHeight: 1.4,
-                }}
-              >
-                A short call. A tailored report. Hours back every week.
-              </p>
-
-              <p className="mx-auto mt-8 max-w-[420px] text-center text-[14px] leading-[1.6] text-white/55">
-                Hours is a voice-driven AI opportunity assessment for business
-                owners. Annie spends 20–40 minutes with you, then our team
-                builds a written report of the tools and next steps that fit
-                your work.
-              </p>
-
-              <p className="mx-auto mt-5 max-w-[420px] text-center text-[14px] leading-[1.6] text-white/75">
-                Supports 70+ languages, including{" "}
-                <RotatingLanguages />
-                .
-              </p>
-
-              <p className="mt-10 text-center text-[12px] uppercase tracking-[0.18em] text-white/40">
-                {starting ? "Connecting…" : hint}
-              </p>
-
-              {displayedError && (
-                <p className="mt-3 text-center text-[12px] text-red-400">
-                  {displayedError}
-                </p>
-              )}
-            </div>
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row">
+            <a
+              href="#phone"
+              className="bg-primary-container px-8 py-4 text-center font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-on-primary-fixed transition-opacity hover:opacity-80"
+            >
+              Get My Hours Audit
+            </a>
+            <a
+              href="#sample-report"
+              className="border border-primary-container px-8 py-4 text-center font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-primary-container transition-colors hover:bg-primary-container/10"
+            >
+              See Sample Report
+            </a>
           </div>
 
-          <div className="relative flex items-center justify-center">
-            <PhoneStage
-              phase={live.phase}
-              utterances={live.utterances}
-              elapsed={live.elapsed}
-              level={live.level}
-              onStart={handleStart}
-              onEnd={live.end}
-            />
-          </div>
+          <p className="flex items-center gap-2 font-[Inter] text-sm text-[#737373]">
+            <span className="material-symbols-outlined text-[16px]">schedule</span>
+            Includes a 30-minute AI discovery call and actionable report.
+          </p>
+
+          {starting && (
+            <p className="mt-4 text-[12px] uppercase tracking-[0.18em] text-white/50">
+              Connecting…
+            </p>
+          )}
+          {displayedError && (
+            <p className="mt-3 text-[12px] text-red-400">{displayedError}</p>
+          )}
         </div>
-      </section>
-    </>
+
+        <div
+          id="phone"
+          className="relative mt-16 flex scroll-mt-24 justify-center md:col-span-5 md:mt-0"
+        >
+          <PhoneStage
+            phase={live.phase}
+            utterances={live.utterances}
+            elapsed={live.elapsed}
+            level={live.level}
+            onStart={handleStart}
+            onEnd={live.end}
+          />
+        </div>
+      </div>
+    </section>
   );
 };
