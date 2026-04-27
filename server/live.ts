@@ -16,7 +16,10 @@ import {
   type LiveServerMessage,
 } from "@google/genai";
 import { randomUUID } from "crypto";
-import { buildSystemInstruction } from "./system-instruction.js";
+import {
+  buildSystemInstruction,
+  type CallLengthLabel,
+} from "./system-instruction.js";
 import { TOOL_DECLARATIONS } from "./tools.js";
 import { sessionStore } from "./session-store.js";
 import { generateReport } from "./report.js";
@@ -142,7 +145,16 @@ wss.on("connection", async (ws, req) => {
   let currentSessionHandle = "";
   let transcriptBuffer: TranscriptBuffer | null = null;
   let clientFirstName = "there";
-  let clientEmail = "";
+  let clientBusinessName = "your business";
+  let clientWebsite = "";
+  let clientRole = "owner/operator";
+  let clientIndustry = "your industry";
+  let clientTeamSize = "your team";
+  let clientCountry = "";
+  let clientCity = "";
+  let clientCallLengthPref: "quick" | "standard" | "deep" = "quick";
+  let checkpointTimer: NodeJS.Timeout | null = null;
+  let checkpointFired = false;
   const clientConnectedAtMs = Date.now();
 
   const reqUrl = new URL(req.url ?? "/", `http://localhost:${PORT}`);
@@ -183,9 +195,23 @@ wss.on("connection", async (ws, req) => {
       const snap = await docRef.get();
       if (snap.exists) {
         const data = snap.data() as Record<string, string | null | undefined>;
-        const fullName = (data.clientName ?? "").trim();
-        if (fullName) clientFirstName = fullName.split(/\s+/)[0];
-        clientEmail = (data.clientEmail ?? "").trim();
+        const firstName = (data.firstName ?? data.clientName ?? "").trim();
+        if (firstName) clientFirstName = firstName.split(/\s+/)[0];
+        const businessName = (data.businessName ?? "").trim();
+        if (businessName) clientBusinessName = businessName;
+        clientWebsite = (data.website ?? "").trim();
+        const role = (data.role ?? data.callerRole ?? "").trim();
+        if (role) clientRole = role;
+        const industry = (data.industry ?? "").trim();
+        if (industry) clientIndustry = industry;
+        const teamSize = (data.teamSize ?? "").trim();
+        if (teamSize) clientTeamSize = teamSize;
+        clientCountry = (data.country ?? "").trim();
+        clientCity = (data.city ?? "").trim();
+        const pref = (data.callLengthPref ?? "").trim();
+        if (pref === "quick" || pref === "standard" || pref === "deep") {
+          clientCallLengthPref = pref;
+        }
       }
       await docRef.update({
         voiceSessionId: voiceSessionUuid,
@@ -210,6 +236,11 @@ wss.on("connection", async (ws, req) => {
   const finalizeReport = async (reason: string) => {
     if (endTriggered) return;
     endTriggered = true;
+
+    if (checkpointTimer) {
+      clearTimeout(checkpointTimer);
+      checkpointTimer = null;
+    }
 
     sessionStore.markEnded(sessionId);
     send(ws, { type: "end_signal", reason });
@@ -258,17 +289,92 @@ wss.on("connection", async (ws, req) => {
     }
   };
 
-  const openLive = async () => {
+  function callLengthMeta(pref: "quick" | "standard" | "deep"): {
+    label: CallLengthLabel;
+    minutes: number;
+    checkpoint: number;
+  } {
+    if (pref === "deep") return { label: "Deep", minutes: 45, checkpoint: 30 };
+    if (pref === "standard") return { label: "Standard", minutes: 30, checkpoint: 20 };
+    return { label: "Quick", minutes: 15, checkpoint: 10 };
+  }
+
+  const scheduleCheckpoint = () => {
+    if (checkpointTimer) return;
+    if (clientCallLengthPref !== "standard" && clientCallLengthPref !== "deep") {
+      return;
+    }
+    const { checkpoint } = callLengthMeta(clientCallLengthPref);
+    const elapsedMs = Date.now() - clientConnectedAtMs;
+    const delayMs = Math.max(0, checkpoint * 60 * 1000 - elapsedMs);
+    checkpointTimer = setTimeout(() => {
+      if (checkpointFired || endTriggered || !liveSession) return;
+      checkpointFired = true;
+      try {
+        liveSession.sendClientContent({
+          turns: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `[Internal cue: about ${checkpoint} minutes have elapsed. Move into Phase 5 — the mid-call checkpoint — with the user now.]`,
+                },
+              ],
+            },
+          ],
+          turnComplete: true,
+        });
+        console.log(
+          `[CHECKPOINT] sent at ${checkpoint}min session=${sessionId}`,
+        );
+      } catch (e) {
+        console.error("[CHECKPOINT] failed:", e);
+      }
+    }, delayMs);
+  };
+
+  let reconnecting = false;
+  const reconnectWithResume = async () => {
+    if (reconnecting || endTriggered) return;
+    if (!currentSessionHandle) {
+      console.warn(
+        `[GEMINI-LIVE] goAway but no resume handle yet session=${sessionId} — letting call drop`,
+      );
+      return;
+    }
+    reconnecting = true;
     try {
       console.log(
-        `[GEMINI-LIVE] open session=${sessionId} model=${MODEL} voice=${VOICE}`
+        `[GEMINI-LIVE] reconnecting with resume handle session=${sessionId}`,
       );
+      await openLive(currentSessionHandle);
+    } finally {
+      reconnecting = false;
+    }
+  };
+
+  const openLive = async (resumeHandle?: string) => {
+    try {
+      console.log(
+        `[GEMINI-LIVE] open session=${sessionId} model=${MODEL} voice=${VOICE} resume=${resumeHandle ? "yes" : "no"}`,
+      );
+      const meta = callLengthMeta(clientCallLengthPref);
       const systemInstruction = buildSystemInstruction({
         agentName: AGENT_NAME,
         firstName: clientFirstName,
-        email: clientEmail,
+        businessName: clientBusinessName,
+        website: clientWebsite,
+        role: clientRole,
+        industry: clientIndustry,
+        teamSize: clientTeamSize,
+        country: clientCountry,
+        city: clientCity,
+        callLengthLabel: meta.label,
+        callLengthMinutes: meta.minutes,
+        checkpointMinute: meta.checkpoint,
       });
-      liveSession = await ai.live.connect({
+      let myReconnectTriggered = false;
+      const newSession = await ai.live.connect({
         model: MODEL,
         config: {
           responseModalities: [Modality.AUDIO],
@@ -279,11 +385,14 @@ wss.on("connection", async (ws, req) => {
           inputAudioTranscription: {},
           outputAudioTranscription: {},
           tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
+          sessionResumption: resumeHandle ? { handle: resumeHandle } : {},
         },
         callbacks: {
           onopen: () => {
-            console.log(`[GEMINI-LIVE] open session=${sessionId}`);
-            send(ws, { type: "ready" });
+            console.log(
+              `[GEMINI-LIVE] open session=${sessionId} resume=${resumeHandle ? "yes" : "no"}`,
+            );
+            if (!resumeHandle) send(ws, { type: "ready" });
           },
           onmessage: async (msg: LiveServerMessage) => {
             // Debug: surface the shape of every non-audio message.
@@ -335,9 +444,23 @@ wss.on("connection", async (ws, req) => {
               }
             }
 
-            // Send the kickoff as soon as Gemini acknowledges setup.
-            // Anything sent before setupComplete is silently dropped.
-            if (msg.setupComplete && !kickoffSent && liveSession) {
+            // Gemini is asking us to migrate to a fresh session. Open a new
+            // one with the latest resume handle so we keep context across the
+            // ~15min hard limit. Quick (~15min) calls won't normally see this.
+            if (msg.goAway && !myReconnectTriggered && !endTriggered) {
+              myReconnectTriggered = true;
+              void reconnectWithResume();
+            }
+
+            // Send the kickoff as soon as Gemini acknowledges setup. Skip on
+            // resumed sessions — Gemini restores prior context, so a fresh
+            // greeting would be jarring.
+            if (
+              msg.setupComplete &&
+              !resumeHandle &&
+              !kickoffSent &&
+              liveSession
+            ) {
               kickoffSent = true;
               try {
                 liveSession.sendClientContent({
@@ -346,7 +469,7 @@ wss.on("connection", async (ws, req) => {
                       role: "user",
                       parts: [
                         {
-                          text: "[The call is now connected with the business owner. Greet them warmly in one or two short sentences and ask what their business does. Be conversational, not formal.]",
+                          text: "[The user is now connected. Begin Phase 0 of your contract.]",
                         },
                       ],
                     },
@@ -468,6 +591,18 @@ wss.on("connection", async (ws, req) => {
         },
       });
 
+      // Swap atomically: client audio frames sent during the brief overlap
+      // window may be dropped by the closing session, but the new session is
+      // ready to receive immediately afterwards.
+      const oldSession = liveSession;
+      liveSession = newSession;
+      if (oldSession) {
+        try {
+          oldSession.close();
+        } catch {
+          /* ignore */
+        }
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       console.error(`[GEMINI-LIVE] connect failed session=${sessionId}:`, msg);
@@ -491,7 +626,10 @@ wss.on("connection", async (ws, req) => {
 
     if (msg.type === "start") {
       if (msg.language) sessionStore.setLanguage(sessionId, msg.language);
-      if (!liveSession) await openLive();
+      if (!liveSession) {
+        await openLive();
+        scheduleCheckpoint();
+      }
       return;
     }
 
@@ -539,6 +677,10 @@ wss.on("connection", async (ws, req) => {
 
   ws.on("close", async () => {
     console.log(`[SERVER] WS closed session=${sessionId}`);
+    if (checkpointTimer) {
+      clearTimeout(checkpointTimer);
+      checkpointTimer = null;
+    }
     await setupPromise.catch(() => undefined);
     if (!endTriggered) {
       // If user just closed the tab mid-call and we have some transcript,

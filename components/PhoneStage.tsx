@@ -1,9 +1,10 @@
 "use client";
 
 import { IPhoneMockup } from "./ui/iphone-mockup";
-import { CallScreen, type CallScreenProps } from "./CallScreen";
 
-export const PhoneStage: React.FC<CallScreenProps> = (props) => {
+export const PhoneStage: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   return (
     <div className="phone-frame">
       <div className="phone-stage">
@@ -13,7 +14,7 @@ export const PhoneStage: React.FC<CallScreenProps> = (props) => {
           screenBg="#0a0a0a"
           safeAreaOverrides={{ top: 34, bottom: 10 }}
         >
-          <CallScreen {...props} />
+          {children}
         </IPhoneMockup>
       </div>
     </div>
