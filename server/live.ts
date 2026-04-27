@@ -148,7 +148,19 @@ wss.on("connection", async (ws, req) => {
   const reqUrl = new URL(req.url ?? "/", `http://localhost:${PORT}`);
   const token = reqUrl.searchParams.get("token");
 
-  if (token) {
+  console.log(`[SERVER] WS opened session=${sessionId} token=${token ? "yes" : "no"}`);
+
+  // Kick off async setup (token verify + Firestore read) but DO NOT await it
+  // here — message and close listeners must be registered synchronously so
+  // the client's `start` message isn't lost during the setup window.
+  let setupRejected: string | null = null;
+  const setupPromise = (async () => {
+    if (!token) {
+      console.warn(
+        `[SERVER] session=${sessionId} no token — Firestore writes disabled`,
+      );
+      return;
+    }
     try {
       const payload = await verifyVoiceSessionToken(token);
       assessmentId = payload.assessmentId;
@@ -158,48 +170,38 @@ wss.on("connection", async (ws, req) => {
       transcriptBuffer = new TranscriptBuffer(assessmentId);
       transcriptBuffer.startAutoFlush(500);
       console.log(
-        `[SERVER] WS connected session=${sessionId} assessment=${assessmentId} share=${shareId}`,
+        `[SERVER] session=${sessionId} verified assessment=${assessmentId} share=${shareId}`,
       );
-      try {
-        const docRef = adminDb()
-          .collection("assessments")
-          .doc(assessmentId);
-        const snap = await docRef.get();
-        if (snap.exists) {
-          const data = snap.data() as Record<string, string | null | undefined>;
-          const fullName = (data.clientName ?? "").trim();
-          if (fullName) clientFirstName = fullName.split(/\s+/)[0];
-          clientEmail = (data.clientEmail ?? "").trim();
-        }
-        await docRef.update({
-          voiceSessionId: voiceSessionUuid,
-          callStartedAt: FieldValue.serverTimestamp(),
-        });
-        console.log(
-          `[FIRESTORE] assessment marked in_call assessment=${assessmentId} voiceSessionId=${voiceSessionUuid}`,
-        );
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        console.error(
-          `[FIRESTORE] failed to update assessment on connect assessment=${assessmentId}:`,
-          msg,
-        );
-      }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      console.warn(`[SERVER] WS rejected — invalid token: ${msg}`);
-      ws.close(4401, "invalid_token");
+      setupRejected = e instanceof Error ? e.message : String(e);
+      console.warn(`[SERVER] session=${sessionId} invalid token: ${setupRejected}`);
+      try { ws.close(4401, "invalid_token"); } catch {}
       return;
     }
-  } else {
-    // Backward-compat fallback: existing prototype clients connect without
-    // a token. Accept the connection but skip Firestore writes. Remove this
-    // branch once Phase 2 is fully cut over and the Vercel client always
-    // sends a token.
-    console.warn(
-      `[SERVER] WS connected session=${sessionId} WITHOUT token — Firestore writes disabled`,
-    );
-  }
+    try {
+      const docRef = adminDb().collection("assessments").doc(assessmentId!);
+      const snap = await docRef.get();
+      if (snap.exists) {
+        const data = snap.data() as Record<string, string | null | undefined>;
+        const fullName = (data.clientName ?? "").trim();
+        if (fullName) clientFirstName = fullName.split(/\s+/)[0];
+        clientEmail = (data.clientEmail ?? "").trim();
+      }
+      await docRef.update({
+        voiceSessionId: voiceSessionUuid,
+        callStartedAt: FieldValue.serverTimestamp(),
+      });
+      console.log(
+        `[FIRESTORE] assessment marked in_call assessment=${assessmentId} voiceSessionId=${voiceSessionUuid}`,
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error(
+        `[FIRESTORE] connect-time update failed assessment=${assessmentId}:`,
+        msg,
+      );
+    }
+  })();
 
   send(ws, { type: "session", id: sessionId });
 
@@ -481,6 +483,12 @@ wss.on("connection", async (ws, req) => {
       return send(ws, { type: "error", message: "bad_json" });
     }
 
+    // Wait for setup (token verify + Firestore prefetch) before handling any
+    // message. The client's `start` arrives within milliseconds of WS open;
+    // setup may still be running.
+    await setupPromise;
+    if (setupRejected) return;
+
     if (msg.type === "start") {
       if (msg.language) sessionStore.setLanguage(sessionId, msg.language);
       if (!liveSession) await openLive();
@@ -531,6 +539,7 @@ wss.on("connection", async (ws, req) => {
 
   ws.on("close", async () => {
     console.log(`[SERVER] WS closed session=${sessionId}`);
+    await setupPromise.catch(() => undefined);
     if (!endTriggered) {
       // If user just closed the tab mid-call and we have some transcript,
       // still try to generate a report.
