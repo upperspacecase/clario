@@ -78,17 +78,15 @@ export const HomeHero: React.FC = () => {
     <section className="relative overflow-hidden bg-[#121212] bg-grain py-[160px] text-surface-container">
       <div className="relative z-10 mx-auto grid max-w-[1120px] grid-cols-1 items-center gap-8 px-8 md:grid-cols-12">
         <div className="pr-0 md:col-span-7 md:pr-12">
-          <span className="mb-8 inline-block rounded-full border border-primary-container px-4 py-1.5 font-[Inter] text-[13px] font-semibold uppercase tracking-widest text-primary-container">
-            OPERATIONAL TIME AUDIT
-          </span>
-
           <h1 className="mb-6 font-serif text-[clamp(40px,6vw,64px)] leading-[1.1] tracking-[-0.02em] text-surface-container">
-            Free up time for what matters most.
+            Get hours back for what matters most.
           </h1>
 
-          <p className="mb-8 max-w-lg font-[Inter] text-lg leading-[1.6] text-[#a3a3a3]">
-            We help business owners and operators identify structural time leaks.
-            Regain hours lost to friction and poorly designed systems.
+          <p className="mb-8 max-w-xl font-[Inter] text-lg leading-[1.6] text-[#a3a3a3]">
+            Manual admin, missed follow-up, duplicate work, and disconnected
+            tools quietly drain hours from you and your team every day. We help
+            you find where time is being lost, which workflows are worth
+            improving, what tools fit best, and what to do next.
           </p>
 
           <div className="mb-6 flex flex-col gap-4 sm:flex-row">
@@ -106,9 +104,12 @@ export const HomeHero: React.FC = () => {
             </a>
           </div>
 
-          <p className="flex items-center gap-2 font-[Inter] text-sm text-[#737373]">
-            <span className="material-symbols-outlined text-[16px]">schedule</span>
-            Includes a 30-minute AI discovery call and actionable report.
+          <p className="flex items-start gap-2 font-[Inter] text-sm leading-[1.6] text-[#737373]">
+            <span className="material-symbols-outlined mt-0.5 text-[16px]">
+              schedule
+            </span>
+            One short AI assisted call. One clear report. Practical next steps
+            to save time, reduce friction, and create more room for growth.
           </p>
 
           {starting && (

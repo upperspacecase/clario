@@ -4,6 +4,8 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { RoiCalculator } from "@/components/site/RoiCalculator";
 import { HowItWorks } from "@/components/site/HowItWorks";
 import { SampleReport } from "@/components/site/SampleReport";
+import { Testimonials } from "@/components/site/Testimonials";
+import { FinalCta } from "@/components/site/FinalCta";
 
 export default function Page() {
   return (
@@ -14,6 +16,8 @@ export default function Page() {
         <RoiCalculator />
         <HowItWorks />
         <SampleReport />
+        <Testimonials />
+        <FinalCta />
       </main>
       <SiteFooter />
     </>

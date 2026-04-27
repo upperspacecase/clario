@@ -75,12 +75,16 @@ export const RoiCalculator: React.FC = () => {
     <section className="relative border-t border-white/5 bg-[#121212] py-[120px] text-surface-container">
       <div className="mx-auto max-w-[1120px] px-8">
         <div className="mb-16 md:w-2/3">
-          <span className="mb-4 block font-[Inter] text-[13px] font-semibold uppercase tracking-widest text-primary-container">
-            THE MATH
-          </span>
-          <h2 className="font-serif text-[40px] leading-[1.2] text-surface-container">
+          <h2 className="mb-6 font-serif text-[40px] leading-[1.2] text-surface-container">
             What are those lost hours really costing you?
           </h2>
+          <p className="font-[Inter] text-base leading-[1.6] text-[#a3a3a3]">
+            Small businesses increasingly report that AI tools and systems help
+            them save time, improve productivity, and reduce operating costs.
+            Use the calculator to estimate what repetitive admin, slow
+            workflows, and poor follow-up may be costing your business each
+            month.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 gap-8 md:grid-cols-12">

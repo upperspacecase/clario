@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export const SiteFooter: React.FC = () => {
   return (
-    <footer className="mt-[120px] flex w-full flex-col items-center justify-between gap-6 border-t border-white/10 bg-[#0a0a0a] px-8 py-12 md:flex-row">
+    <footer className="flex w-full flex-col items-center justify-between gap-6 border-t border-white/10 bg-[#0a0a0a] px-8 py-12 md:flex-row">
       <Link href="/" className="flex items-center" aria-label="hrs home">
         <Image
           src="/hrs-logo-light.png"

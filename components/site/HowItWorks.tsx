@@ -2,17 +2,17 @@ const steps = [
   {
     n: "01",
     title: "Tell us where time gets lost",
-    body: "Complete a focused asynchronous survey or a 30-minute AI-guided audio interview. We gather raw data on your operational friction points.",
+    body: "Share how your business runs and where work gets stuck.",
   },
   {
     n: "02",
-    title: "We assess the leaks",
-    body: "Our system maps your qualitative inputs against established operational frameworks to identify systemic redundancies and tool sprawl.",
+    title: "We assess the biggest time leaks",
+    body: "We review your workflows, tools, and recurring tasks to identify the most useful AI opportunities.",
   },
   {
     n: "03",
-    title: "Get your action plan",
-    body: "Receive a tactile, high-contrast digital report detailing exact hours to reclaim, immediate next steps, and specific tool consolidations.",
+    title: "Get a practical action plan",
+    body: "Receive a focused report with recommendations, expected impact, and next steps for the next 30 days.",
   },
 ];
 
@@ -25,7 +25,7 @@ export const HowItWorks: React.FC = () => {
       <div className="mx-auto max-w-[1120px] px-8">
         <div className="mb-20 text-center">
           <h2 className="font-serif text-[40px] leading-[1.2] text-surface-container">
-            A quiet, precise intervention.
+            Simple next steps, not software chaos.
           </h2>
         </div>
 
