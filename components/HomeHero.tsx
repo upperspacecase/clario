@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLiveSession } from "./use-live-session";
 import { PhoneStage } from "./PhoneStage";
 import { WebGLShader } from "./ui/web-gl-shader";
 import { RotatingLanguages } from "./RotatingLanguages";
 
-const WS_URL =
+const FALLBACK_WS_URL =
   process.env.NEXT_PUBLIC_WS_URL ??
   (typeof window !== "undefined"
     ? `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.hostname}:3043`
@@ -24,17 +24,69 @@ const PHASE_HINT: Record<string, string> = {
   error: "Something went wrong. Tap the green phone again to retry.",
 };
 
+type StartResponse = {
+  assessmentId: string;
+  shareId: string;
+  voiceSessionToken: string;
+  wsUrl: string;
+};
+
 export const HomeHero: React.FC = () => {
   const router = useRouter();
-  const live = useLiveSession({ wsUrl: WS_URL });
+  const live = useLiveSession({ wsUrl: FALLBACK_WS_URL });
+  const [assessmentId, setAssessmentId] = useState<string | null>(null);
+  const [startError, setStartError] = useState<string | null>(null);
+  const [starting, setStarting] = useState(false);
+  const previousPhaseRef = useRef(live.phase);
+
+  const handleStart = useCallback(async () => {
+    if (starting) return;
+    setStarting(true);
+    setStartError(null);
+    try {
+      const res = await fetch("/api/voice/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error ?? `start failed (${res.status})`);
+      }
+      const data = (await res.json()) as StartResponse;
+      setAssessmentId(data.assessmentId);
+      console.log("[CLIENT] assessment started", data.assessmentId);
+      await live.start({ wsUrl: data.wsUrl });
+    } catch (e) {
+      setStartError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setStarting(false);
+    }
+  }, [live, starting]);
 
   useEffect(() => {
-    if (live.phase === "report_ready" && live.sessionId) {
+    const prev = previousPhaseRef.current;
+    previousPhaseRef.current = live.phase;
+
+    if (assessmentId) {
+      const callEnded =
+        prev === "live" || prev === "ending" || prev === "report_generating";
+      if (callEnded && (live.phase === "idle" || live.phase === "report_ready")) {
+        router.push(`/start/confirm/${assessmentId}`);
+        return;
+      }
+      if (live.phase === "report_ready") {
+        router.push(`/start/confirm/${assessmentId}`);
+        return;
+      }
+    }
+
+    if (!assessmentId && live.phase === "report_ready" && live.sessionId) {
       router.push(`/report/${live.sessionId}`);
     }
-  }, [live.phase, live.sessionId, router]);
+  }, [assessmentId, live.phase, live.sessionId, router]);
 
   const hint = PHASE_HINT[live.phase] ?? PHASE_HINT.idle;
+  const displayedError = live.error ?? startError;
 
   return (
     <>
@@ -42,7 +94,6 @@ export const HomeHero: React.FC = () => {
 
       <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1320px] items-center px-[clamp(16px,4vw,48px)] py-[clamp(24px,5vw,72px)]">
         <div className="grid w-full gap-8 lg:grid-cols-[1fr_1fr] lg:gap-14">
-          {/* LEFT: dark bordered text box */}
           <div className="relative w-full self-center border border-[#27272a] bg-black/90 p-2 shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-md">
             <div className="relative border border-[#27272a] bg-black px-[clamp(20px,3vw,40px)] py-[clamp(36px,6vw,72px)]">
               <div className="mb-6 flex items-center justify-center gap-1.5">
@@ -92,22 +143,21 @@ export const HomeHero: React.FC = () => {
                 {hint}
               </p>
 
-              {live.error && (
+              {displayedError && (
                 <p className="mt-3 text-center text-[12px] text-red-400">
-                  {live.error}
+                  {displayedError}
                 </p>
               )}
             </div>
           </div>
 
-          {/* RIGHT: phone */}
           <div className="relative flex items-center justify-center">
             <PhoneStage
               phase={live.phase}
               utterances={live.utterances}
               elapsed={live.elapsed}
               level={live.level}
-              onStart={live.start}
+              onStart={handleStart}
               onEnd={live.end}
             />
           </div>

@@ -15,10 +15,15 @@ import {
   type Session,
   type LiveServerMessage,
 } from "@google/genai";
+import { randomUUID } from "crypto";
 import { SYSTEM_INSTRUCTION } from "./system-instruction.js";
 import { TOOL_DECLARATIONS } from "./tools.js";
 import { sessionStore } from "./session-store.js";
 import { generateReport } from "./report.js";
+import { TranscriptBuffer } from "./firestore-writer.js";
+import { verifyVoiceSessionToken } from "../lib/voice-token.js";
+import { adminDb } from "../lib/firebase-admin.js";
+import { FieldValue } from "firebase-admin/firestore";
 
 const PORT = Number(process.env.LIVE_WS_PORT ?? 3043);
 const MODEL = process.env.LIVE_MODEL ?? "gemini-3.1-flash-live-preview";
@@ -120,7 +125,7 @@ function send(ws: WebSocket, msg: ServerToClient) {
   if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
 }
 
-wss.on("connection", async (ws) => {
+wss.on("connection", async (ws, req) => {
   const sessionId = nanoid(12);
   const session = sessionStore.create(sessionId);
   let liveSession: Session | null = null;
@@ -130,7 +135,62 @@ wss.on("connection", async (ws) => {
   let audioFramesToGemini = 0;
   let audioFramesFromGemini = 0;
 
-  console.log(`[SERVER] WS connected session=${sessionId}`);
+  let assessmentId: string | null = null;
+  let shareId: string | null = null;
+  let voiceSessionUuid: string | null = null;
+  let currentSessionHandle = "";
+  let transcriptBuffer: TranscriptBuffer | null = null;
+  const clientConnectedAtMs = Date.now();
+
+  const reqUrl = new URL(req.url ?? "/", `http://localhost:${PORT}`);
+  const token = reqUrl.searchParams.get("token");
+
+  if (token) {
+    try {
+      const payload = await verifyVoiceSessionToken(token);
+      assessmentId = payload.assessmentId;
+      shareId = payload.shareId;
+      voiceSessionUuid = randomUUID();
+      currentSessionHandle = voiceSessionUuid;
+      transcriptBuffer = new TranscriptBuffer(assessmentId);
+      transcriptBuffer.startAutoFlush(500);
+      console.log(
+        `[SERVER] WS connected session=${sessionId} assessment=${assessmentId} share=${shareId}`,
+      );
+      try {
+        await adminDb()
+          .collection("assessments")
+          .doc(assessmentId)
+          .update({
+            voiceSessionId: voiceSessionUuid,
+            callStartedAt: FieldValue.serverTimestamp(),
+          });
+        console.log(
+          `[FIRESTORE] assessment marked in_call assessment=${assessmentId} voiceSessionId=${voiceSessionUuid}`,
+        );
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.error(
+          `[FIRESTORE] failed to update assessment on connect assessment=${assessmentId}:`,
+          msg,
+        );
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.warn(`[SERVER] WS rejected — invalid token: ${msg}`);
+      ws.close(4401, "invalid_token");
+      return;
+    }
+  } else {
+    // Backward-compat fallback: existing prototype clients connect without
+    // a token. Accept the connection but skip Firestore writes. Remove this
+    // branch once Phase 2 is fully cut over and the Vercel client always
+    // sends a token.
+    console.warn(
+      `[SERVER] WS connected session=${sessionId} WITHOUT token — Firestore writes disabled`,
+    );
+  }
+
   send(ws, { type: "session", id: sessionId });
 
   const MIN_USER_CHARS = 120;
@@ -235,6 +295,29 @@ wss.on("connection", async (ws) => {
               );
             }
 
+            const newHandle = (
+              msg as LiveServerMessage & {
+                sessionResumptionUpdate?: { newHandle?: string };
+              }
+            ).sessionResumptionUpdate?.newHandle;
+            if (newHandle && assessmentId) {
+              currentSessionHandle = newHandle;
+              try {
+                await adminDb()
+                  .collection("assessments")
+                  .doc(assessmentId)
+                  .update({
+                    voiceSessionHandles: FieldValue.arrayUnion(newHandle),
+                  });
+              } catch (e) {
+                const errMsg = e instanceof Error ? e.message : String(e);
+                console.error(
+                  `[FIRESTORE] failed to append voiceSessionHandle assessment=${assessmentId}:`,
+                  errMsg,
+                );
+              }
+            }
+
             // Send the kickoff as soon as Gemini acknowledges setup.
             // Anything sent before setupComplete is silently dropped.
             if (msg.setupComplete && !kickoffSent && liveSession) {
@@ -286,6 +369,14 @@ wss.on("connection", async (ws) => {
                 ts: Date.now(),
               });
               send(ws, { type: "transcript", who: "user", text: inputT });
+              if (transcriptBuffer) {
+                transcriptBuffer.push({
+                  role: "user",
+                  text: inputT,
+                  sessionHandle: currentSessionHandle,
+                  isFinal: !!msg.serverContent?.turnComplete,
+                });
+              }
             }
 
             const outputT = msg.serverContent?.outputTranscription?.text;
@@ -296,6 +387,14 @@ wss.on("connection", async (ws) => {
                 ts: Date.now(),
               });
               send(ws, { type: "transcript", who: "agent", text: outputT });
+              if (transcriptBuffer) {
+                transcriptBuffer.push({
+                  role: "agent",
+                  text: outputT,
+                  sessionHandle: currentSessionHandle,
+                  isFinal: !!msg.serverContent?.turnComplete,
+                });
+              }
             }
 
             // Barge-in
@@ -432,6 +531,44 @@ wss.on("connection", async (ws) => {
       liveSession?.close();
     } catch {
       /* ignore */
+    }
+
+    if (transcriptBuffer) {
+      transcriptBuffer.stopAutoFlush();
+      try {
+        await transcriptBuffer.flush();
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.error(
+          `[FIRESTORE] final flush failed assessment=${assessmentId}:`,
+          msg,
+        );
+      }
+    }
+
+    if (assessmentId) {
+      const callDurationSec = Math.max(
+        0,
+        Math.round((Date.now() - clientConnectedAtMs) / 1000),
+      );
+      try {
+        await adminDb()
+          .collection("assessments")
+          .doc(assessmentId)
+          .update({
+            callEndedAt: FieldValue.serverTimestamp(),
+            callDurationSec,
+          });
+        console.log(
+          `[FIRESTORE] assessment call ended assessment=${assessmentId} durationSec=${callDurationSec}`,
+        );
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.error(
+          `[FIRESTORE] failed to update assessment on close assessment=${assessmentId}:`,
+          msg,
+        );
+      }
     }
   });
 });

@@ -222,7 +222,7 @@ const LiveState: React.FC<{
                     color: isAgent ? "rgba(255,255,255,0.45)" : "rgba(10,10,10,0.7)",
                   }}
                 >
-                  {isAgent ? "CLARIO" : "YOU"}
+                  {isAgent ? "ANNIE" : "YOU"}
                 </p>
                 {line.text}
               </div>
