@@ -6,6 +6,7 @@ import { useLiveSession } from "./use-live-session";
 import { PhoneStage } from "./PhoneStage";
 import { WebGLShader } from "./ui/web-gl-shader";
 import { RotatingLanguages } from "./RotatingLanguages";
+import { StartForm, type StartFormValues } from "./StartForm";
 
 const FALLBACK_WS_URL =
   process.env.NEXT_PUBLIC_WS_URL ??
@@ -14,14 +15,14 @@ const FALLBACK_WS_URL =
     : "ws://localhost:3043");
 
 const PHASE_HINT: Record<string, string> = {
-  idle: "Tap the green phone. Speak any language. Receive a written report.",
+  idle: "Fill in the form on the left. Annie greets you by name when she connects.",
   requesting_mic: "Allow microphone access in the browser to continue.",
   connecting: "Opening the line…",
   live: "Speak naturally. End the call from the phone whenever you're done.",
   ending: "Wrapping up the interview.",
   report_generating: "Writing your report — about 15–30 seconds.",
   report_ready: "Opening your report…",
-  error: "Something went wrong. Tap the green phone again to retry.",
+  error: "Something went wrong. Submit the form again to retry.",
 };
 
 type StartResponse = {
@@ -39,7 +40,7 @@ export const HomeHero: React.FC = () => {
   const [starting, setStarting] = useState(false);
   const previousPhaseRef = useRef(live.phase);
 
-  const handleStart = useCallback(async () => {
+  const handleStart = useCallback(async (values: StartFormValues) => {
     if (starting) return;
     setStarting(true);
     setStartError(null);
@@ -47,6 +48,7 @@ export const HomeHero: React.FC = () => {
       const res = await fetch("/api/voice/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -71,11 +73,11 @@ export const HomeHero: React.FC = () => {
       const callEnded =
         prev === "live" || prev === "ending" || prev === "report_generating";
       if (callEnded && (live.phase === "idle" || live.phase === "report_ready")) {
-        router.push(`/start/confirm/${assessmentId}`);
+        router.push(`/start/thanks?id=${assessmentId}`);
         return;
       }
       if (live.phase === "report_ready") {
-        router.push(`/start/confirm/${assessmentId}`);
+        router.push(`/start/thanks?id=${assessmentId}`);
         return;
       }
     }
@@ -87,6 +89,7 @@ export const HomeHero: React.FC = () => {
 
   const hint = PHASE_HINT[live.phase] ?? PHASE_HINT.idle;
   const displayedError = live.error ?? startError;
+  const callActive = live.phase !== "idle" && live.phase !== "error";
 
   return (
     <>
@@ -129,8 +132,9 @@ export const HomeHero: React.FC = () => {
 
               <p className="mx-auto mt-8 max-w-[420px] text-center text-[14px] leading-[1.6] text-white/55">
                 Hours is a voice-driven AI opportunity assessment for business
-                owners. Spend twelve minutes with Annie; receive a written
-                report of the tools and next steps that fit your work.
+                owners. Annie spends 20–40 minutes with you, then our team
+                builds a written report of the tools and next steps that fit
+                your work.
               </p>
 
               <p className="mx-auto mt-5 max-w-[420px] text-center text-[14px] leading-[1.6] text-white/75">
@@ -139,14 +143,25 @@ export const HomeHero: React.FC = () => {
                 .
               </p>
 
-              <p className="mt-10 text-center text-[12px] uppercase tracking-[0.18em] text-white/40">
-                {hint}
-              </p>
-
-              {displayedError && (
-                <p className="mt-3 text-center text-[12px] text-red-400">
-                  {displayedError}
-                </p>
+              {!callActive ? (
+                <div className="mx-auto mt-2 max-w-[420px]">
+                  <StartForm
+                    onSubmit={handleStart}
+                    submitting={starting}
+                    outerError={displayedError}
+                  />
+                </div>
+              ) : (
+                <>
+                  <p className="mt-10 text-center text-[12px] uppercase tracking-[0.18em] text-white/40">
+                    {hint}
+                  </p>
+                  {displayedError && (
+                    <p className="mt-3 text-center text-[12px] text-red-400">
+                      {displayedError}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -157,7 +172,9 @@ export const HomeHero: React.FC = () => {
               utterances={live.utterances}
               elapsed={live.elapsed}
               level={live.level}
-              onStart={handleStart}
+              onStart={() => {
+                /* phone tap is now disabled while idle — form drives the start */
+              }}
               onEnd={live.end}
             />
           </div>

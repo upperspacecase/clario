@@ -1,9 +1,9 @@
 # Fly.io config for the voice-agent WS/HTTP server.
-# Runs on an isolated machine, terminates TLS at the edge, forwards to :8080.
-# Auto-stops when idle to stay within the free allowance.
+# Runs in syd (Sydney) for low-latency audio to AU users; min 1 machine to
+# avoid cold starts during a call.
 
 app = "voice-agent-ws"
-primary_region = "sjc"
+primary_region = "syd"
 
 [build]
   dockerfile = "Dockerfile.server"
@@ -13,20 +13,21 @@ primary_region = "sjc"
   LIVE_MODEL = "gemini-3.1-flash-live-preview"
   REPORT_MODEL = "gemini-3-flash-preview"
   LIVE_VOICE = "Aoede"
+  LIVE_AGENT_NAME = "Annie"
 
 [http_service]
   internal_port = 8080
   force_https = true
   auto_stop_machines = "suspend"
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
   processes = ["app"]
 
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "512mb"
+  size = "shared-cpu-2x"
+  memory = "1024mb"
   cpu_kind = "shared"
-  cpus = 1
+  cpus = 2
 
 [[services.tcp_checks]]
   interval = "15s"

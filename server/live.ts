@@ -16,7 +16,7 @@ import {
   type LiveServerMessage,
 } from "@google/genai";
 import { randomUUID } from "crypto";
-import { SYSTEM_INSTRUCTION } from "./system-instruction.js";
+import { buildSystemInstruction } from "./system-instruction.js";
 import { TOOL_DECLARATIONS } from "./tools.js";
 import { sessionStore } from "./session-store.js";
 import { generateReport } from "./report.js";
@@ -28,6 +28,7 @@ import { FieldValue } from "firebase-admin/firestore";
 const PORT = Number(process.env.LIVE_WS_PORT ?? 3043);
 const MODEL = process.env.LIVE_MODEL ?? "gemini-3.1-flash-live-preview";
 const VOICE = process.env.LIVE_VOICE ?? "Aoede";
+const AGENT_NAME = process.env.LIVE_AGENT_NAME ?? "Annie";
 
 if (!process.env.GEMINI_API_KEY) {
   console.error("[SERVER] GEMINI_API_KEY missing — aborting");
@@ -140,6 +141,8 @@ wss.on("connection", async (ws, req) => {
   let voiceSessionUuid: string | null = null;
   let currentSessionHandle = "";
   let transcriptBuffer: TranscriptBuffer | null = null;
+  let clientFirstName = "there";
+  let clientEmail = "";
   const clientConnectedAtMs = Date.now();
 
   const reqUrl = new URL(req.url ?? "/", `http://localhost:${PORT}`);
@@ -158,13 +161,20 @@ wss.on("connection", async (ws, req) => {
         `[SERVER] WS connected session=${sessionId} assessment=${assessmentId} share=${shareId}`,
       );
       try {
-        await adminDb()
+        const docRef = adminDb()
           .collection("assessments")
-          .doc(assessmentId)
-          .update({
-            voiceSessionId: voiceSessionUuid,
-            callStartedAt: FieldValue.serverTimestamp(),
-          });
+          .doc(assessmentId);
+        const snap = await docRef.get();
+        if (snap.exists) {
+          const data = snap.data() as Record<string, string | null | undefined>;
+          const fullName = (data.clientName ?? "").trim();
+          if (fullName) clientFirstName = fullName.split(/\s+/)[0];
+          clientEmail = (data.clientEmail ?? "").trim();
+        }
+        await docRef.update({
+          voiceSessionId: voiceSessionUuid,
+          callStartedAt: FieldValue.serverTimestamp(),
+        });
         console.log(
           `[FIRESTORE] assessment marked in_call assessment=${assessmentId} voiceSessionId=${voiceSessionUuid}`,
         );
@@ -251,11 +261,16 @@ wss.on("connection", async (ws, req) => {
       console.log(
         `[GEMINI-LIVE] open session=${sessionId} model=${MODEL} voice=${VOICE}`
       );
+      const systemInstruction = buildSystemInstruction({
+        agentName: AGENT_NAME,
+        firstName: clientFirstName,
+        email: clientEmail,
+      });
       liveSession = await ai.live.connect({
         model: MODEL,
         config: {
           responseModalities: [Modality.AUDIO],
-          systemInstruction: SYSTEM_INSTRUCTION,
+          systemInstruction,
           speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICE } },
           },
@@ -420,8 +435,6 @@ wss.on("connection", async (ws, req) => {
                     name: fc.name,
                     response: { result: "ok" },
                   });
-                  // Finalize after the current model turn finishes playing
-                  // out to the client. The client will also ACK end.
                   queueMicrotask(() => finalizeReport(reason));
                 } else {
                   responses.push({
