@@ -63,7 +63,7 @@ export const HomeHero: React.FC = () => {
                   letterSpacing: "-0.03em",
                 }}
               >
-                Five minutes on the phone. Tools that fit your business.
+                Twelve minutes on the phone. The tools that give you back your time.
               </h1>
 
               <p
@@ -73,14 +73,13 @@ export const HomeHero: React.FC = () => {
                   lineHeight: 1.4,
                 }}
               >
-                Cinco minutos al teléfono. Herramientas que se adaptan a tu
-                negocio.
+                A short call. A tailored report. Hours back every week.
               </p>
 
               <p className="mx-auto mt-8 max-w-[420px] text-center text-[14px] leading-[1.6] text-white/55">
-                Clario is a voice agent for owners of small and mid-sized
-                businesses. Answer a few questions in your own language;
-                receive a written report of practical tools and next steps.
+                Hours is a voice-driven AI opportunity assessment for business
+                owners. Spend twelve minutes with Annie; receive a written
+                report of the tools and next steps that fit your work.
               </p>
 
               <p className="mx-auto mt-5 max-w-[420px] text-center text-[14px] leading-[1.6] text-white/75">

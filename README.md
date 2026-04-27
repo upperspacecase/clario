@@ -1,4 +1,4 @@
-# Clario — voice discovery prototype
+# Hours — voice-driven AI opportunity assessment
 
 Voice agent for owners of small and mid-sized businesses. You call, describe
 how your business runs, and get a written report of practical tools and

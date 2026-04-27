@@ -86,7 +86,7 @@ export const Demo: React.FC = () => {
             {lines.map((line, i) => (
               <p
                 key={i}
-                className="clario-line text-[15px] leading-[1.55]"
+                className="hours-line text-[15px] leading-[1.55]"
                 style={{
                   animationDelay: `${line.delay}s`,
                   color: "var(--ink)",
@@ -128,7 +128,7 @@ export const Demo: React.FC = () => {
         {cards.map((card, i) => (
           <div
             key={i}
-            className="clario-card rounded-xl bg-[var(--bg-card)] p-5 sm:p-6"
+            className="hours-card rounded-xl bg-[var(--bg-card)] p-5 sm:p-6"
             style={{
               animationDelay: `${card.delay}s`,
               border: "1px solid var(--olive-soft)",

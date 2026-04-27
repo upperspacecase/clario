@@ -1,5 +1,5 @@
 const links = [
-  { href: "#about", label: "About Clario" },
+  { href: "#about", label: "About Hours" },
   { href: "#mission", label: "Our Mission" },
   { href: "#contact", label: "Contact" },
   { href: "#privacy", label: "Privacy Policy" },

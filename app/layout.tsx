@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Clario — Five minutes on the phone. Three AI tools that fit your restaurant.",
+  title: "Hours — A 12-minute call that finds where AI gives you your time back.",
   description:
-    "Clario is a voice agent for restaurant owners in non-English-speaking countries. Call us in your language; we send a plain-language report of AI tools that fit your restaurant.",
+    "Hours is a voice-driven AI opportunity assessment. Spend 12 minutes on the phone with Annie. Receive a personalized report of tools and next steps that save you hours every week.",
   openGraph: {
-    title: "Clario — AI tools for your restaurant, in your language.",
+    title: "Hours — Find where AI gives you your time back.",
     description:
-      "Five minutes on the phone. Three AI tools that fit your restaurant. In Spanish, Portuguese, Italian, Vietnamese, and more.",
+      "A 12-minute call. A tailored report. The tools and next steps that save you hours every week.",
     type: "website",
   },
 };

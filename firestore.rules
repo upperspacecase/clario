@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'tay@life-time.co'
+        && request.auth.token.email_verified == true;
+    }
+
+    // Assessments — admin reads only, all writes go through Admin SDK
+    match /assessments/{assessmentId} {
+      allow read: if isAdmin();
+      allow write: if false;
+
+      match /transcript/{turnId} {
+        allow read: if isAdmin();
+        allow write: if false;
+      }
+
+      match /pipelineRuns/{runId} {
+        allow read: if isAdmin();
+        allow write: if false;
+      }
+    }
+
+    // Public reports — readable by anyone with the unguessable shareId
+    match /publicReports/{shareId} {
+      allow read: if true;
+      allow write: if false;
+
+      match /views/{viewId} {
+        allow read: if isAdmin();
+        allow create: if request.resource.data.keys().hasAll(
+          ['timestamp', 'userAgent', 'ipHash']
+        );
+        allow update, delete: if false;
+      }
+    }
+
+    // Bookings — admin reads only; writes through Admin SDK
+    match /bookings/{bookingId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Prompts, allowlist, users — admin only
+    match /prompts/{promptId} {
+      allow read, write: if isAdmin();
+    }
+    match /allowlistTools/{toolId} {
+      allow read, write: if isAdmin();
+    }
+    match /users/{uid} {
+      allow read, write: if isAdmin();
+    }
+
+    // Config — public read (price etc.); admin write
+    match /config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

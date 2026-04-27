@@ -35,15 +35,15 @@ body.page-light {
 
 /* Transcript and cards render statically; the waveform is the only loop.
    On first paint, a subtle rise reveals them one after another. */
-.clario-line,
-.clario-card {
+.hours-line,
+.hours-card {
   animation: clario-rise 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
   will-change: transform, opacity;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .clario-line,
-  .clario-card {
+  .hours-line,
+  .hours-card {
     animation: none;
   }
 }
@@ -61,11 +61,11 @@ body.page-light {
   70%  { box-shadow: 0 10px 24px rgba(43,174,102,0.45), 0 0 0 18px rgba(43,174,102,0); }
   100% { box-shadow: 0 10px 24px rgba(43,174,102,0.45), 0 0 0 0 rgba(43,174,102,0); }
 }
-.clario-call-btn {
+.hours-call-btn {
   animation: clario-call-pulse 2.2s ease-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .clario-call-btn { animation: none; }
+  .hours-call-btn { animation: none; }
 }
 
 /* Responsive iPhone stage: scale and reserve the scaled height so the

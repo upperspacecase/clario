@@ -69,7 +69,7 @@ export const ReportView: React.FC<{ sessionId: string }> = ({ sessionId }) => {
     const url = URL.createObjectURL(blob);
     const a = anchorRef.current ?? document.createElement("a");
     a.href = url;
-    a.download = `clario-report-${sessionId}.html`;
+    a.download = `hours-report-${sessionId}.html`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }, [data, sessionId]);

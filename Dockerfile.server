@@ -1,4 +1,4 @@
-# Dockerfile for the Clario WS/HTTP server on Fly.
+# Dockerfile for the Hours WS/HTTP server on Fly.
 # Only runs server/live.ts (and its imports). Next.js app is deployed
 # separately to Vercel.
 
@@ -13,8 +13,9 @@ RUN npm ci --omit=dev --no-audit --no-fund
 # restricted to just tsx (smaller image than full devDependencies).
 RUN npm install tsx@^4.21.0 --no-save --no-audit --no-fund
 
-# Copy only what the server needs.
+# Copy what the server needs (server code + shared lib).
 COPY server ./server
+COPY lib ./lib
 COPY tsconfig.json ./
 
 ENV NODE_ENV=production

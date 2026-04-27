@@ -1,4 +1,4 @@
-# Testing — Clario voice prototype
+# Testing — Hours voice prototype
 
 Five manual tests. All run locally against `npm run dev` + `npm run server`.
 Each includes what to check and how to tell whether it passed.
@@ -24,7 +24,7 @@ Each includes what to check and how to tell whether it passed.
 - Agent audio was audible and natural.
 - After End, the phone status changed to "Writing report…" and the page auto-redirected to `/report/<sessionId>`.
 - `/report/<sessionId>` rendered a structured report in English with three problems, 30-day plan, and watch-items.
-- Clicking **Download** saved a standalone `clario-report-*.html` file.
+- Clicking **Download** saved a standalone `hours-report-*.html` file.
 
 ## Test (b) — Portuguese interview end-to-end
 
