@@ -55,15 +55,14 @@ export const RoiCalculator: React.FC = () => {
   const [hoursLost, setHoursLost] = useState(6);
   const [teamSize, setTeamSize] = useState(12);
   const [hourlyCost, setHourlyCost] = useState(45);
-  const [targetPct, setTargetPct] = useState(50);
 
   const { reclaimable, weeklyCost, annual, roi } = useMemo(() => {
-    const reclaimable = hoursLost * teamSize * (targetPct / 100);
+    const reclaimable = hoursLost * teamSize;
     const weeklyCost = reclaimable * hourlyCost;
     const annual = weeklyCost * 52;
     const roi = annual / AUDIT_COST;
     return { reclaimable, weeklyCost, annual, roi };
-  }, [hoursLost, teamSize, hourlyCost, targetPct]);
+  }, [hoursLost, teamSize, hourlyCost]);
 
   return (
     <section className="relative border-t border-white/5 bg-[#121212] py-[64px] text-surface-container md:py-[120px]">
@@ -106,15 +105,6 @@ export const RoiCalculator: React.FC = () => {
               max={150}
               display={`$${hourlyCost}`}
               onChange={setHourlyCost}
-            />
-            <Slider
-              label="Target % simplified"
-              value={targetPct}
-              min={0}
-              max={100}
-              step={5}
-              display={`${targetPct}%`}
-              onChange={setTargetPct}
             />
 
             <div className="pt-6">
