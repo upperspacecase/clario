@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import * as RadixSlider from "@radix-ui/react-slider";
 
-const AUDIT_COST = 6000;
+const SERVICE_COST = 1000;
+const WEEKS_PER_MONTH = 52 / 12;
 
 const fmtUsd = (n: number) =>
   new Intl.NumberFormat("en-US", {
@@ -56,12 +57,10 @@ export const RoiCalculator: React.FC = () => {
   const [teamSize, setTeamSize] = useState(12);
   const [hourlyCost, setHourlyCost] = useState(45);
 
-  const { reclaimable, weeklyCost, annual, roi } = useMemo(() => {
-    const reclaimable = hoursLost * teamSize;
-    const weeklyCost = reclaimable * hourlyCost;
-    const annual = weeklyCost * 52;
-    const roi = annual / AUDIT_COST;
-    return { reclaimable, weeklyCost, annual, roi };
+  const { hoursPerMonth, costPerMonth } = useMemo(() => {
+    const hoursPerMonth = hoursLost * teamSize * WEEKS_PER_MONTH;
+    const costPerMonth = hoursPerMonth * hourlyCost;
+    return { hoursPerMonth, costPerMonth };
   }, [hoursLost, teamSize, hourlyCost]);
 
   return (
@@ -83,7 +82,7 @@ export const RoiCalculator: React.FC = () => {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
           <div className="space-y-10 pr-0 md:col-span-5 md:pr-8">
             <Slider
-              label="Hours lost per week (per person)"
+              label="Hours spent on repetitive tasks"
               value={hoursLost}
               min={0}
               max={20}
@@ -99,56 +98,42 @@ export const RoiCalculator: React.FC = () => {
               onChange={setTeamSize}
             />
             <Slider
-              label="Average hourly cost"
+              label="Average hourly rate"
               value={hourlyCost}
               min={20}
               max={150}
               display={`$${hourlyCost}`}
               onChange={setHourlyCost}
             />
-
-            <div className="pt-6">
-              <a
-                href="#phone"
-                className="block w-full bg-primary-container px-6 py-3 text-center font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-on-primary-fixed transition-opacity hover:opacity-80"
-              >
-                Calculate Full Trajectory
-              </a>
-            </div>
           </div>
 
-          <div className="mt-12 grid grid-cols-1 gap-4 md:col-span-7 md:mt-0 sm:grid-cols-2">
+          <div className="mt-12 grid grid-cols-1 gap-4 md:col-span-7 md:mt-0">
             <div className="flex flex-col justify-center border border-white/10 bg-white/5 p-8">
               <span className="mb-2 font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-[#737373]">
-                Hours Reclaimable/Wk
+                Hours / Month
               </span>
               <span className="font-serif text-4xl text-surface-container">
-                {Math.round(reclaimable)}{" "}
+                {Math.round(hoursPerMonth)}{" "}
                 <span className="font-sans text-lg text-[#737373]">hrs</span>
               </span>
             </div>
             <div className="flex flex-col justify-center border border-white/10 bg-white/5 p-8">
               <span className="mb-2 font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-[#737373]">
-                Weekly Cost Recovered
+                Cost / Month
               </span>
               <span className="font-serif text-4xl text-surface-container">
-                {fmtUsd(weeklyCost)}
-              </span>
-            </div>
-            <div className="flex flex-col justify-center border border-white/10 bg-white/5 p-8">
-              <span className="mb-2 font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-[#737373]">
-                Annual Value Created
-              </span>
-              <span className="font-serif text-4xl text-surface-container">
-                {fmtUsd(annual)}
+                {fmtUsd(costPerMonth)}
               </span>
             </div>
             <div className="flex flex-col justify-center border border-primary-container/30 bg-secondary/10 p-8">
               <span className="mb-2 font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-secondary-fixed-dim">
-                Projected ROI
+                Our Service
               </span>
               <span className="font-serif text-4xl text-secondary-fixed">
-                {roi >= 1 ? `${Math.round(roi)}x` : `${roi.toFixed(1)}x`}
+                {fmtUsd(SERVICE_COST)}{" "}
+                <span className="font-sans text-lg text-secondary-fixed-dim">
+                  one-time
+                </span>
               </span>
             </div>
           </div>
