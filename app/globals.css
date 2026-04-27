@@ -102,11 +102,11 @@ body.page-light {
 .phone-stage {
   position: absolute;
   top: 0;
-  left: 50%;
+  left: 0;
   width: 417px;
   height: 876px;
-  transform-origin: top center;
+  transform-origin: top left;
   /* Scale = container's inline width / natural width. Capped at 1 via min(). */
-  transform: translateX(-50%) scale(min(1, calc(100cqw / 417)));
+  transform: scale(min(1, calc(100cqw / 417)));
 }
 
