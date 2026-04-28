@@ -16,7 +16,7 @@ export async function GET(request: Request) {
 
   const db = adminDb();
   const [doneSnap, sentSnap] = await Promise.all([
-    db.collection("assessments").where("status", "==", "complete").count().get(),
+    db.collection("assessments").where("completedAt", "!=", null).count().get(),
     db.collection("assessments").where("emailedAt", "!=", null).count().get(),
   ]);
 
