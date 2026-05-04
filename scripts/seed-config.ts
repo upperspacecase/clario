@@ -17,7 +17,7 @@ async function main() {
   const defaults = {
     assessmentPriceUsd: 1000,
     freePilotMode: true,
-    maxCallDurationSec: 720,
+    maxCallDurationSec: 2400,
     bookingUrlBase: "https://gethours.org/r",
     notificationEmail: "tay@life-time.co",
     activePromptId: null as string | null,
