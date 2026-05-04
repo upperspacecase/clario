@@ -125,7 +125,7 @@ export const PricingSection: React.FC = () => {
               </ul>
 
               <a
-                href={`/?tier=${tier.id}#phone`}
+                href={`/start?tier=${tier.id}`}
                 className={
                   tier.popular
                     ? "mb-4 inline-block bg-primary-container px-6 py-3.5 text-center font-[Inter] text-[12px] font-semibold uppercase tracking-[0.05em] text-on-primary-fixed transition-opacity hover:opacity-80"

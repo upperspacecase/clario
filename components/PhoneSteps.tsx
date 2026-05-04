@@ -1,34 +1,36 @@
 type Step = 1 | 2 | 3;
 
 interface Props {
-  step: Step;
+  current: Step;
   done?: boolean;
 }
 
 const STEPS: { n: Step; label: string }[] = [
   { n: 1, label: "Call" },
-  { n: 2, label: "Details" },
-  { n: 3, label: "Payment" },
+  { n: 2, label: "Payment" },
+  { n: 3, label: "Results" },
 ];
 
-export const ProgressBar: React.FC<Props> = ({ step, done = false }) => {
+export const PhoneSteps: React.FC<Props> = ({ current, done = false }) => {
   return (
     <div
-      className="mb-8 flex items-center gap-2"
-      aria-label={`Step ${step} of 3`}
+      className="flex items-center gap-1 px-4 pb-2 pt-1"
       role="group"
+      aria-label={`Step ${current} of 3`}
     >
       {STEPS.map((s, i) => {
         const state =
-          done || s.n < step
+          done || s.n < current
             ? "complete"
-            : s.n === step
+            : s.n === current
               ? "current"
               : "pending";
         return (
-          <div key={s.n} className="flex flex-1 items-center gap-2">
+          <div key={s.n} className="flex flex-1 items-center gap-1">
             <Pill state={state} number={s.n} label={s.label} />
-            {i < STEPS.length - 1 && <Connector active={s.n < step || done} />}
+            {i < STEPS.length - 1 && (
+              <Connector active={s.n < current || done} />
+            )}
           </div>
         );
       })}
@@ -55,17 +57,17 @@ function Pill({
     state === "current"
       ? "text-white"
       : state === "complete"
-        ? "text-white/80"
-        : "text-white/35";
+        ? "text-white/70"
+        : "text-white/30";
   return (
-    <div className="flex items-center gap-2 whitespace-nowrap">
+    <div className="flex items-center gap-1 whitespace-nowrap">
       <span
-        className={`flex h-6 w-6 items-center justify-center rounded-full border text-[11px] font-bold ${ring}`}
+        className={`flex h-4 w-4 items-center justify-center rounded-full border text-[8px] font-bold ${ring}`}
       >
         {state === "complete" ? "✓" : number}
       </span>
       <span
-        className={`text-[11px] font-bold uppercase tracking-[0.16em] ${labelColor}`}
+        className={`text-[9px] font-bold uppercase tracking-[0.14em] ${labelColor}`}
       >
         {label}
       </span>

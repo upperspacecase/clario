@@ -13,6 +13,7 @@ import {
 import { WaveformPlayer } from "./WaveformPlayer";
 import type { CallPhase, Utterance } from "./use-live-session";
 import { PROMISES } from "@/lib/promises";
+import { PhoneSteps } from "./PhoneSteps";
 
 export type CallScreenProps = {
   phase: CallPhase;
@@ -93,6 +94,8 @@ export const CallScreen: React.FC<CallScreenProps> = ({
           <BatteryMedium size={18} strokeWidth={2.2} />
         </div>
       </div>
+
+      <PhoneSteps current={1} />
 
       {/* Header */}
       <div className="flex flex-col items-center gap-2 px-6 pt-4">

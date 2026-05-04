@@ -12,7 +12,7 @@ export const FinalCta: React.FC = () => {
         </p>
 
         <a
-          href="/#phone"
+          href="/start"
           className="mb-6 inline-block bg-primary-container px-10 py-4 font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-on-primary-fixed transition-opacity hover:opacity-80"
         >
           Get My Hours Assessment
