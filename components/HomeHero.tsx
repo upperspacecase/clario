@@ -1,7 +1,18 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { PhoneStage } from "./PhoneStage";
+import { CallScreen } from "./CallScreen";
 import { PROMISES } from "@/lib/promises";
 
 export const HomeHero: React.FC = () => {
+  const router = useRouter();
+
+  const goToStart = () => {
+    router.push("/start");
+  };
+
   return (
     <section className="relative overflow-hidden bg-[#1a1a1a] bg-grain py-[96px] text-surface-container md:py-[160px]">
       <div
@@ -45,40 +56,16 @@ export const HomeHero: React.FC = () => {
         </div>
 
         <div className="relative flex justify-center md:col-span-5">
-          <div className="relative mx-auto h-[600px] w-[300px] overflow-hidden rounded-[3rem] border-[8px] border-[#2a2a2a] bg-[#121212] shadow-2xl">
-            <div className="absolute left-1/2 top-0 z-20 h-7 w-32 -translate-x-1/2 rounded-b-2xl bg-[#2a2a2a]" />
-            <div className="flex h-full w-full flex-col items-center justify-between bg-[#121212] px-6 py-20">
-              <div className="mt-12 text-center">
-                <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border border-primary-container/30 bg-primary-container/20">
-                  <span className="material-symbols-outlined text-5xl text-primary-container">
-                    person
-                  </span>
-                </div>
-                <h2 className="mb-2 font-serif text-2xl text-white">
-                  Operational Assessment
-                </h2>
-                <p className="font-[Inter] text-sm uppercase tracking-widest text-[#a3a3a3]">
-                  Incoming Audio Call
-                </p>
-              </div>
-              <div className="mb-10 flex w-full items-center justify-around">
-                <Link
-                  href="/start"
-                  aria-label="Answer the call"
-                  className="mx-auto flex flex-col items-center gap-3"
-                >
-                  <span className="hours-call-btn flex h-20 w-20 items-center justify-center rounded-full bg-[#34c759] transition-transform hover:scale-105">
-                    <span className="material-symbols-outlined text-4xl text-white">
-                      call
-                    </span>
-                  </span>
-                  <span className="font-[Inter] text-[10px] font-semibold uppercase tracking-widest text-[#a3a3a3]">
-                    Answer
-                  </span>
-                </Link>
-              </div>
-            </div>
-          </div>
+          <PhoneStage>
+            <CallScreen
+              phase="idle"
+              utterances={[]}
+              elapsed={0}
+              level={0}
+              onStart={goToStart}
+              onEnd={() => {}}
+            />
+          </PhoneStage>
         </div>
       </div>
     </section>

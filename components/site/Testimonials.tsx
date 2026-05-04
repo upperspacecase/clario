@@ -1,15 +1,20 @@
+import Image from "next/image";
+
 const quotes = [
   {
     body: "We finally saw where time was disappearing every week — and fixed it faster than expected.",
     role: "Operations lead, marketing studio",
+    image: "/testimonial images/30879d31-2580-453f-92dc-a03c7785c050.png",
   },
   {
     body: "The report was practical, clear, and focused on the work actually slowing us down.",
     role: "Founder, professional services",
+    image: "/testimonial images/ae81c91f-e34b-46da-b128-45d0a715cb0c.png",
   },
   {
     body: "Instead of testing random AI tools, we got a shortlist that made sense for our team.",
     role: "Director, design agency",
+    image: "/testimonial images/b935c7a0-cc91-40c1-9f97-4b7f51146d95.png",
   },
 ];
 
@@ -29,12 +34,15 @@ export const Testimonials: React.FC = () => {
               key={i}
               className="flex h-full flex-col border border-white/10 bg-white/[0.02] p-8"
             >
-              <span
-                aria-hidden
-                className="mb-4 font-serif text-5xl leading-none text-primary-container/40"
-              >
-                &ldquo;
-              </span>
+              <div className="mb-6 h-16 w-16 overflow-hidden rounded-full border border-primary-container/30">
+                <Image
+                  src={q.image}
+                  alt=""
+                  width={64}
+                  height={64}
+                  className="h-full w-full object-cover"
+                />
+              </div>
               <blockquote className="mb-6 font-serif text-xl italic leading-relaxed text-white">
                 {q.body}
               </blockquote>

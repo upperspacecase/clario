@@ -34,7 +34,7 @@ const config: Config = {
         "on-surface": "#1c1b1b",
         "on-surface-variant": "#4d463a",
         "primary": "#745a27",
-        "primary-container": "#c9a96e",
+        "primary-container": "#9CB380",
         "primary-fixed": "#ffdea4",
         "primary-fixed-dim": "#e4c285",
         "on-primary": "#ffffff",
