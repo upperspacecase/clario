@@ -12,4 +12,10 @@ export const PROMISES = {
   followUpSentence:
     "Once your report is ready, you can book a free 30-minute walkthrough where we go through it together and answer your questions.",
   priceLabel: "$1,000 one-time",
+  guaranteeLabel: "10× ROI guarantee",
+  guaranteeSentence:
+    "If your report's dollar value of recovered time doesn't exceed $10,000/year, full refund — and you keep the report.",
+  slaGuaranteeLabel: "24h or it's free",
+  slaGuaranteeSentence:
+    "Your report lands within 24 hours of your call ending — or the assessment is free.",
 } as const;

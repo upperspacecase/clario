@@ -1,11 +1,13 @@
+import { PROMISES } from "@/lib/promises";
+
 const faqs = [
   {
-    q: "What happens during the 60-minute assessment?",
-    a: "We use a proprietary rapid-diagnosis framework to review your client journey, internal communication, and tool stack. No generic advice; strictly actionable identification of leaks.",
+    q: `What happens during the ${PROMISES.callDurationLabel}?`,
+    a: "A focused conversation with Sam covering your client journey, internal communication, and tool stack. You leave with a verified written report, a 4-day quick-win install playbook, an exec one-pager you can forward to leadership, and a Day-30 Pulse-Check from Sam to make sure the fixes landed.",
   },
   {
     q: "Will you implement the systems for us?",
-    a: "We are advisory-only. We provide the blueprint, the logic, and the SOP templates. This keeps our costs low and ensures your team actually understands the systems they use.",
+    a: "Diagnosis is advisory — we provide the blueprint, the logic, and the SOP templates so your team actually understands the systems they use. Sprint is done-with-you — Tay personally implements your top quick-win in 7 days.",
   },
   {
     q: "What tools do you specialize in?",
@@ -14,6 +16,14 @@ const faqs = [
   {
     q: "How quickly will I see a return?",
     a: "The assessment identifies 'Quick Wins' — fixes that take under 30 minutes to implement but save 2+ hours a week immediately.",
+  },
+  {
+    q: "What's the 10× ROI guarantee?",
+    a: PROMISES.guaranteeSentence,
+  },
+  {
+    q: "What's the difference between Pulse, Diagnosis, and Sprint?",
+    a: "Pulse if you want a taste — 5 minutes with Sam and a one-page summary in your inbox. Diagnosis if you want a verified plan you can execute yourself. Sprint if you want it done — Tay personally implements your top quick-win in 7 days.",
   },
 ];
 

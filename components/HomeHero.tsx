@@ -30,10 +30,10 @@ export const HomeHero: React.FC = () => {
           </h1>
 
           <p className="mb-7 max-w-xl font-[Inter] text-base leading-[1.6] text-[#a3a3a3] md:mb-8 md:text-lg">
-            Manual admin, missed follow-up, duplicate work, and disconnected
-            tools quietly drain hours from you and your team every day. We help
-            you find where time is being lost, which workflows are worth
-            improving, what tools fit best, and what to do next.
+            Your team is losing 8–12 hours a week to manual admin, missed
+            follow-up, duplicate work, and disconnected tools. We help you find
+            exactly where, what to fix first, and the dollar value of getting
+            it back.
           </p>
 
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:gap-4">
