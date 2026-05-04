@@ -2,7 +2,7 @@
 
 Version 0.1 · Author: Tay · For: dev team
 
-A voice-agent-driven AI opportunity assessment product. Prospects visit gethours.org, have a 12-minute conversation with an AI agent (Iris), and receive a personalized report at a private share link identifying tools that will save them time, plus upsell opportunities for deeper engagements.
+A voice-agent-driven AI opportunity assessment product. Prospects visit gethours.org, have a 12-minute conversation with an AI agent (Sam), and receive a personalized report at a private share link identifying tools that will save them time, plus upsell opportunities for deeper engagements.
 
 ## 1. Product overview
 
@@ -10,7 +10,7 @@ The user journey:
 
 1. Prospect lands on gethours.org and clicks "Start your assessment"
 2. Quick form captures name, email, business name, industry
-3. Browser opens a voice session with Iris (Gemini Flash Live)
+3. Browser opens a voice session with Sam (Gemini Flash Live)
 4. ~12-minute conversation surfaces pain points and current workflows
 5. Transcript is streamed live to Firestore
 6. After the call, Tay's local skill pipeline processes the transcript into a structured report
@@ -42,14 +42,14 @@ All on `gethours.org`:
 | Path | Purpose | Auth |
 |---|---|---|
 | `/` | Marketing landing page | Public |
-| `/start` | Pre-call form + Iris voice widget | Public |
+| `/start` | Pre-call form + Sam voice widget | Public |
 | `/r/{shareId}` | Client's report (private via unguessable shareId) | Public, shareId-gated |
 | `/sample` | Pre-rendered demo report | Public |
 | `/admin` | Tay's operations dashboard | Auth-gated (single email) |
 | `/admin/queue` | Incoming + processing + completed assessments | Auth-gated |
 | `/admin/live/{id}` | Real-time transcript view of in-progress calls | Auth-gated |
 | `/admin/r/{id}` | Internal view of any assessment with edit + re-run controls | Auth-gated |
-| `/admin/prompts` | Iris system prompt management (versioned) | Auth-gated |
+| `/admin/prompts` | Sam system prompt management (versioned) | Auth-gated |
 | `/admin/allowlist` | Curated tool database | Auth-gated |
 | `/admin/analytics` | Cross-assessment insights | Auth-gated |
 | `/api/voice/start` | Initialize voice session (creates assessment doc) | Public, rate-limited |
@@ -112,7 +112,7 @@ All on `gethours.org`:
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-## 5. The voice agent (Iris)
+## 5. The voice agent (Sam)
 
 ### 5.1 Model & session
 
@@ -120,13 +120,13 @@ All on `gethours.org`:
 - **Modality**: audio in/out
 - **Transcription**: native, both directions enabled (`input_audio_transcription`, `output_audio_transcription`)
 - **Voice**: select one of the 30 HD voices; default to a warm, mid-pitched feminine voice (test with users)
-- **Session length**: Live API caps audio sessions at 15 min and underlying connections at ~10 min. Strategy: target a 12-minute conversation. Implement session resumption (handle-based) for safety, but design Iris's prompt to wrap before the limit is reached.
+- **Session length**: Live API caps audio sessions at 15 min and underlying connections at ~10 min. Strategy: target a 12-minute conversation. Implement session resumption (handle-based) for safety, but design Sam's prompt to wrap before the limit is reached.
 
 ### 5.2 Prompt principles
 
 The system prompt is product IP — versioned in Firestore (`prompts/` collection), A/B testable across calls, editable from `/admin/prompts`. Starter structure:
 
-- **Identity** — "You are Iris, an AI assistant for GetHours. You help business owners identify where AI can give them their time back."
+- **Identity** — "You are Sam, an AI assistant for GetHours. You help business owners identify where AI can give them their time back."
 - **Tone** — warm, curious, not salesy. Comfortable with silence. Asks one question at a time. Never recommends tools or solutions during the call (that's the report's job).
 - **Opening (30 sec)** — greet by name, frame the call ("I'll spend about 10 minutes learning about your day-to-day so we can spot the best AI opportunities for you. Sound good?"), confirm consent.
 - **Business context (2 min)** — industry, team size, role, current SaaS stack, decision-making setup.
@@ -142,7 +142,7 @@ The system prompt is product IP — versioned in Firestore (`prompts/` collectio
 
 ### 5.4 Function calling (deferred to v2)
 
-Flash Live supports function calling. Tempting to have Iris call `log_pain_point()` live during the conversation for cleaner structured data. Defer this to v2. v1 captures raw transcript only and extracts in the skills layer — keeps the voice and intelligence layers cleanly separated for debugging.
+Flash Live supports function calling. Tempting to have Sam call `log_pain_point()` live during the conversation for cleaner structured data. Defer this to v2. v1 captures raw transcript only and extracts in the skills layer — keeps the voice and intelligence layers cleanly separated for debugging.
 
 ## 6. Firestore data model
 
@@ -156,7 +156,7 @@ Flash Live supports function calling. Tempting to have Iris call `log_pain_point
 /publicReports/{shareId}                     — denormalized public-safe view
   /views/{viewId}                            — analytics: who opened, when
 
-/prompts/{promptId}                          — versioned Iris system prompts
+/prompts/{promptId}                          — versioned Sam system prompts
 /allowlistTools/{toolId}                     — curated tool database
 /config/global                               — site singleton (price, etc.)
 /users/{uid}                                 — admin user record
@@ -206,7 +206,7 @@ Flash Live supports function calling. Tempting to have Iris call `log_pain_point
   fourDayPlan: Array<{day: number, action: string, toolName: string}>;
 
   // Tracking
-  promptVersionId: string;             // which Iris prompt was used
+  promptVersionId: string;             // which Sam prompt was used
   pipelineVersionId: string;           // which skill chain version processed it
   createdAt: Timestamp;
   completedAt: Timestamp | null;
@@ -550,7 +550,7 @@ Hero, value prop, sample report link, "Start your assessment" CTA → `/start`. 
 - On submit → POST `/api/voice/start` → receives `{assessmentId, shareId, voiceSessionToken}`
 - UI swaps to voice agent: animated indicator (talking / listening / thinking), live transcript display (optional), "End call" button, mute button, elapsed timer
 - WebSocket established via `/api/voice/socket` proxy
-- After Iris's wrap or user-clicked end → POST `/api/voice/finalize` → swap to "Thanks, your report is on the way" screen with expected delivery time
+- After Sam's wrap or user-clicked end → POST `/api/voice/finalize` → swap to "Thanks, your report is on the way" screen with expected delivery time
 
 ### 9.3 `/r/{shareId}` (the client report)
 
@@ -588,7 +588,7 @@ Table of all assessments. Columns: business name, status, created at, duration, 
 
 ### 10.3 `/admin/live/{id}`
 
-For in-progress calls. Streams `assessments/{id}/transcript/` in real-time. Lets Tay watch Iris work. Crucial in the first 20–50 calls for prompt iteration.
+For in-progress calls. Streams `assessments/{id}/transcript/` in real-time. Lets Tay watch Sam work. Crucial in the first 20–50 calls for prompt iteration.
 
 ### 10.4 `/admin/r/{id}`
 
@@ -605,7 +605,7 @@ This is where Tay quality-controls each report before it goes to the client. v1 
 
 ### 10.5 `/admin/prompts`
 
-List of all Iris prompt versions. Active one is highlighted. Editor to create new version. "Activate" button. Per-version metrics (call count, avg pain points extracted, avg duration).
+List of all Sam prompt versions. Active one is highlighted. Editor to create new version. "Activate" button. Per-version metrics (call count, avg pain points extracted, avg duration).
 
 ### 10.6 `/admin/allowlist`
 
@@ -854,7 +854,7 @@ GETHOURS_SERVICE_TOKEN=
 
 ### Phase 5 — Iteration tools (week 5+)
 
-- [ ] `/admin/prompts` — Iris prompt versioning
+- [ ] `/admin/prompts` — Sam prompt versioning
 - [ ] `/admin/allowlist` — CRUD UI
 - [ ] `/admin/analytics` — cross-assessment insights
 - [ ] Auto-send toggle per prompt version (once trust is established)

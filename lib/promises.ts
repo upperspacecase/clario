@@ -1,5 +1,5 @@
 // Canonical customer-facing promise strings. Every surface that makes a claim
-// to a customer (marketing copy, in-call UI, Iris's prompt, emails, report
+// to a customer (marketing copy, in-call UI, Sam's prompt, emails, report
 // page) imports from here so promises stay aligned. See docs/PROMISES.md.
 
 export const PROMISES = {

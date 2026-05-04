@@ -36,7 +36,7 @@ Smoke check the local creds: `npx tsx -e "import('./lib/firebase-admin.js').then
 
 ## The GetHours skill pipeline
 
-After a finished Iris call, run on Tay's Mac:
+After a finished Sam call, run on Tay's Mac:
 
 ```
 /gethours-pipeline {assessmentId}
@@ -73,7 +73,7 @@ Source: `cli/assess-cli.ts` + `cli/{fetch,write,log-run}.ts`. Wrapper:
 
 - Allowlist (`/allowlistTools`) is empty. Sub-skill 03 falls back to TAAFT +
   Futuretools + web verification on every pain point; first run is slow.
-- Iris's current prompt may not probe deeply enough for `currentProcess`,
+- Sam's current prompt may not probe deeply enough for `currentProcess`,
   `whatTried`, `costOfBreaking` (per `HANDOFF.md` Phase 3 requirements).
   Sub-skill 02 will produce shallow pain points if the transcript is thin.
 
@@ -98,7 +98,7 @@ escapes, write the script to a temp file and `flyctl ssh sftp` it over.
 | `assessments/{id}/pipelineRuns/{runId}` | `assess-cli log-run` | each pipeline run's status + errors |
 | `publicReports/{shareId}` | `assess-cli write` | public-safe denormalized report rendered at `/r/{shareId}` |
 | `config/global` | `npm run seed:config` | site-wide settings (price, bookingUrlBase, etc.) |
-| `prompts/{promptId}` | not yet implemented | versioned Iris prompts |
+| `prompts/{promptId}` | not yet implemented | versioned Sam prompts |
 | `allowlistTools/{toolId}` | not yet implemented | curated tool DB |
 
 `shareId` is a 10-char nanoid minted by `app/api/voice/start/route.ts` and

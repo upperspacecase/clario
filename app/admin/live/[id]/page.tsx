@@ -134,7 +134,7 @@ export default function AdminLivePage({ params }: PageProps) {
             coalesced.map((t, i) => (
               <div key={i} className="flex flex-col">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-outline">
-                  {t.role === "agent" ? "Annie" : "Caller"}
+                  {t.role === "agent" ? "Sam" : "Caller"}
                   {t.ts ? ` · ${t.ts.toLocaleTimeString()}` : ""}
                 </span>
                 <p className="text-[15px] leading-[1.6] text-on-surface">

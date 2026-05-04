@@ -29,7 +29,7 @@ import { FieldValue } from "firebase-admin/firestore";
 const PORT = Number(process.env.LIVE_WS_PORT ?? 3043);
 const MODEL = process.env.LIVE_MODEL ?? "gemini-3.1-flash-live-preview";
 const VOICE = process.env.LIVE_VOICE ?? "Kore";
-const AGENT_NAME = process.env.LIVE_AGENT_NAME ?? "Iris";
+const AGENT_NAME = process.env.LIVE_AGENT_NAME ?? "Sam";
 
 if (!process.env.GEMINI_API_KEY) {
   console.error("[SERVER] GEMINI_API_KEY missing — aborting");

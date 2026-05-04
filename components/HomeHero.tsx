@@ -49,7 +49,7 @@ export const HomeHero: React.FC = () => {
             <span className="material-symbols-outlined mt-0.5 text-[16px]">
               schedule
             </span>
-            One {PROMISES.callDurationLabel} with Iris. One clear report,{" "}
+            One {PROMISES.callDurationLabel} with Sam. One clear report,{" "}
             {PROMISES.reportSlaLabel}. Practical next steps to save time, reduce
             friction, and create more room for growth.
           </p>

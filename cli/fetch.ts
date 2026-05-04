@@ -110,7 +110,7 @@ export async function runFetch(opts: {
   // Convenience .txt view: labeled prose, one block per utterance.
   const txtLines: string[] = [];
   for (const t of transcript) {
-    const label = t.role === "agent" ? "Iris" : "Caller";
+    const label = t.role === "agent" ? "Sam" : "Caller";
     txtLines.push(`${label}: ${t.text.trim()}`);
   }
   const transcriptText = txtLines.join("\n\n");

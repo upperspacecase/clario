@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Hours — A 30-minute call that finds where AI gives you your time back.",
   description:
-    "Hours is a voice-driven AI opportunity assessment. Spend 30 minutes on the phone with Iris. Receive a personalized report within 24 hours — tools and next steps that save you hours every week.",
+    "Hours is a voice-driven AI opportunity assessment. Spend 30 minutes on the phone with Sam. Receive a personalized report within 24 hours — tools and next steps that save you hours every week.",
   openGraph: {
     title: "Hours — Find where AI gives you your time back.",
     description:

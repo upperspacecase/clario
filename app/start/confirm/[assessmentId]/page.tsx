@@ -76,7 +76,7 @@ export default async function ConfirmPage({ params }: PageProps) {
             Confirm your details
           </h1>
           <p className="mb-5 text-[12px] leading-snug text-white/55">
-            We use these to send your written report. Edit anything Iris
+            We use these to send your written report. Edit anything Sam
             misheard.
           </p>
           <ConfirmForm assessmentId={assessmentId} initial={initial} />
