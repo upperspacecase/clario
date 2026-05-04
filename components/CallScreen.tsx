@@ -41,11 +41,9 @@ function phaseStatus(phase: CallPhase, elapsed: number): string {
     case "live":
       return `On call · ${mmss(elapsed)}`;
     case "ending":
-      return "Ending…";
-    case "report_generating":
-      return "Writing report…";
-    case "report_ready":
-      return "Report ready";
+      return "Wrapping up…";
+    case "ended":
+      return "Call ended";
     case "error":
       return "Error";
   }
@@ -59,19 +57,15 @@ export const CallScreen: React.FC<CallScreenProps> = ({
   onEnd,
 }) => {
   const isLive =
-    phase === "live" ||
-    phase === "ending" ||
-    phase === "report_generating" ||
-    phase === "report_ready";
+    phase === "live" || phase === "ending" || phase === "ended";
 
   const isIdle = phase === "idle" || phase === "error";
   const isBusy =
     phase === "requesting_mic" ||
     phase === "connecting" ||
-    phase === "ending" ||
-    phase === "report_generating";
+    phase === "ending";
 
-  const showGenerating = phase === "report_generating" || phase === "ending";
+  const showGenerating = phase === "ending";
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {

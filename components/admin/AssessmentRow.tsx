@@ -136,12 +136,11 @@ function CopyIdButton({ assessmentId }: { assessmentId: string }) {
 
 export function AssessmentRow({ row }: { row: AssessmentRowData }) {
   const when = row.startedAt ?? row.createdAt;
-  const showLink = row.status === "complete" && !!row.shareId;
 
   return (
     <div className="flex items-start gap-4 border-b border-outline-variant/60 py-4">
-      <div className="min-w-0 flex-1">
-        <div className="text-[15px] font-medium text-on-surface">
+      <Link href={`/admin/r/${row.id}`} className="min-w-0 flex-1">
+        <div className="text-[15px] font-medium text-on-surface hover:underline">
           {row.clientName ?? <span className="text-on-surface-variant">—</span>}
         </div>
         <div className="text-sm text-on-surface-variant">
@@ -149,7 +148,7 @@ export function AssessmentRow({ row }: { row: AssessmentRowData }) {
           {row.industry ? <span className="text-outline"> · {row.industry}</span> : null}
           {row.callerRole ? <span className="text-outline"> · {row.callerRole}</span> : null}
         </div>
-      </div>
+      </Link>
 
       <div className="flex w-28 flex-shrink-0 flex-col items-start gap-1">
         <StatusChip status={row.status} />
@@ -165,19 +164,17 @@ export function AssessmentRow({ row }: { row: AssessmentRowData }) {
       </div>
 
       <div className="w-28 flex-shrink-0 text-right text-sm">
-        {showLink ? (
-          <Link
-            href={`/report/${row.shareId}`}
-            className="text-primary underline-offset-2 hover:underline"
-          >
-            Report →
-          </Link>
-        ) : row.status === "pending_processing" ? (
+        {row.status === "pending_processing" ? (
           <ProcessButton assessmentId={row.id} />
         ) : row.status === "processing" ? (
           <CopyIdButton assessmentId={row.id} />
         ) : (
-          <span className="text-outline">—</span>
+          <Link
+            href={`/admin/r/${row.id}`}
+            className="text-primary underline-offset-2 hover:underline"
+          >
+            View →
+          </Link>
         )}
       </div>
     </div>

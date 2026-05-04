@@ -1,5 +1,8 @@
 // WebSocket relay: browser <-> Node <-> Gemini Live API.
-// One browser WS = one Gemini Live session. In-memory session state.
+// One browser WS = one Gemini Live session. Transcript turns stream to
+// Firestore as they arrive. Report generation lives in the local skill
+// pipeline (see CLAUDE.md), NOT here — this server's job ends at flushing
+// the transcript and recording call end timestamps.
 
 import { config as loadDotenv } from "dotenv";
 // Prefer .env.local (Next convention); fall back to .env.
@@ -18,8 +21,6 @@ import {
 import { randomUUID } from "crypto";
 import { buildSystemInstruction } from "./system-instruction.js";
 import { TOOL_DECLARATIONS } from "./tools.js";
-import { sessionStore } from "./session-store.js";
-import { generateReport } from "./report.js";
 import { TranscriptBuffer } from "./firestore-writer.js";
 import { verifyVoiceSessionToken } from "../lib/voice-token.js";
 import { adminDb } from "../lib/firebase-admin.js";
@@ -37,7 +38,7 @@ if (!process.env.GEMINI_API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// ------- HTTP server (CORS + report fetch) -------
+// ------- HTTP server (health only) -------
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -67,36 +68,6 @@ const httpServer = createServer((req: IncomingMessage, res: ServerResponse) => {
     return;
   }
 
-  const sessionMatch = url.pathname.match(/^\/api\/session\/([\w-]+)$/);
-  if (req.method === "GET" && sessionMatch) {
-    const s = sessionStore.get(sessionMatch[1]);
-    if (!s) return sendJson(res, 404, { error: "not_found" });
-    sendJson(res, 200, {
-      id: s.id,
-      language: s.language,
-      transcript: s.transcript,
-      endedAt: s.endedAt,
-      reportStatus: s.reportStatus,
-      reportError: s.reportError ?? null,
-    });
-    return;
-  }
-
-  const reportMatch = url.pathname.match(/^\/api\/report\/([\w-]+)$/);
-  if (req.method === "GET" && reportMatch) {
-    const s = sessionStore.get(reportMatch[1]);
-    if (!s) return sendJson(res, 404, { error: "not_found" });
-    sendJson(res, 200, {
-      id: s.id,
-      language: s.language,
-      reportStatus: s.reportStatus,
-      reportError: s.reportError ?? null,
-      report: s.report,
-      transcript: s.transcript,
-    });
-    return;
-  }
-
   sendJson(res, 404, { error: "not_found" });
 });
 
@@ -119,7 +90,6 @@ type ServerToClient =
   | { type: "turn_complete" }
   | { type: "language"; language: string }
   | { type: "end_signal"; reason: string } // model called end_interview tool
-  | { type: "report_status"; status: string; error?: string }
   | { type: "error"; message: string };
 
 function send(ws: WebSocket, msg: ServerToClient) {
@@ -128,7 +98,6 @@ function send(ws: WebSocket, msg: ServerToClient) {
 
 wss.on("connection", async (ws, req) => {
   const sessionId = nanoid(12);
-  const session = sessionStore.create(sessionId);
   let liveSession: Session | null = null;
   let endTriggered = false;
   let kickoffSent = false;
@@ -196,52 +165,10 @@ wss.on("connection", async (ws, req) => {
 
   send(ws, { type: "session", id: sessionId });
 
-  const MIN_USER_CHARS = 120;
-
-  const finalizeReport = async (reason: string) => {
+  const endCall = (reason: string) => {
     if (endTriggered) return;
     endTriggered = true;
-
-    sessionStore.markEnded(sessionId);
     send(ws, { type: "end_signal", reason });
-
-    // Guard: refuse to fabricate a report from an empty or near-empty
-    // transcript. The report schema forces 3 problems, which the model
-    // will hallucinate from silence if we let it.
-    const userChars = session.transcript
-      .filter((l) => l.who === "user")
-      .reduce((n, l) => n + l.text.trim().length, 0);
-
-    if (userChars < MIN_USER_CHARS) {
-      const msg = `Not enough said on the call to write a report (only ${userChars} characters of user speech captured). Try the call again and speak for a few minutes.`;
-      console.warn(
-        `[GEMINI-REPORT] session=${sessionId} skipped — user_chars=${userChars}`
-      );
-      sessionStore.setReportStatus(sessionId, "failed", msg);
-      send(ws, { type: "report_status", status: "failed", error: msg });
-      try {
-        liveSession?.close();
-      } catch {
-        /* ignore */
-      }
-      return;
-    }
-
-    send(ws, { type: "report_status", status: "generating" });
-    sessionStore.setReportStatus(sessionId, "generating");
-
-    try {
-      const report = await generateReport(session);
-      sessionStore.setReport(sessionId, report);
-      send(ws, { type: "report_status", status: "ready" });
-      console.log(`[GEMINI-REPORT] session=${sessionId} ready`);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      sessionStore.setReportStatus(sessionId, "failed", msg);
-      send(ws, { type: "report_status", status: "failed", error: msg });
-      console.error(`[GEMINI-REPORT] session=${sessionId} failed:`, msg);
-    }
-
     try {
       liveSession?.close();
     } catch {
@@ -407,11 +334,6 @@ wss.on("connection", async (ws, req) => {
             // Transcriptions
             const inputT = msg.serverContent?.inputTranscription?.text;
             if (inputT) {
-              sessionStore.appendTranscript(sessionId, {
-                who: "user",
-                text: inputT,
-                ts: Date.now(),
-              });
               send(ws, { type: "transcript", who: "user", text: inputT });
               if (transcriptBuffer) {
                 transcriptBuffer.push({
@@ -425,11 +347,6 @@ wss.on("connection", async (ws, req) => {
 
             const outputT = msg.serverContent?.outputTranscription?.text;
             if (outputT) {
-              sessionStore.appendTranscript(sessionId, {
-                who: "agent",
-                text: outputT,
-                ts: Date.now(),
-              });
               send(ws, { type: "transcript", who: "agent", text: outputT });
               if (transcriptBuffer) {
                 transcriptBuffer.push({
@@ -464,7 +381,7 @@ wss.on("connection", async (ws, req) => {
                     name: fc.name,
                     response: { result: "ok" },
                   });
-                  queueMicrotask(() => finalizeReport(reason));
+                  queueMicrotask(() => endCall(reason));
                 } else {
                   responses.push({
                     id: fc.id,
@@ -529,7 +446,6 @@ wss.on("connection", async (ws, req) => {
     if (setupRejected) return;
 
     if (msg.type === "start") {
-      if (msg.language) sessionStore.setLanguage(sessionId, msg.language);
       if (!liveSession) await openLive();
       return;
     }
@@ -571,7 +487,7 @@ wss.on("connection", async (ws, req) => {
 
     if (msg.type === "end") {
       console.log(`[SERVER] user end session=${sessionId}`);
-      await finalizeReport("user_ended");
+      endCall("user_ended");
       return;
     }
   });
@@ -579,20 +495,7 @@ wss.on("connection", async (ws, req) => {
   ws.on("close", async () => {
     console.log(`[SERVER] WS closed session=${sessionId}`);
     await setupPromise.catch(() => undefined);
-    if (!endTriggered) {
-      // If user just closed the tab mid-call and we have some transcript,
-      // still try to generate a report.
-      if (session.transcript.length >= 2) {
-        await finalizeReport("client_disconnect");
-      } else {
-        sessionStore.markEnded(sessionId);
-      }
-    }
-    try {
-      liveSession?.close();
-    } catch {
-      /* ignore */
-    }
+    if (!endTriggered) endCall("client_disconnect");
 
     if (transcriptBuffer) {
       transcriptBuffer.stopAutoFlush();

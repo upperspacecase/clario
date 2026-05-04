@@ -125,6 +125,49 @@ export async function sendAdminNotification(args: {
   }
 }
 
+export async function sendReportReady(args: {
+  to: string;
+  clientName: string;
+  shareId: string;
+}): Promise<void> {
+  const { to, clientName, shareId } = args;
+  const greetingName = clientName.trim() || "there";
+  const reportUrl = `https://gethours.org/r/${shareId}`;
+  const subject = "Your Hours report is ready";
+  const text = [
+    `Hi ${greetingName},`,
+    "",
+    `Your Hours report is ready: ${reportUrl}`,
+    "",
+    "It walks through where time is going in your business, the highest-impact tools to fix it, and a 4-day plan to get going.",
+    "",
+    "There's a link at the bottom of the report to book a free 30-minute walkthrough where we go through it together and answer your questions.",
+    "",
+    "— The Hours team",
+  ].join("\n");
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#1E1A14; max-width:560px; margin:0 auto; padding:24px;">
+      <p style="margin:0 0 16px 0;">Hi ${escapeHtml(greetingName)},</p>
+      <p style="margin:0 0 16px 0;">Your Hours report is ready: <a href="${reportUrl}">${reportUrl}</a></p>
+      <p style="margin:0 0 16px 0;">It walks through where time is going in your business, the highest-impact tools to fix it, and a 4-day plan to get going.</p>
+      <p style="margin:0 0 16px 0;">There's a link at the bottom of the report to book a free 30-minute walkthrough where we go through it together and answer your questions.</p>
+      <p style="margin:24px 0 0 0; color:#5a5448;">— The Hours team</p>
+    </div>
+  `;
+  try {
+    await sendViaResend({
+      from: fromAddress(),
+      to,
+      subject,
+      text,
+      html,
+    });
+  } catch (err) {
+    console.error("[email] sendReportReady failed:", err);
+    throw err;
+  }
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")

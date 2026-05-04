@@ -23,8 +23,7 @@ export type CallPhase =
   | "connecting"
   | "live"
   | "ending"
-  | "report_generating"
-  | "report_ready"
+  | "ended"
   | "error";
 
 export type Utterance = { who: "agent" | "user"; text: string };
@@ -224,15 +223,7 @@ export function useLiveSession({ wsUrl: defaultWsUrl }: Options) {
               case "language":
                 break;
               case "end_signal":
-                setPhase("ending");
-                break;
-              case "report_status":
-                if (msg.status === "generating") setPhase("report_generating");
-                if (msg.status === "ready") setPhase("report_ready");
-                if (msg.status === "failed") {
-                  setPhase("error");
-                  setError(msg.error ?? "report failed");
-                }
+                setPhase("ended");
                 break;
               case "error":
                 setError(msg.message);
@@ -294,6 +285,7 @@ export function useLiveSession({ wsUrl: defaultWsUrl }: Options) {
       /* ignore */
     }
     await cleanup();
+    setPhase("ended");
   }, [cleanup]);
 
   useEffect(() => {

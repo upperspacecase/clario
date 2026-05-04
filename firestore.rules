@@ -52,11 +52,8 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Prompts, allowlist, users — admin only
+    // Prompts, users — admin only
     match /prompts/{promptId} {
-      allow read, write: if isAdmin();
-    }
-    match /allowlistTools/{toolId} {
       allow read, write: if isAdmin();
     }
     match /users/{uid} {

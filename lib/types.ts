@@ -120,7 +120,7 @@ export interface Recommendation {
   whyItFits: string;
   installSteps: string[];
   timeSavedHoursPerWeek: number;
-  source: "allowlist" | "taaft" | "futuretools" | "web";
+  source: "taaft" | "futuretools" | "web";
   confidence: number;
 }
 
@@ -181,27 +181,6 @@ export interface PromptVersion {
     avgPainPointsExtracted: number;
     avgCallDuration: number;
   };
-}
-
-export interface AllowlistTool {
-  toolId: string;
-  name: string;
-  url: string;
-  category: string;
-  painPointKeywords: string[];
-  pricing: {
-    hasFreeTier: boolean;
-    freeTierDescription: string;
-    paidTierStartsAt: number;
-    pricingPageUrl: string;
-  };
-  integrations: string[];
-  whyItFits: string;
-  installSteps: string[];
-  lastVerifiedAt: Timestamp;
-  verifiedBy: string;
-  isActive: boolean;
-  notes: string;
 }
 
 export interface ConfigGlobal {

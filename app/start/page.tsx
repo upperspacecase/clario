@@ -23,9 +23,10 @@ export default function StartPage() {
   const router = useRouter();
   const live = useLiveSession({ wsUrl: FALLBACK_WS_URL });
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
+  const [voiceSessionToken, setVoiceSessionToken] = useState<string | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
-  const previousPhaseRef = useRef(live.phase);
+  const finalizingRef = useRef(false);
 
   const handleStart = useCallback(async () => {
     if (starting) return;
@@ -42,6 +43,7 @@ export default function StartPage() {
       }
       const data = (await res.json()) as StartResponse;
       setAssessmentId(data.assessmentId);
+      setVoiceSessionToken(data.voiceSessionToken);
       await live.start({ wsUrl: data.wsUrl });
     } catch (e) {
       setStartError(e instanceof Error ? e.message : String(e));
@@ -51,30 +53,25 @@ export default function StartPage() {
   }, [live, starting]);
 
   useEffect(() => {
-    const prev = previousPhaseRef.current;
-    previousPhaseRef.current = live.phase;
+    if (live.phase !== "ended") return;
+    if (!assessmentId || !voiceSessionToken) return;
+    if (finalizingRef.current) return;
 
-    if (!assessmentId) {
-      if (live.phase === "report_ready" && live.sessionId) {
-        router.push(`/report/${live.sessionId}`);
+    finalizingRef.current = true;
+    void (async () => {
+      try {
+        await fetch("/api/voice/finalize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ assessmentId, voiceSessionToken }),
+        });
+      } catch (e) {
+        console.error("[CLIENT] finalize failed", e);
+      } finally {
+        router.push(`/start/confirm/${assessmentId}`);
       }
-      return;
-    }
-
-    const wasActive =
-      prev === "live" ||
-      prev === "ending" ||
-      prev === "report_generating";
-    const isOver =
-      live.phase === "idle" ||
-      live.phase === "ending" ||
-      live.phase === "report_ready" ||
-      live.phase === "error";
-
-    if (wasActive && isOver) {
-      router.push(`/start/confirm/${assessmentId}`);
-    }
-  }, [assessmentId, live.phase, live.sessionId, router]);
+    })();
+  }, [assessmentId, voiceSessionToken, live.phase, router]);
 
   const displayedError = live.error ?? startError;
 

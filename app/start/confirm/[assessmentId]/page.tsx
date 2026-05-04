@@ -51,7 +51,7 @@ export default async function ConfirmPage({ params }: PageProps) {
 
   if (status === "complete") {
     const shareId = (data.shareId as string | undefined) ?? "";
-    redirect(shareId ? `/report/${shareId}` : "/");
+    redirect(shareId ? `/r/${shareId}` : "/");
   }
 
   const initial = {
