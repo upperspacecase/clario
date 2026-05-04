@@ -64,7 +64,13 @@ function PaymentChip({
   );
 }
 
-function ProcessButton({ assessmentId }: { assessmentId: string }) {
+function ProcessButton({
+  assessmentId,
+  label = "Process",
+}: {
+  assessmentId: string;
+  label?: string;
+}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -105,7 +111,66 @@ function ProcessButton({ assessmentId }: { assessmentId: string }) {
         disabled={busy}
         className="inline-flex items-center rounded-full border border-primary bg-primary px-3 py-1 text-xs font-medium text-on-primary transition hover:bg-primary/90 disabled:opacity-60"
       >
-        {busy ? "…" : "Process"}
+        {busy ? "…" : label}
+      </button>
+      {error ? <span className="text-[11px] text-error">{error}</span> : null}
+    </div>
+  );
+}
+
+function SendReportButton({
+  assessmentId,
+  label,
+}: {
+  assessmentId: string;
+  label: string;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+
+  async function onClick() {
+    setBusy(true);
+    setError(null);
+    try {
+      const user = clientAuth().currentUser;
+      const token = user ? await user.getIdToken() : null;
+      if (!token) {
+        setError("Not signed in");
+        return;
+      }
+      const res = await fetch("/api/admin/send-report", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ assessmentId }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        setError(body?.error ?? `HTTP ${res.status}`);
+        return;
+      }
+      setSent(true);
+      setTimeout(() => setSent(false), 1500);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <button
+        onClick={onClick}
+        disabled={busy}
+        className="inline-flex items-center rounded-full border border-primary bg-primary px-3 py-1 text-xs font-medium text-on-primary transition hover:bg-primary/90 disabled:opacity-60"
+      >
+        {busy ? "…" : sent ? "Sent" : label}
       </button>
       {error ? <span className="text-[11px] text-error">{error}</span> : null}
     </div>
@@ -168,6 +233,12 @@ export function AssessmentRow({ row }: { row: AssessmentRowData }) {
           <ProcessButton assessmentId={row.id} />
         ) : row.status === "processing" ? (
           <CopyIdButton assessmentId={row.id} />
+        ) : row.status === "manual_review" ? (
+          <SendReportButton assessmentId={row.id} label="Send report" />
+        ) : row.status === "complete" ? (
+          <SendReportButton assessmentId={row.id} label="Re-send" />
+        ) : row.status === "failed" ? (
+          <ProcessButton assessmentId={row.id} label="Re-run" />
         ) : (
           <Link
             href={`/admin/r/${row.id}`}

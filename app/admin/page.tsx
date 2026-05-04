@@ -17,10 +17,18 @@ import {
   type AssessmentRowData,
 } from "@/components/admin/AssessmentRow";
 
-type Filter = "all" | "queue" | "active" | "review" | "complete" | "failed";
+type Filter =
+  | "all"
+  | "awaiting"
+  | "queue"
+  | "active"
+  | "review"
+  | "complete"
+  | "failed";
 
 const FILTERS: { id: Filter; label: string }[] = [
   { id: "all", label: "All" },
+  { id: "awaiting", label: "Awaiting info" },
   { id: "queue", label: "Queue" },
   { id: "active", label: "Active" },
   { id: "review", label: "Review" },
@@ -32,6 +40,8 @@ function matchesFilter(status: AssessmentStatus, filter: Filter): boolean {
   switch (filter) {
     case "all":
       return true;
+    case "awaiting":
+      return status === "awaiting_details";
     case "queue":
       return status === "pending_processing";
     case "active":
@@ -102,6 +112,7 @@ export default function AdminPage() {
   const counts = useMemo(() => {
     const c: Record<Filter, number> = {
       all: rows.length,
+      awaiting: 0,
       queue: 0,
       active: 0,
       review: 0,
@@ -109,6 +120,7 @@ export default function AdminPage() {
       failed: 0,
     };
     for (const r of rows) {
+      if (matchesFilter(r.status, "awaiting")) c.awaiting++;
       if (matchesFilter(r.status, "queue")) c.queue++;
       if (matchesFilter(r.status, "active")) c.active++;
       if (matchesFilter(r.status, "review")) c.review++;

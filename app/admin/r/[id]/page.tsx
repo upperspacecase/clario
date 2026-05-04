@@ -45,6 +45,7 @@ interface AssessmentSnapshot {
   createdAt: Date | null;
   emailedAt: Date | null;
   paidAt: Date | null;
+  lastPipelineError: string | null;
 }
 
 interface TranscriptRow {
@@ -117,6 +118,7 @@ export default function AdminAssessmentPage({ params }: PageProps) {
           createdAt: tsToDate(data.createdAt),
           emailedAt: tsToDate(data.emailedAt),
           paidAt: tsToDate(data.paidAt),
+          lastPipelineError: (data.lastPipelineError as string | null) ?? null,
         });
       },
       (err) => setError(err.message),
@@ -384,6 +386,16 @@ export default function AdminAssessmentPage({ params }: PageProps) {
         </Card>
 
         <Card title={`Pipeline runs (${pipelineRuns.length})`}>
+          {assessment.lastPipelineError ? (
+            <div className="mb-3 rounded border border-error/40 bg-error-container/40 p-3 text-sm text-on-error-container">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.08em]">
+                Last error
+              </div>
+              <p className="mt-1 break-words font-mono text-[12px]">
+                {assessment.lastPipelineError}
+              </p>
+            </div>
+          ) : null}
           {pipelineRuns.length === 0 ? (
             <p className="text-sm text-on-surface-variant">No runs yet.</p>
           ) : (

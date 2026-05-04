@@ -68,8 +68,13 @@ export async function confirmDetails(
       callerRole,
     };
 
+    if (currentStatus === "awaiting_details") {
+      updates.status = "pending_processing" satisfies AssessmentStatus;
+    }
+
     const shouldSendConfirmation =
-      currentStatus === "pending_processing" &&
+      (currentStatus === "awaiting_details" ||
+        currentStatus === "pending_processing") &&
       !alreadyEmailed &&
       EMAIL_REGEX.test(clientEmail);
 

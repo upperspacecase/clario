@@ -79,7 +79,7 @@ export async function POST(req: Request) {
     }
 
     await docRef.update({
-      status: "pending_processing" satisfies AssessmentStatus,
+      status: "awaiting_details" satisfies AssessmentStatus,
     });
 
     const updates: Record<string, unknown> = {};
@@ -104,7 +104,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       ok: true,
-      status: "pending_processing" as AssessmentStatus,
+      status: "awaiting_details" as AssessmentStatus,
       needsConfirmation,
     });
   } catch (err) {

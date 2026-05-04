@@ -34,9 +34,12 @@ export async function POST(
   const data = snap.data() as Record<string, unknown>;
   const currentStatus = data.status as AssessmentStatus | undefined;
 
-  if (currentStatus !== "pending_processing") {
+  if (currentStatus !== "pending_processing" && currentStatus !== "failed") {
     return NextResponse.json(
-      { error: "Not in pending_processing", status: currentStatus ?? null },
+      {
+        error: "Not in pending_processing or failed",
+        status: currentStatus ?? null,
+      },
       { status: 409 },
     );
   }
@@ -44,6 +47,7 @@ export async function POST(
   await docRef.update({
     status: "processing" satisfies AssessmentStatus,
     queuedForProcessingAt: FieldValue.serverTimestamp(),
+    lastPipelineError: null,
   });
 
   return NextResponse.json({ ok: true, status: "processing" as AssessmentStatus });

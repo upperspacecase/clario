@@ -62,6 +62,15 @@ export async function runLogRun(opts: {
   if (reportPath) update.finalReportPath = reportPath;
   await runRef.update(update);
 
+  if (status === "failed") {
+    await assessmentRef.update({
+      status: "failed",
+      lastPipelineError: error ?? "Pipeline failed",
+    });
+  } else if (status === "success") {
+    await assessmentRef.update({ lastPipelineError: null });
+  }
+
   console.log(
     `[assess-cli log-run] id=${assessmentId} runId=${runRef.id} status=${status}`,
   );

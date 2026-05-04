@@ -2,6 +2,7 @@ import type { Timestamp } from "firebase-admin/firestore";
 
 export type AssessmentStatus =
   | "in_call"
+  | "awaiting_details"
   | "pending_processing"
   | "processing"
   | "manual_review"
@@ -66,6 +67,8 @@ export interface Assessment {
   amountPaidUsd: number | null;
   stripeCheckoutSessionId: string | null;
   stripePaymentIntentId: string | null;
+
+  lastPipelineError: string | null;
 
   tayNotes: string | null;
 }
