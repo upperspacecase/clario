@@ -57,7 +57,15 @@ export async function POST(req: Request) {
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  if (session.payment_status !== "paid") return;
+  // "paid" = card charged. "no_payment_required" = 100%-off promo code,
+  // total dropped to $0, no Payment Intent. Both count as "they're done
+  // and the report should ship."
+  if (
+    session.payment_status !== "paid" &&
+    session.payment_status !== "no_payment_required"
+  ) {
+    return;
+  }
 
   const assessmentId =
     session.client_reference_id ??
