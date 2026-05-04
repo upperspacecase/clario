@@ -93,7 +93,7 @@ body.page-light {
 .phone-frame {
   --phone-scale: 1;
   width: 100%;
-  max-width: 417px;
+  max-width: 320px;
   aspect-ratio: 417 / 876;
   margin: 0 auto;
   position: relative;

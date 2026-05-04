@@ -58,7 +58,7 @@ export const CallScreen: React.FC<CallScreenProps> = ({
 };
 
 const IdleState: React.FC<{ onStart: () => void }> = ({ onStart }) => (
-  <div className="flex flex-1 flex-col items-center justify-center gap-8 px-8 pb-10">
+  <div className="flex flex-1 flex-col items-center justify-between px-8 pb-12 pt-14">
     <p className="text-center text-[18px] font-semibold leading-snug text-white">
       Begin your assessment
     </p>
