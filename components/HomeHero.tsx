@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useLiveSession } from "./use-live-session";
 import { PhoneStage } from "./PhoneStage";
 import { CallScreen } from "./CallScreen";
-import { PreCallForm, type PreCallFormValues } from "./PreCallForm";
 
 const FALLBACK_WS_URL =
   process.env.NEXT_PUBLIC_WS_URL ??
@@ -20,45 +19,37 @@ type StartResponse = {
   wsUrl: string;
 };
 
-type Mode = "form" | "call";
-
 export const HomeHero: React.FC = () => {
   const router = useRouter();
   const live = useLiveSession({ wsUrl: FALLBACK_WS_URL });
-  const [mode, setMode] = useState<Mode>("form");
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const previousPhaseRef = useRef(live.phase);
 
-  const handleSubmit = useCallback(
-    async (values: PreCallFormValues) => {
-      if (starting) return;
-      setStarting(true);
-      setStartError(null);
-      try {
-        const res = await fetch("/api/voice/start", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body?.error ?? `start failed (${res.status})`);
-        }
-        const data = (await res.json()) as StartResponse;
-        setAssessmentId(data.assessmentId);
-        setMode("call");
-        console.log("[CLIENT] assessment started", data.assessmentId);
-        await live.start({ wsUrl: data.wsUrl });
-      } catch (e) {
-        setStartError(e instanceof Error ? e.message : String(e));
-      } finally {
-        setStarting(false);
+  const handleStart = useCallback(async () => {
+    if (starting) return;
+    setStarting(true);
+    setStartError(null);
+    try {
+      const res = await fetch("/api/voice/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error ?? `start failed (${res.status})`);
       }
-    },
-    [live, starting],
-  );
+      const data = (await res.json()) as StartResponse;
+      setAssessmentId(data.assessmentId);
+      console.log("[CLIENT] assessment started", data.assessmentId);
+      await live.start({ wsUrl: data.wsUrl });
+    } catch (e) {
+      setStartError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setStarting(false);
+    }
+  }, [live, starting]);
 
   useEffect(() => {
     const prev = previousPhaseRef.current;
@@ -68,11 +59,11 @@ export const HomeHero: React.FC = () => {
       const callEnded =
         prev === "live" || prev === "ending" || prev === "report_generating";
       if (callEnded && (live.phase === "idle" || live.phase === "report_ready")) {
-        router.push(`/start/thanks?id=${assessmentId}`);
+        router.push(`/start/confirm/${assessmentId}`);
         return;
       }
       if (live.phase === "report_ready") {
-        router.push(`/start/thanks?id=${assessmentId}`);
+        router.push(`/start/confirm/${assessmentId}`);
         return;
       }
     }
@@ -137,22 +128,14 @@ export const HomeHero: React.FC = () => {
           className="relative flex scroll-mt-24 justify-center md:col-span-5"
         >
           <PhoneStage>
-            {mode === "form" ? (
-              <PreCallForm
-                onSubmit={handleSubmit}
-                submitting={starting}
-                errorMessage={startError}
-              />
-            ) : (
-              <CallScreen
-                phase={live.phase}
-                utterances={live.utterances}
-                elapsed={live.elapsed}
-                level={live.level}
-                onStart={() => {}}
-                onEnd={live.end}
-              />
-            )}
+            <CallScreen
+              phase={live.phase}
+              utterances={live.utterances}
+              elapsed={live.elapsed}
+              level={live.level}
+              onStart={handleStart}
+              onEnd={live.end}
+            />
           </PhoneStage>
         </div>
       </div>

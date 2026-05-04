@@ -61,6 +61,11 @@ export interface Assessment {
   completedAt: Timestamp | null;
   emailedAt: Timestamp | null;
 
+  paidAt: Timestamp | null;
+  amountPaidUsd: number | null;
+  stripeCheckoutSessionId: string | null;
+  stripePaymentIntentId: string | null;
+
   tayNotes: string | null;
 }
 

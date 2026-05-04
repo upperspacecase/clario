@@ -153,7 +153,7 @@ export const ConfirmForm: React.FC<Props> = ({ assessmentId, initial }) => {
         disabled={pending}
         className="mt-3 inline-flex h-12 items-center justify-center rounded-md bg-[#C05A3E] px-5 text-sm font-semibold uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#A84A30] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {pending ? "Saving…" : "Confirm"}
+        {pending ? "Saving…" : "Continue to payment"}
       </button>
     </form>
   );

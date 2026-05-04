@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
 import { sendCallConfirmation } from "@/lib/email";
+import { isFreePilotMode } from "@/lib/stripe";
 import type { AssessmentStatus } from "@/lib/types";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -91,5 +92,9 @@ export async function confirmDetails(
     };
   }
 
-  redirect(`/start/confirm/${input.assessmentId}/done`);
+  const freePilot = await isFreePilotMode();
+  if (freePilot) {
+    redirect(`/start/thanks?id=${input.assessmentId}`);
+  }
+  redirect(`/start/payment/${input.assessmentId}`);
 }
