@@ -141,11 +141,6 @@ wss.on("connection", async (ws, req) => {
   let voiceSessionUuid: string | null = null;
   let currentSessionHandle = "";
   let transcriptBuffer: TranscriptBuffer | null = null;
-  let clientFirstName = "there";
-  let clientBusinessName = "your business";
-  let clientWebsite = "";
-  let clientTeamSize = "your team";
-  let clientLocation = "";
   const clientConnectedAtMs = Date.now();
 
   const reqUrl = new URL(req.url ?? "/", `http://localhost:${PORT}`);
@@ -183,18 +178,6 @@ wss.on("connection", async (ws, req) => {
     }
     try {
       const docRef = adminDb().collection("assessments").doc(assessmentId!);
-      const snap = await docRef.get();
-      if (snap.exists) {
-        const data = snap.data() as Record<string, string | null | undefined>;
-        const firstName = (data.firstName ?? data.clientName ?? "").trim();
-        if (firstName) clientFirstName = firstName.split(/\s+/)[0];
-        const businessName = (data.businessName ?? "").trim();
-        if (businessName) clientBusinessName = businessName;
-        clientWebsite = (data.website ?? "").trim();
-        const teamSize = (data.teamSize ?? "").trim();
-        if (teamSize) clientTeamSize = teamSize;
-        clientLocation = (data.location ?? data.country ?? "").trim();
-      }
       await docRef.update({
         voiceSessionId: voiceSessionUuid,
         callStartedAt: FieldValue.serverTimestamp(),
@@ -293,11 +276,6 @@ wss.on("connection", async (ws, req) => {
       );
       const systemInstruction = buildSystemInstruction({
         agentName: AGENT_NAME,
-        firstName: clientFirstName,
-        businessName: clientBusinessName,
-        website: clientWebsite,
-        teamSize: clientTeamSize,
-        location: clientLocation,
       });
       let myReconnectTriggered = false;
       const newSession = await ai.live.connect({
