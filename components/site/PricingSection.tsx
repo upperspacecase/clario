@@ -1,15 +1,11 @@
-import { PROMISES } from "@/lib/promises";
-
 type Tier = {
-  id: "assessment" | "install";
+  id: "assessment" | "blueprint" | "advisory";
   name: string;
-  tagline: string;
   price: string;
-  priceNote: string;
-  forWho: string;
+  priceSuffix?: string;
+  blurb: string;
   includes: string[];
   cta: string;
-  guarantee: string;
   popular?: boolean;
 };
 
@@ -17,40 +13,45 @@ const tiers: Tier[] = [
   {
     id: "assessment",
     name: "Hours Assessment",
-    tagline: "The full assessment. The plan. A clear path back to your time.",
-    price: "$1,000",
-    priceNote: "one-time · per assessment",
-    forWho: "For owners ready to commit and execute the plan themselves.",
+    price: "€750",
+    blurb: "Find your biggest operational leaks in a single focused session.",
     includes: [
-      `${PROMISES.callDurationLabel} with Iris, your AI interviewer`,
-      `Personalized written report, delivered ${PROMISES.reportSlaLabel}`,
-      "Verified tool recommendations with pricing and install steps",
-      "Effort × Impact matrix",
-      "4-day quick-win plan",
-      `Free ${PROMISES.followUpLabel}`,
+      "60-minute diagnosis call",
+      "Tool stack optimization",
+      "Bottleneck identification",
+      "Top 3 priority fix list",
+      "Efficiency scoring",
     ],
-    cta: "Get My Hours Assessment",
-    guarantee:
-      "If your report doesn't surface at least 8 hours per week of recoverable time, full refund.",
+    cta: "Book the Assessment",
+  },
+  {
+    id: "blueprint",
+    name: "Hours Blueprint",
+    price: "€2,500",
+    blurb: "Get the full plan to fix one core workflow from start to finish.",
+    includes: [
+      "Complete process mapping",
+      "Standard Operating Procedures",
+      "Automation logic diagrams",
+      "Implementation timeline",
+      "1x Follow-up review",
+    ],
+    cta: "Get the Blueprint",
     popular: true,
   },
   {
-    id: "install",
-    name: "Hours Install",
-    tagline: "Don't just get the plan — get it done with you.",
-    price: "$3,500",
-    priceNote: "one-time · 30-day engagement",
-    forWho: "For owners who want hours back now, not after they self-install.",
+    id: "advisory",
+    name: "Hours Advisory",
+    price: "€3,500",
+    priceSuffix: "/mo",
+    blurb: "Ongoing guidance for multiple processes and continuous scaling.",
     includes: [
-      "Everything in the Hours Assessment",
-      "30-day private Slack channel with Tay",
-      "3 done-with-you screen-share install sessions",
-      "Week 1, 2, and 4 accountability check-ins",
-      "One-page decision-maker brief for your team",
+      "Weekly strategy calls",
+      "Unlimited async support",
+      "Monthly system assessments",
+      "Team training sessions",
     ],
-    cta: "Start the Install",
-    guarantee:
-      "If you don't recover at least 5 hours per week of working time within 30 days, full refund — and you keep all the install work.",
+    cta: "Start Advisory",
   },
 ];
 
@@ -58,64 +59,59 @@ export const PricingSection: React.FC = () => {
   return (
     <section
       id="pricing"
-      className="relative overflow-hidden border-t border-white/5 bg-[#121212] bg-grain py-[64px] text-surface-container md:py-[120px]"
+      className="relative border-t border-white/5 bg-[#1a1a1a] py-[80px] text-surface-container md:py-[120px]"
     >
-      <div className="relative z-10 mx-auto max-w-[1080px] px-5 md:px-8">
-        <div className="mb-12 text-center md:mb-16">
-          <h2 className="mb-4 font-serif text-[clamp(28px,5vw,48px)] leading-[1.1] tracking-[-0.02em] text-surface-container">
-            Stop being your business&apos;s bottleneck.
+      <div className="mx-auto max-w-[1120px] px-5 md:px-8">
+        <div className="mb-16">
+          <span className="mb-4 block font-[Inter] text-[13px] font-semibold uppercase tracking-widest text-primary-container">
+            Investment
+          </span>
+          <h2 className="max-w-2xl font-serif text-[clamp(28px,5vw,40px)] leading-[1.2] text-white">
+            Start with diagnosis. Get the plan. Implement yourself.
           </h2>
-          <p className="mx-auto max-w-2xl font-[Inter] text-base leading-[1.6] text-[#a3a3a3] md:text-lg">
-            Two ways to get hours back. Pick the one that matches how done you
-            want it.
-          </p>
         </div>
 
-        <div className="mx-auto grid max-w-[860px] grid-cols-1 gap-6 md:grid-cols-2 md:gap-5">
+        <div className="mb-24 grid grid-cols-1 gap-8 md:grid-cols-3">
           {tiers.map((tier) => (
             <article
               key={tier.id}
               className={
                 tier.popular
-                  ? "relative flex flex-col border-2 border-primary-container bg-[#161616] p-8 sm:p-10"
-                  : "relative flex flex-col border border-white/10 bg-[#141414] p-8 sm:p-10"
+                  ? "relative flex h-full flex-col border-2 border-primary-container bg-white/[0.04] p-10"
+                  : "relative flex h-full flex-col border border-white/10 bg-white/[0.02] p-10"
               }
             >
               {tier.popular && (
-                <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 bg-primary-container px-4 py-1 font-[Inter] text-[11px] font-semibold uppercase tracking-[0.18em] text-on-primary-fixed">
-                  Most popular
-                </span>
+                <div className="absolute right-0 top-0 bg-primary-container px-3 py-1 font-[Inter] text-[10px] font-bold uppercase tracking-widest text-on-primary-fixed">
+                  Most Popular
+                </div>
               )}
 
-              <p className="mb-2 font-[Inter] text-[12px] font-semibold uppercase tracking-[0.18em] text-[#737373]">
+              <h3 className="mb-4 font-serif text-2xl text-white">
                 {tier.name}
-              </p>
-              <p className="mb-6 font-serif text-lg leading-[1.35] text-surface-container/90">
-                {tier.tagline}
-              </p>
-
-              <div className="mb-6 flex items-baseline gap-3">
-                <span className="font-serif text-[clamp(40px,5.5vw,56px)] leading-none tracking-[-0.02em] text-surface-container">
-                  {tier.price}
-                </span>
-                <span className="font-[Inter] text-xs text-[#a3a3a3]">
-                  {tier.priceNote}
-                </span>
+              </h3>
+              <div className="mb-8 font-serif text-4xl text-primary-container">
+                {tier.price}
+                {tier.priceSuffix && (
+                  <span className="font-[Inter] text-lg text-[#a3a3a3]">
+                    {tier.priceSuffix}
+                  </span>
+                )}
               </div>
 
-              <p className="mb-6 font-[Inter] text-sm leading-[1.55] text-[#a3a3a3]">
-                {tier.forWho}
+              <p className="mb-8 font-[Inter] text-base leading-[1.6] text-[#a3a3a3]">
+                {tier.blurb}
               </p>
 
-              <ul className="mb-8 space-y-3">
+              <ul className="mb-12 flex-grow space-y-4">
                 {tier.includes.map((item) => (
                   <li
                     key={item}
-                    className="flex items-start gap-3 font-[Inter] text-[14px] leading-[1.55] text-surface-container/90"
+                    className="flex items-start gap-3 font-[Inter] text-sm leading-[1.5] text-[#a3a3a3]"
                   >
                     <span
                       aria-hidden
-                      className="material-symbols-outlined mt-0.5 text-[18px] text-primary-container"
+                      className="material-symbols-outlined text-lg text-primary-container"
                     >
                       check
                     </span>
@@ -128,30 +124,35 @@ export const PricingSection: React.FC = () => {
                 href={`/start?tier=${tier.id}`}
                 className={
                   tier.popular
-                    ? "mb-4 inline-block bg-primary-container px-6 py-3.5 text-center font-[Inter] text-[12px] font-semibold uppercase tracking-[0.05em] text-on-primary-fixed transition-opacity hover:opacity-80"
-                    : "mb-4 inline-block border border-primary-container px-6 py-3.5 text-center font-[Inter] text-[12px] font-semibold uppercase tracking-[0.05em] text-primary-container transition-colors hover:bg-primary-container/10"
+                    ? "w-full bg-primary-container py-4 text-center font-[Inter] text-[13px] font-semibold uppercase tracking-widest text-on-primary-fixed transition-opacity hover:opacity-90"
+                    : "w-full border border-white/20 py-4 text-center font-[Inter] text-[13px] font-semibold uppercase tracking-widest text-white transition-colors hover:bg-white/5"
                 }
               >
                 {tier.cta}
               </a>
-
-              <p className="mt-auto border-t border-white/5 pt-4 font-[Inter] text-[12px] leading-[1.5] text-[#737373]">
-                <span className="font-semibold uppercase tracking-[0.14em] text-[#a3a3a3]">
-                  Guarantee
-                </span>
-                <br />
-                {tier.guarantee}
-              </p>
             </article>
           ))}
         </div>
 
-        <p className="mt-10 text-center font-[Inter] text-sm leading-[1.6] text-[#737373]">
-          We onboard a small cohort each month — limited Install and Assessment
-          slots per intake.
-        </p>
+        <div className="mx-auto max-w-4xl rounded-xl border border-white/10 bg-white/[0.02] p-12 text-center">
+          <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-full border border-primary-container/20">
+            <span
+              aria-hidden
+              className="material-symbols-outlined text-primary-container"
+            >
+              verified
+            </span>
+          </div>
+          <h3 className="mb-6 font-serif text-3xl italic text-white">
+            The Hours Guarantee
+          </h3>
+          <p className="mx-auto max-w-2xl font-[Inter] text-base leading-[1.6] text-[#a3a3a3] md:text-lg">
+            If your Assessment does not identify at least 3 actionable leaks worth
+            €5K+/year, we extend the session at no extra cost until we do.
+            Precision isn&apos;t optional; it&apos;s our mandate.
+          </p>
+        </div>
       </div>
     </section>
   );
 };
-

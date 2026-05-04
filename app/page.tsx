@@ -1,23 +1,21 @@
 import { HomeHero } from "@/components/HomeHero";
+import { TopNav } from "@/components/site/TopNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { RoiCalculator } from "@/components/site/RoiCalculator";
-import { HowItWorks } from "@/components/site/HowItWorks";
-import { SampleReport } from "@/components/site/SampleReport";
 import { Testimonials } from "@/components/site/Testimonials";
 import { PricingSection } from "@/components/site/PricingSection";
-import { FinalCta } from "@/components/site/FinalCta";
+import { FAQ } from "@/components/site/FAQ";
 
 export default function Page() {
   return (
     <>
-      <main className="relative z-10">
+      <TopNav />
+      <main className="relative z-10 pt-[80px]">
         <HomeHero />
         <RoiCalculator />
-        <HowItWorks />
-        <SampleReport />
-        <Testimonials />
         <PricingSection />
-        <FinalCta />
+        <Testimonials />
+        <FAQ />
       </main>
       <SiteFooter />
     </>

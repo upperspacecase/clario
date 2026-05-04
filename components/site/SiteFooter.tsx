@@ -1,20 +1,17 @@
-import Image from "next/image";
 import Link from "next/link";
 
 export const SiteFooter: React.FC = () => {
   return (
-    <footer className="flex w-full flex-col items-center justify-between gap-6 border-t border-white/10 bg-[#0a0a0a] px-5 py-10 md:flex-row md:px-8 md:py-12">
-      <Link href="/" className="flex items-center" aria-label="hrs home">
-        <Image
-          src="/hrs-logo-light.png"
-          alt="hrs"
-          width={696}
-          height={358}
-          className="h-6 w-auto"
-        />
+    <footer className="flex w-full flex-col items-center justify-between gap-6 border-t border-white/10 bg-[#1a1a1a] px-5 py-10 md:flex-row md:px-8 md:py-12">
+      <Link
+        href="/"
+        aria-label="hrs home"
+        className="font-serif text-lg lowercase text-primary-container"
+      >
+        hrs
       </Link>
 
-      <div className="font-serif text-xs uppercase tracking-widest text-primary-container">
+      <div className="font-serif text-xs uppercase tracking-widest text-[#a3a3a3]">
         © {new Date().getFullYear()} Hours. Reclaiming the craft of time.
       </div>
 

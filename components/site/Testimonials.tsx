@@ -15,19 +15,19 @@ const quotes = [
 
 export const Testimonials: React.FC = () => {
   return (
-    <section className="border-t border-white/5 bg-[#121212] py-[64px] text-surface-container md:py-[120px]">
+    <section className="border-t border-white/5 bg-[#1a1a1a] py-[80px] text-surface-container md:py-[120px]">
       <div className="mx-auto max-w-[1120px] px-5 md:px-8">
-        <div className="mb-12 text-center md:mb-16">
-          <h2 className="font-serif text-[clamp(28px,5vw,40px)] leading-[1.2] text-surface-container">
+        <div className="mb-16 text-center md:mb-20">
+          <h2 className="font-serif text-[clamp(28px,5vw,40px)] leading-[1.2] text-white">
             What getting hours back feels like
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
           {quotes.map((q, i) => (
             <figure
               key={i}
-              className="flex h-full flex-col justify-between border border-white/10 bg-white/5 p-6 sm:p-8"
+              className="flex h-full flex-col border border-white/10 bg-white/[0.02] p-8"
             >
               <span
                 aria-hidden
@@ -35,10 +35,10 @@ export const Testimonials: React.FC = () => {
               >
                 &ldquo;
               </span>
-              <blockquote className="font-serif text-lg leading-[1.45] text-surface-container">
+              <blockquote className="mb-6 font-serif text-xl italic leading-relaxed text-white">
                 {q.body}
               </blockquote>
-              <figcaption className="mt-6 font-[Inter] text-[12px] font-semibold uppercase tracking-[0.14em] text-[#737373]">
+              <figcaption className="mt-auto font-[Inter] text-[11px] font-semibold uppercase tracking-widest text-primary-container">
                 {q.role}
               </figcaption>
             </figure>
