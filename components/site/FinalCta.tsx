@@ -7,15 +7,15 @@ export const FinalCta: React.FC = () => {
         </h2>
         <p className="mb-8 font-[Inter] text-base leading-[1.6] text-[#a3a3a3] md:mb-10 md:text-lg">
           If your business is losing time to repetitive work, the first step is
-          to see it clearly. Hours gives you a practical audit and a clear path
-          forward.
+          to see it clearly. Hours gives you a practical assessment and a clear
+          path forward.
         </p>
 
         <a
           href="/#phone"
           className="mb-6 inline-block bg-primary-container px-10 py-4 font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-on-primary-fixed transition-opacity hover:opacity-80"
         >
-          Get My Hours Audit
+          Get My Hours Assessment
         </a>
 
         <p className="font-[Inter] text-sm leading-[1.6] text-[#737373]">

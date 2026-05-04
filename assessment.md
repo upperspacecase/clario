@@ -1,6 +1,6 @@
-# Audit — Clario (pre-deploy)
+# Assessment — Clario (pre-deploy)
 
-## 6a. CMO Copy Audit
+## 6a. CMO Copy Assessment
 - **Headline:** "Five minutes on the phone. Three AI tools that fit your restaurant." — ✅ visualizable, verifiable (five minutes, three tools), passes Dry's "could a competitor sign this?" test (no one else is shipping voice-first AI advisory for non-English-speaking restaurants).
 - **Spanish subhead:** "Cinco minutos al teléfono. Tres herramientas de IA que se adaptan a tu restaurante." — ✅ present, italic, audience-language.
 - **Sub-headline paragraph:** names specific losses ("reservations, reviews, waste, staff") and promises a concrete deliverable ("plain-language report you can try this week"). ✅
@@ -8,7 +8,7 @@
 - **Commitment line:** "We call within 24 hours, or we don't ask for your number again." — ✅ removes the cost of giving up a phone number.
 - **Honesty caveat (logo strip):** "Not affiliated. Tools Clario may recommend." — ✅ present, per skill rule on external brand marks.
 - **Pre-launch badge:** "Pre-launch · Early-access waitlist" — ✅ present, top of hero in olive caps.
-- **AI-slop audit:** No banned filler words ("simply," "just," "truly," "actually," "every"). ✅
+- **AI-slop assessment:** No banned filler words ("simply," "just," "truly," "actually," "every"). ✅
 - **CMO override log:** bilingual hero + specific transcript dialogue taken from mockup; CTA label taken from CMO (mockup had placeholder "Call-accent-action"). Logged in `_design_ref/notes.md`.
 
 ## 6b. Visual QA
@@ -43,7 +43,7 @@
 - Type: Playfair Display Black headline + Karla body — consistent with mockup's editorial serif + clean sans pairing. ✅
 - Composition anchor: olive waveform + speech-bubble transcript = the single visual focal point. ✅
 
-### Issues fixed during audit
+### Issues fixed during assessment
 - **Pinchtab** daemon wouldn't start cleanly. Fell back to headless Chrome for screenshotting. (Tool fallback, not a page bug.)
 - **First screenshot pass** had delayed-reveal animations keeping transcript lines and cards at opacity 0 past the virtual-time-budget. Fixed by shortening delays to <1s and using `animation-fill-mode: both` so stale paints still show final state.
 - **Headline font-size** was clamping too large (104px max) causing 5–7 wrapping lines in the left hero column. Tuned clamp to 84px max for a 4-line hero that matches the mockup's rhythm.

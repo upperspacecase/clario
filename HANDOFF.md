@@ -4,7 +4,7 @@ A handoff-ready summary of what gets gathered on the GetHours.org call and what 
 
 ## What the call gathers
 
-Annie runs the call in five phases. Every facet listed under "must capture" is required for the report to be writable; the call is otherwise considered low-quality and gets flagged for re-do.
+Iris runs the call in five phases. Every facet listed under "must capture" is required for the report to be writable; the call is otherwise considered low-quality and gets flagged for re-do.
 
 ### Phase 1 — Identity (~60 sec)
 Captured verbally at the top of the call.
@@ -49,12 +49,12 @@ For each pain point:
 ### Phase 4 — Wrap (~1–2 min)
 | Field | Required | Notes |
 |---|---|---|
-| Recap of 3–4 themes | Yes | Annie reflects what she heard before closing |
+| Recap of 3–4 themes | Yes | Iris reflects what she heard before closing |
 | "Anything else?" capture | Yes | Caller often saves the most important thing for the end |
 | Expectation set | Yes | "Report goes to {email}. Includes a link to book a follow-up." |
 
 ### Phase 5 — Implicit metadata
-Captured by the system, not Annie:
+Captured by the system, not Iris:
 
 | Field | Required |
 |---|---|
@@ -144,6 +144,6 @@ These are the rules that stop the report from being LLM slop:
 5. **Confidence floor 0.7.** Pain points with no qualifying tool get routed to upsells, not papered over with a weak recommendation.
 
 ## Time targets
-- Call: 20–60 min, Annie wraps when she has enough rather than padding
+- Call: 20–60 min, Iris wraps when she has enough rather than padding
 - Pipeline (transcript → published report): ~15–30 min on Tay's Mac
 - Total turnaround (call ended → email with report sent): same business day for v1

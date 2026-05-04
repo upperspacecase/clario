@@ -80,7 +80,7 @@ export default async function ConfirmPage({ params }: PageProps) {
           </h1>
           <p className="mb-8 text-sm leading-relaxed text-white/60">
             We use these to send your written report and reach you if we have a
-            follow-up question. Edit anything Annie misheard.
+            follow-up question. Edit anything Iris misheard.
           </p>
           <ConfirmForm assessmentId={assessmentId} initial={initial} />
         </div>

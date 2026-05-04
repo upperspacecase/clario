@@ -24,8 +24,8 @@ Any code below that makes a duration / SLA / follow-up claim must match
 | Hero subhead | `components/HomeHero.tsx` | duration + SLA |
 | Pricing card includes list | `components/site/PricingSection.tsx` | duration + SLA + follow-up |
 | iPhone mockup idle screen | `components/CallScreen.tsx` | duration |
-| Annie's mid-call checkpoint (Phase 5) | `server/system-instruction.ts` | SLA |
-| Annie's wrap (Phase 7, step 4) | `server/system-instruction.ts` | SLA + follow-up |
+| Iris's mid-call checkpoint (Phase 5) | `server/system-instruction.ts` | SLA |
+| Iris's wrap (Phase 7, step 4) | `server/system-instruction.ts` | SLA + follow-up |
 | Confirmation email | `lib/email.ts` (`sendCallConfirmation`) | SLA |
 
 ## Surfaces that intentionally stay vague
@@ -38,19 +38,18 @@ set is changing:
 - `components/site/HowItWorks.tsx` — three numbered steps, no times
 - `components/site/SampleReport.tsx` — example report fixtures only
 
-## "Audit" vs "assessment" — known divergence
+## "Assessment" — single brand word
 
-Marketing brands the offering "the Hours Audit" (CTA buttons, pricing card).
-Annie's prompt explicitly forbids the word "audit" on the call ("Say
-'assessment,' 'report,' or 'conversation.'"). This is intentional: the
-written brand can be punchy while the spoken word can feel softer. Don't
-collapse them.
+Marketing and the call now both use **"Hours Assessment"** / "assessment".
+Iris's prompt still carries a guardrail to avoid "audit" (training data may
+surface the older word) but there is no longer a deliberate divergence
+between the written brand and what she says on the call.
 
 ## Why the server prompt inlines instead of imports
 
 `server/system-instruction.ts` runs in a separate Node process on Fly with
 its own module graph — it doesn't have access to the Next.js `@/lib/*`
-alias. So Annie's promise strings are inlined verbatim. **If you change a
+alias. So Iris's promise strings are inlined verbatim. **If you change a
 value in `lib/promises.ts`, also update the matching string in
 `server/system-instruction.ts` Phase 7.** Grep confirms alignment.
 
@@ -66,4 +65,4 @@ prompt source from there. Not done yet — nothing reads it server-side.
 Before shipping a change to any promise:
 
 1. `grep -r "ten minutes\|twelve-minute\|few minutes" app components server lib` returns zero hits.
-2. Manual walkthrough: homepage → pre-call form → Annie's opening → hang up → confirmation email → report page. Every duration / SLA mention matches `lib/promises.ts`.
+2. Manual walkthrough: homepage → pre-call form → Iris's opening → hang up → confirmation email → report page. Every duration / SLA mention matches `lib/promises.ts`.

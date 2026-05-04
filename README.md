@@ -50,7 +50,7 @@ Optional overrides:
 LIVE_WS_PORT=3043
 LIVE_MODEL=gemini-3.1-flash-live-preview
 REPORT_MODEL=gemini-3-pro
-LIVE_VOICE=Aoede   # Aoede recommended for multilingual. Also: Puck, Charon, Kore, Fenrir.
+LIVE_VOICE=Kore    # Current default. Audition Aoede / Puck / Charon / Kore / Fenrir to pick the most British-sounding voice.
 NEXT_PUBLIC_WS_URL=ws://localhost:3043     # browser connects here
 NEXT_PUBLIC_API_BASE=http://localhost:3043 # report route fetches here
 ```

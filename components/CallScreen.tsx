@@ -114,7 +114,7 @@ export const CallScreen: React.FC<CallScreenProps> = ({
           )}
         </div>
         <p className="text-[22px] font-extrabold tracking-tight text-white">
-          Annie
+          Iris
         </p>
         <div className="flex items-center gap-2">
           <span
@@ -153,14 +153,14 @@ export const CallScreen: React.FC<CallScreenProps> = ({
 const IdleState: React.FC<{ onStart: () => void }> = ({ onStart }) => (
   <div className="flex flex-1 flex-col items-center justify-center gap-6 px-8 pb-10">
     <p className="max-w-[280px] text-center text-[15px] leading-snug text-white/55">
-      Tap to start your {PROMISES.callDurationLabel} with Annie. Speak any
+      Tap to start your {PROMISES.callDurationLabel} with Iris. Speak any
       language.
     </p>
 
     <button
       type="button"
       onClick={onStart}
-      aria-label="Call Annie"
+      aria-label="Call Iris"
       className="hours-call-btn relative flex h-[76px] w-[76px] items-center justify-center rounded-full transition-transform duration-150 hover:scale-[1.04] active:scale-[0.98]"
       style={{
         background: "#22c55e",
@@ -224,7 +224,7 @@ const LiveState: React.FC<{
                     color: isAgent ? "rgba(255,255,255,0.45)" : "rgba(10,10,10,0.7)",
                   }}
                 >
-                  {isAgent ? "ANNIE" : "YOU"}
+                  {isAgent ? "IRIS" : "YOU"}
                 </p>
                 {line.text}
               </div>

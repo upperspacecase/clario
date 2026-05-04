@@ -1,7 +1,7 @@
 import { PROMISES } from "@/lib/promises";
 
 type Tier = {
-  id: "audit" | "install";
+  id: "assessment" | "install";
   name: string;
   tagline: string;
   price: string;
@@ -15,21 +15,21 @@ type Tier = {
 
 const tiers: Tier[] = [
   {
-    id: "audit",
-    name: "Hours Audit",
-    tagline: "The full audit. The plan. A clear path back to your time.",
+    id: "assessment",
+    name: "Hours Assessment",
+    tagline: "The full assessment. The plan. A clear path back to your time.",
     price: "$1,000",
-    priceNote: "one-time · per audit",
+    priceNote: "one-time · per assessment",
     forWho: "For owners ready to commit and execute the plan themselves.",
     includes: [
-      `${PROMISES.callDurationLabel} with Annie, your AI interviewer`,
+      `${PROMISES.callDurationLabel} with Iris, your AI interviewer`,
       `Personalized written report, delivered ${PROMISES.reportSlaLabel}`,
       "Verified tool recommendations with pricing and install steps",
       "Effort × Impact matrix",
       "4-day quick-win plan",
       `Free ${PROMISES.followUpLabel}`,
     ],
-    cta: "Get My Hours Audit",
+    cta: "Get My Hours Assessment",
     guarantee:
       "If your report doesn't surface at least 8 hours per week of recoverable time, full refund.",
     popular: true,
@@ -42,7 +42,7 @@ const tiers: Tier[] = [
     priceNote: "one-time · 30-day engagement",
     forWho: "For owners who want hours back now, not after they self-install.",
     includes: [
-      "Everything in the Hours Audit",
+      "Everything in the Hours Assessment",
       "30-day private Slack channel with Tay",
       "3 done-with-you screen-share install sessions",
       "Week 1, 2, and 4 accountability check-ins",
@@ -147,7 +147,7 @@ export const PricingSection: React.FC = () => {
         </div>
 
         <p className="mt-10 text-center font-[Inter] text-sm leading-[1.6] text-[#737373]">
-          We onboard a small cohort each month — limited Install and Audit
+          We onboard a small cohort each month — limited Install and Assessment
           slots per intake.
         </p>
       </div>

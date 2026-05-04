@@ -96,7 +96,7 @@ export const HomeHero: React.FC = () => {
               href="#phone"
               className="bg-primary-container px-8 py-4 text-center font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-on-primary-fixed transition-opacity hover:opacity-80"
             >
-              Get My Hours Audit
+              Get My Hours Assessment
             </a>
             <a
               href="#sample-report"
@@ -110,7 +110,7 @@ export const HomeHero: React.FC = () => {
             <span className="material-symbols-outlined mt-0.5 text-[16px]">
               schedule
             </span>
-            One {PROMISES.callDurationLabel} with Annie. One clear report,{" "}
+            One {PROMISES.callDurationLabel} with Iris. One clear report,{" "}
             {PROMISES.reportSlaLabel}. Practical next steps to save time, reduce
             friction, and create more room for growth.
           </p>
