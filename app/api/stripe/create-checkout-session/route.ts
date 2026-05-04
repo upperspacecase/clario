@@ -77,6 +77,7 @@ export async function POST(req: Request) {
         },
       ],
       metadata: { assessmentId },
+      allow_promotion_codes: true,
       success_url: `${origin}/start/payment/${assessmentId}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/start/payment/${assessmentId}`,
     });
