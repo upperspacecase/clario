@@ -16,7 +16,7 @@ import { FieldValue } from "firebase-admin/firestore";
 async function main() {
   const defaults = {
     assessmentPriceUsd: 1000,
-    freePilotMode: true,
+    freePilotMode: false,
     maxCallDurationSec: 2400,
     bookingUrlBase: "https://gethours.org/r",
     notificationEmail: "tay@life-time.co",
