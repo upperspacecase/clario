@@ -216,7 +216,6 @@ export interface ConfigGlobal {
 export interface VoiceSessionTokenPayload {
   assessmentId: string;
   shareId: string;
-  voice?: string;
   iat: number;
   exp: number;
 }

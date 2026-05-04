@@ -141,7 +141,6 @@ wss.on("connection", async (ws, req) => {
   let voiceSessionUuid: string | null = null;
   let currentSessionHandle = "";
   let transcriptBuffer: TranscriptBuffer | null = null;
-  let sessionVoice: string = VOICE;
   const clientConnectedAtMs = Date.now();
 
   const reqUrl = new URL(req.url ?? "/", `http://localhost:${PORT}`);
@@ -164,13 +163,12 @@ wss.on("connection", async (ws, req) => {
       const payload = await verifyVoiceSessionToken(token);
       assessmentId = payload.assessmentId;
       shareId = payload.shareId;
-      if (payload.voice) sessionVoice = payload.voice;
       voiceSessionUuid = randomUUID();
       currentSessionHandle = voiceSessionUuid;
       transcriptBuffer = new TranscriptBuffer(assessmentId);
       transcriptBuffer.startAutoFlush(500);
       console.log(
-        `[SERVER] session=${sessionId} verified assessment=${assessmentId} share=${shareId} voice=${sessionVoice}`,
+        `[SERVER] session=${sessionId} verified assessment=${assessmentId} share=${shareId}`,
       );
     } catch (e) {
       setupRejected = e instanceof Error ? e.message : String(e);
@@ -274,7 +272,7 @@ wss.on("connection", async (ws, req) => {
   const openLive = async (resumeHandle?: string) => {
     try {
       console.log(
-        `[GEMINI-LIVE] open session=${sessionId} model=${MODEL} voice=${sessionVoice} resume=${resumeHandle ? "yes" : "no"}`,
+        `[GEMINI-LIVE] open session=${sessionId} model=${MODEL} voice=${VOICE} resume=${resumeHandle ? "yes" : "no"}`,
       );
       const systemInstruction = buildSystemInstruction({
         agentName: AGENT_NAME,
@@ -286,7 +284,7 @@ wss.on("connection", async (ws, req) => {
           responseModalities: [Modality.AUDIO],
           systemInstruction,
           speechConfig: {
-            voiceConfig: { prebuiltVoiceConfig: { voiceName: sessionVoice } },
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICE } },
           },
           inputAudioTranscription: {},
           outputAudioTranscription: {},

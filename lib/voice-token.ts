@@ -12,11 +12,8 @@ function secretKey(): Uint8Array {
 export async function signVoiceSessionToken(
   assessmentId: string,
   shareId: string,
-  voice?: string,
 ): Promise<string> {
-  const claims: Record<string, unknown> = { assessmentId, shareId };
-  if (voice) claims.voice = voice;
-  return await new SignJWT(claims)
+  return await new SignJWT({ assessmentId, shareId })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${TOKEN_TTL_SECONDS}s`)
