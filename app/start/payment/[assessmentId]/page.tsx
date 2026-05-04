@@ -107,7 +107,7 @@ export default async function PaymentPage({ params }: PageProps) {
             </div>
             <p className="mt-1.5 text-[11px] leading-snug text-white/45">
               One personalized written report for {businessName}, with a 4-day
-              quick-win plan and a free 30-minute follow-up call.
+              quick-win plan and a free 60-minute follow-up call.
             </p>
           </div>
 

@@ -141,7 +141,7 @@ export async function sendReportReady(args: {
     "",
     "It walks through where time is going in your business, the highest-impact tools to fix it, and a 4-day plan to get going.",
     "",
-    "There's a link at the bottom of the report to book a free 30-minute walkthrough where we go through it together and answer your questions.",
+    "There's a link at the bottom of the report to book a free 60-minute walkthrough where we go through it together and answer your questions.",
     "",
     "— The Hours team",
   ].join("\n");
@@ -150,7 +150,7 @@ export async function sendReportReady(args: {
       <p style="margin:0 0 16px 0;">Hi ${escapeHtml(greetingName)},</p>
       <p style="margin:0 0 16px 0;">Your Hours report is ready: <a href="${reportUrl}">${reportUrl}</a></p>
       <p style="margin:0 0 16px 0;">It walks through where time is going in your business, the highest-impact tools to fix it, and a 4-day plan to get going.</p>
-      <p style="margin:0 0 16px 0;">There's a link at the bottom of the report to book a free 30-minute walkthrough where we go through it together and answer your questions.</p>
+      <p style="margin:0 0 16px 0;">There's a link at the bottom of the report to book a free 60-minute walkthrough where we go through it together and answer your questions.</p>
       <p style="margin:24px 0 0 0; color:#5a5448;">— The Hours team</p>
     </div>
   `;
@@ -260,7 +260,7 @@ export async function sendBookingConfirmation(args: {
   const text = [
     `Hi ${greetingName},`,
     "",
-    `You're booked in for your free 30-minute implementation walkthrough + Q&A.`,
+    `You're booked in for your free 60-minute implementation walkthrough + Q&A.`,
     "",
     `When: ${startSydney} – ${endSydneyTime} (Sydney time)`,
     args.joinUrl ? `Join: ${args.joinUrl}` : "Tay will email you the joining details before the call.",
@@ -276,7 +276,7 @@ export async function sendBookingConfirmation(args: {
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#1E1A14; max-width:560px; margin:0 auto; padding:24px;">
       <p style="margin:0 0 16px 0;">Hi ${escapeHtml(greetingName)},</p>
-      <p style="margin:0 0 16px 0;">You're booked in for your free 30-minute implementation walkthrough + Q&amp;A.</p>
+      <p style="margin:0 0 16px 0;">You're booked in for your free 60-minute implementation walkthrough + Q&amp;A.</p>
       <p style="margin:0 0 8px 0;"><strong>When:</strong> ${escapeHtml(startSydney)} – ${escapeHtml(endSydneyTime)} (Sydney time)</p>
       ${args.joinUrl ? `<p style="margin:0 0 16px 0;"><strong>Join:</strong> <a href="${escapeHtml(args.joinUrl)}">${escapeHtml(args.joinUrl)}</a></p>` : `<p style="margin:0 0 16px 0;">Tay will email you the joining details before the call.</p>`}
       ${args.notes ? `<p style="margin:0 0 16px 0;"><strong>Your note:</strong> ${escapeHtml(args.notes)}</p>` : ""}

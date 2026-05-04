@@ -24,7 +24,7 @@ const tiers: Tier[] = [
     price: "$97",
     priceSuffix: "one-time",
     blurb:
-      "5-minute Sam call → automated 1-page email summary, within 1 hour.",
+      "5-minute call → automated 1-page email summary, within 1 hour.",
     includes: [
       { label: "Leak score (1–10)" },
       { label: "One verified tool recommendation" },
@@ -37,7 +37,7 @@ const tiers: Tier[] = [
       "Follow-up call",
       "10× ROI guarantee",
     ],
-    cta: "Try Sam — $97",
+    cta: "Try the Pulse — $97",
     ctaHref:
       "mailto:tay@life-time.co?subject=Hours%20Pulse%20waitlist&body=I%27d%20like%20to%20try%20the%20%2497%20Pulse%20when%20it%20opens.",
   },
@@ -49,12 +49,10 @@ const tiers: Tier[] = [
     priceSuffix: "one-time",
     blurb: `${PROMISES.callDurationSentence} ${PROMISES.reportSlaSentence}`,
     includes: [
-      { label: `${PROMISES.callDurationLabel} with Sam` },
+      { label: PROMISES.callDurationLabel },
       { label: `Full verified written report ${PROMISES.reportSlaLabel}` },
       { label: "4-day quick-win install playbook" },
-      { label: "Exec one-pager", isNew: true },
       { label: PROMISES.followUpLabel },
-      { label: "Day-30 Sam Pulse-Check", isNew: true },
     ],
     cta: "Book the Diagnosis",
     ctaHref: "/start",
@@ -67,14 +65,13 @@ const tiers: Tier[] = [
     price: "$4,997",
     priceSuffix: "one-time",
     blurb:
-      "Everything in Diagnosis + Tay personally implements your top quick-win in 7 days, plus 4 weekly check-ins.",
+      "Everything in Diagnosis + the Team personally implements your top quick-win in 7 days, plus 4 weekly check-ins.",
     includes: [
       { label: "Everything in Diagnosis" },
-      { label: "Tay implements top quick-win in 7 days" },
-      { label: "Weekly 30-min calls for 4 weeks" },
+      { label: "The Team implements top quick-win in 7 days" },
       { label: "30-day outcome guarantee" },
     ],
-    cta: "Talk to Tay first",
+    cta: "Talk to the Team first",
     ctaHref:
       "mailto:tay@life-time.co?subject=Hours%20Sprint%20inquiry&body=I%27d%20like%20to%20discuss%20the%20%244%2C997%20Sprint.",
   },
@@ -201,28 +198,23 @@ export const PricingSection: React.FC = () => {
           ))}
         </div>
 
-        <div className="mx-auto max-w-4xl rounded-xl border border-white/10 bg-white/[0.02] p-12">
-          <h3 className="mb-8 text-center font-serif text-3xl italic text-white">
-            Two guarantees
-          </h3>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            <div>
-              <div className="mb-2 font-[Inter] text-base font-semibold text-white">
-                {PROMISES.guaranteeLabel}
-              </div>
-              <p className="font-[Inter] text-sm leading-[1.6] text-[#a3a3a3]">
-                {PROMISES.guaranteeSentence}
-              </p>
-            </div>
-            <div>
-              <div className="mb-2 font-[Inter] text-base font-semibold text-white">
-                {PROMISES.slaGuaranteeLabel}
-              </div>
-              <p className="font-[Inter] text-sm leading-[1.6] text-[#a3a3a3]">
-                {PROMISES.slaGuaranteeSentence}
-              </p>
-            </div>
+        <div className="mx-auto max-w-4xl rounded-xl border border-white/10 bg-white/[0.02] p-12 text-center">
+          <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-full border border-primary-container/20">
+            <span
+              aria-hidden
+              className="material-symbols-outlined text-primary-container"
+            >
+              verified
+            </span>
           </div>
+          <h3 className="mb-6 font-serif text-3xl italic text-white">
+            The Hours Guarantee
+          </h3>
+          <p className="mx-auto max-w-2xl font-[Inter] text-base leading-[1.6] text-[#a3a3a3] md:text-lg">
+            If your Assessment does not identify at least 3 actionable leaks
+            worth $5K+/year, we extend the session at no extra cost until we
+            do. Precision isn&apos;t optional; it&apos;s our mandate.
+          </p>
         </div>
       </div>
     </section>

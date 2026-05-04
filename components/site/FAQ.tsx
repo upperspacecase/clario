@@ -3,11 +3,11 @@ import { PROMISES } from "@/lib/promises";
 const faqs = [
   {
     q: `What happens during the ${PROMISES.callDurationLabel}?`,
-    a: "A focused conversation with Sam covering your client journey, internal communication, and tool stack. You leave with a verified written report, a 4-day quick-win install playbook, an exec one-pager you can forward to leadership, and a Day-30 Pulse-Check from Sam to make sure the fixes landed.",
+    a: "A focused conversation covering your client journey, internal communication, and tool stack. You leave with a verified written report and a 4-day quick-win install playbook.",
   },
   {
     q: "Will you implement the systems for us?",
-    a: "Diagnosis is advisory — we provide the blueprint, the logic, and the SOP templates so your team actually understands the systems they use. Sprint is done-with-you — Tay personally implements your top quick-win in 7 days.",
+    a: "Diagnosis is advisory — we provide the blueprint, the logic, and the SOP templates so your team actually understands the systems they use. Sprint is done-with-you — the Team personally implements your top quick-win in 7 days.",
   },
   {
     q: "What tools do you specialize in?",
@@ -23,7 +23,7 @@ const faqs = [
   },
   {
     q: "What's the difference between Pulse, Diagnosis, and Sprint?",
-    a: "Pulse if you want a taste — 5 minutes with Sam and a one-page summary in your inbox. Diagnosis if you want a verified plan you can execute yourself. Sprint if you want it done — Tay personally implements your top quick-win in 7 days.",
+    a: "Pulse if you want a taste — 5 minutes on a call and a one-page summary in your inbox. Diagnosis if you want a verified plan you can execute yourself. Sprint if you want it done — the Team personally implements your top quick-win in 7 days.",
   },
 ];
 

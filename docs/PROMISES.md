@@ -8,9 +8,9 @@ surface that talks to a customer must source from there.
 
 | Key | Value |
 |---|---|
-| `callDurationLabel` | "30-minute conversation" |
+| `callDurationLabel` | "60-minute conversation" |
 | `reportSlaLabel` | "within 24 hours" |
-| `followUpLabel` | "free 30-minute implementation walkthrough + Q&A" |
+| `followUpLabel` | "free 60-minute implementation walkthrough + Q&A" |
 | `priceLabel` | "$1,000 one-time" |
 
 ## Touchpoint registry

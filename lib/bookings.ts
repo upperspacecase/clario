@@ -2,7 +2,7 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
 
 export const SYDNEY_TZ = "Australia/Sydney";
-export const SLOT_MINUTES = 30;
+export const SLOT_MINUTES = 60;
 
 export type BookingStatus = "open" | "booked" | "blocked";
 
@@ -185,7 +185,7 @@ export async function createSlotIfMissing(args: {
   return { id: ref.id, created: true };
 }
 
-// Returns 30-minute slot start times (in UTC) for the given Sydney-local date,
+// Returns 60-minute slot start times (in UTC) for the given Sydney-local date,
 // from `startHour` (inclusive) to `endHour` (exclusive). Skips weekends if
 // `weekdaysOnly`.
 export function sydneySlotsForDate(args: {
@@ -196,9 +196,7 @@ export function sydneySlotsForDate(args: {
   const { date, startHour, endHour } = args;
   const slots: Date[] = [];
   for (let h = startHour; h < endHour; h++) {
-    for (const m of [0, 30]) {
-      slots.push(sydneyDateToUtc(date, h, m));
-    }
+    slots.push(sydneyDateToUtc(date, h, 0));
   }
   return slots;
 }

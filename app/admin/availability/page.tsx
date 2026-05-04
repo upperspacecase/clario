@@ -11,7 +11,7 @@ export default function AdminAvailabilityPage() {
             Availability
           </h1>
           <p className="mt-1 text-sm text-on-surface-variant">
-            Open and block 30-minute walkthrough slots. Times shown in Sydney.
+            Open and block 60-minute walkthrough slots. Times shown in Sydney.
           </p>
         </header>
 

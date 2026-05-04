@@ -508,7 +508,7 @@ function BookingBlock({ bookingUrl }: { bookingUrl: string }) {
         Book your follow-up
       </h2>
       <p className="mx-auto mb-5 max-w-md font-[Inter] text-[14px] leading-[1.6] text-on-surface-variant">
-        A free 30-minute walkthrough where we go through this report together
+        A free 60-minute walkthrough where we go through this report together
         and answer your questions.
       </p>
       <a
