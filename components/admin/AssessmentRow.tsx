@@ -64,43 +64,101 @@ function PaymentChip({
   );
 }
 
-function ProcessButton({
+const ENABLED_BTN =
+  "inline-flex items-center rounded-full border border-primary bg-primary px-3 py-1 text-xs font-medium text-on-primary transition hover:bg-primary/90 disabled:opacity-60";
+
+const DISABLED_BTN =
+  "inline-flex items-center rounded-full border border-outline-variant bg-surface-container-low px-3 py-1 text-xs font-medium text-on-surface-variant opacity-60 cursor-not-allowed";
+
+function PipelineButton({
+  status,
   assessmentId,
-  label = "Process",
 }: {
+  status: AssessmentStatus;
   assessmentId: string;
-  label?: string;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<"queued" | "copied" | null>(null);
+
+  const command = `/gethours-pipeline ${assessmentId}`;
+  const canQueue = status === "pending_processing" || status === "failed";
+  const canRecopy = status === "processing";
+  const enabled = canQueue || canRecopy;
+
+  let label: string;
+  let tooltip: string;
+  if (canQueue) {
+    label = status === "failed" ? "Re-run" : "Process";
+    tooltip = `Queue for processing and copy ${command} to your clipboard. Paste it in your terminal.`;
+  } else if (canRecopy) {
+    label = "Copy cmd";
+    tooltip = `Already queued. Re-copy ${command} if you lost it from your clipboard.`;
+  } else if (status === "in_call") {
+    label = "Process";
+    tooltip = "Wait — call is in progress.";
+  } else if (status === "awaiting_details") {
+    label = "Process";
+    tooltip = "Wait — customer hasn't confirmed details yet.";
+  } else {
+    label = "Process";
+    tooltip = "Pipeline already ran. Use Send report instead.";
+  }
+
+  if (feedback === "queued") label = "Paste in terminal →";
+  if (feedback === "copied") label = "Copied — paste it";
+
+  async function copyCmd(): Promise<boolean> {
+    try {
+      await navigator.clipboard.writeText(command);
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
   async function onClick() {
-    setBusy(true);
     setError(null);
-    try {
-      const user = clientAuth().currentUser;
-      const token = user ? await user.getIdToken() : null;
-      if (!token) {
-        setError("Not signed in");
-        return;
+    if (canQueue) {
+      setBusy(true);
+      try {
+        const user = clientAuth().currentUser;
+        const token = user ? await user.getIdToken() : null;
+        if (!token) {
+          setError("Not signed in");
+          return;
+        }
+        const res = await fetch(
+          `/api/admin/assessments/${assessmentId}/process`,
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        if (!res.ok) {
+          const body = (await res.json().catch(() => null)) as
+            | { error?: string }
+            | null;
+          setError(body?.error ?? `HTTP ${res.status}`);
+          return;
+        }
+        const copied = await copyCmd();
+        setFeedback("queued");
+        setTimeout(() => setFeedback(null), 3500);
+        if (!copied) setError("Could not copy — copy manually");
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setBusy(false);
       }
-      const res = await fetch(
-        `/api/admin/assessments/${assessmentId}/process`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as
-          | { error?: string }
-          | null;
-        setError(body?.error ?? `HTTP ${res.status}`);
+    } else if (canRecopy) {
+      const copied = await copyCmd();
+      if (copied) {
+        setFeedback("copied");
+        setTimeout(() => setFeedback(null), 2000);
+      } else {
+        setError("Clipboard unavailable");
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(false);
     }
   }
 
@@ -108,8 +166,9 @@ function ProcessButton({
     <div className="flex flex-col items-end gap-1">
       <button
         onClick={onClick}
-        disabled={busy}
-        className="inline-flex items-center rounded-full border border-primary bg-primary px-3 py-1 text-xs font-medium text-on-primary transition hover:bg-primary/90 disabled:opacity-60"
+        disabled={!enabled || busy}
+        title={tooltip}
+        className={enabled ? ENABLED_BTN : DISABLED_BTN}
       >
         {busy ? "…" : label}
       </button>
@@ -118,18 +177,42 @@ function ProcessButton({
   );
 }
 
-function SendReportButton({
+function SendButton({
+  status,
   assessmentId,
-  label,
 }: {
+  status: AssessmentStatus;
   assessmentId: string;
-  label: string;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
 
+  const enabled = status === "manual_review" || status === "complete";
+
+  let label: string;
+  let tooltip: string;
+  if (status === "manual_review") {
+    label = "Send report";
+    tooltip = "Email the report link to the customer.";
+  } else if (status === "complete") {
+    label = "Re-send";
+    tooltip = "Re-send the report email to the customer.";
+  } else if (status === "in_call" || status === "awaiting_details") {
+    label = "Send report";
+    tooltip = "Wait — call hasn't finished yet.";
+  } else if (status === "failed") {
+    label = "Send report";
+    tooltip = "Pipeline failed. Re-run it first.";
+  } else {
+    label = "Send report";
+    tooltip = "Wait — pipeline hasn't written the report yet.";
+  }
+
+  if (sent) label = "Sent ✓";
+
   async function onClick() {
+    if (!enabled) return;
     setBusy(true);
     setError(null);
     try {
@@ -155,7 +238,7 @@ function SendReportButton({
         return;
       }
       setSent(true);
-      setTimeout(() => setSent(false), 1500);
+      setTimeout(() => setSent(false), 2000);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -167,35 +250,14 @@ function SendReportButton({
     <div className="flex flex-col items-end gap-1">
       <button
         onClick={onClick}
-        disabled={busy}
-        className="inline-flex items-center rounded-full border border-primary bg-primary px-3 py-1 text-xs font-medium text-on-primary transition hover:bg-primary/90 disabled:opacity-60"
+        disabled={!enabled || busy}
+        title={tooltip}
+        className={enabled ? ENABLED_BTN : DISABLED_BTN}
       >
-        {busy ? "…" : sent ? "Sent" : label}
+        {busy ? "…" : label}
       </button>
       {error ? <span className="text-[11px] text-error">{error}</span> : null}
     </div>
-  );
-}
-
-function CopyIdButton({ assessmentId }: { assessmentId: string }) {
-  const [copied, setCopied] = useState(false);
-  async function onClick() {
-    try {
-      await navigator.clipboard.writeText(assessmentId);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1200);
-    } catch {
-      // ignore — clipboard not available
-    }
-  }
-  return (
-    <button
-      onClick={onClick}
-      title="Copy assessment ID for /gethours-pipeline"
-      className="inline-flex items-center rounded-full border border-outline-variant bg-surface-container-low px-3 py-1 text-xs font-medium text-on-surface-variant transition hover:bg-surface-container"
-    >
-      {copied ? "Copied" : "Copy ID"}
-    </button>
   );
 }
 
@@ -228,25 +290,9 @@ export function AssessmentRow({ row }: { row: AssessmentRowData }) {
         {formatDuration(row.durationSec)}
       </div>
 
-      <div className="w-28 flex-shrink-0 text-right text-sm">
-        {row.status === "pending_processing" ? (
-          <ProcessButton assessmentId={row.id} />
-        ) : row.status === "processing" ? (
-          <CopyIdButton assessmentId={row.id} />
-        ) : row.status === "manual_review" ? (
-          <SendReportButton assessmentId={row.id} label="Send report" />
-        ) : row.status === "complete" ? (
-          <SendReportButton assessmentId={row.id} label="Re-send" />
-        ) : row.status === "failed" ? (
-          <ProcessButton assessmentId={row.id} label="Re-run" />
-        ) : (
-          <Link
-            href={`/admin/r/${row.id}`}
-            className="text-primary underline-offset-2 hover:underline"
-          >
-            View →
-          </Link>
-        )}
+      <div className="flex flex-shrink-0 items-start justify-end gap-2">
+        <PipelineButton status={row.status} assessmentId={row.id} />
+        <SendButton status={row.status} assessmentId={row.id} />
       </div>
     </div>
   );
