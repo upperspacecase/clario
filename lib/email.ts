@@ -1,11 +1,18 @@
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
+interface ResendAttachment {
+  filename: string;
+  content: string; // base64
+  content_type?: string;
+}
+
 interface ResendPayload {
   from: string;
   to: string | string[];
   subject: string;
   text: string;
   html?: string;
+  attachments?: ResendAttachment[];
 }
 
 async function sendViaResend(payload: ResendPayload): Promise<void> {
@@ -125,4 +132,251 @@ function escapeHtml(s: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+// Format a JS Date as ICS UTC stamp: YYYYMMDDTHHMMSSZ.
+function icsStamp(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    d.getUTCFullYear().toString() +
+    pad(d.getUTCMonth() + 1) +
+    pad(d.getUTCDate()) +
+    "T" +
+    pad(d.getUTCHours()) +
+    pad(d.getUTCMinutes()) +
+    pad(d.getUTCSeconds()) +
+    "Z"
+  );
+}
+
+function icsEscape(s: string): string {
+  return s
+    .replace(/\\/g, "\\\\")
+    .replace(/\n/g, "\\n")
+    .replace(/,/g, "\\,")
+    .replace(/;/g, "\\;");
+}
+
+export function buildBookingIcs(args: {
+  uid: string;
+  start: Date;
+  end: Date;
+  summary: string;
+  description: string;
+  organizerEmail: string;
+  attendeeEmail: string;
+}): string {
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//GetHours//Booking//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:REQUEST",
+    "BEGIN:VEVENT",
+    `UID:${args.uid}@gethours.org`,
+    `DTSTAMP:${icsStamp(new Date())}`,
+    `DTSTART:${icsStamp(args.start)}`,
+    `DTEND:${icsStamp(args.end)}`,
+    `SUMMARY:${icsEscape(args.summary)}`,
+    `DESCRIPTION:${icsEscape(args.description)}`,
+    `ORGANIZER;CN=Hours:mailto:${args.organizerEmail}`,
+    `ATTENDEE;CN=${args.attendeeEmail};RSVP=TRUE:mailto:${args.attendeeEmail}`,
+    "STATUS:CONFIRMED",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ];
+  return lines.join("\r\n");
+}
+
+export async function sendBookingConfirmation(args: {
+  to: string;
+  clientName: string;
+  start: Date;
+  end: Date;
+  slotId: string;
+  joinUrl?: string;
+  notes?: string;
+}): Promise<void> {
+  const greetingName = args.clientName.trim() || "there";
+  const startSydney = formatSydneyForEmail(args.start);
+  const endSydneyTime = formatSydneyTimeForEmail(args.end);
+  const subject = `Your Hours walkthrough — ${startSydney}`;
+
+  const ics = buildBookingIcs({
+    uid: args.slotId,
+    start: args.start,
+    end: args.end,
+    summary: "Hours implementation walkthrough + Q&A",
+    description: args.joinUrl
+      ? `Join: ${args.joinUrl}\n\nAny questions? Reply to this email.`
+      : "Tay will be in touch with the joining details before the call.\n\nAny questions? Reply to this email.",
+    organizerEmail: process.env.RESEND_FROM_EMAIL ?? "tay@life-time.co",
+    attendeeEmail: args.to,
+  });
+
+  const text = [
+    `Hi ${greetingName},`,
+    "",
+    `You're booked in for your free 30-minute implementation walkthrough + Q&A.`,
+    "",
+    `When: ${startSydney} – ${endSydneyTime} (Sydney time)`,
+    args.joinUrl ? `Join: ${args.joinUrl}` : "Tay will email you the joining details before the call.",
+    args.notes ? `\nYour note: ${args.notes}` : "",
+    "",
+    "A calendar invite is attached.",
+    "",
+    "If you need to reschedule, just reply to this email.",
+    "",
+    "— The Hours team",
+  ].filter(Boolean).join("\n");
+
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#1E1A14; max-width:560px; margin:0 auto; padding:24px;">
+      <p style="margin:0 0 16px 0;">Hi ${escapeHtml(greetingName)},</p>
+      <p style="margin:0 0 16px 0;">You're booked in for your free 30-minute implementation walkthrough + Q&amp;A.</p>
+      <p style="margin:0 0 8px 0;"><strong>When:</strong> ${escapeHtml(startSydney)} – ${escapeHtml(endSydneyTime)} (Sydney time)</p>
+      ${args.joinUrl ? `<p style="margin:0 0 16px 0;"><strong>Join:</strong> <a href="${escapeHtml(args.joinUrl)}">${escapeHtml(args.joinUrl)}</a></p>` : `<p style="margin:0 0 16px 0;">Tay will email you the joining details before the call.</p>`}
+      ${args.notes ? `<p style="margin:0 0 16px 0;"><strong>Your note:</strong> ${escapeHtml(args.notes)}</p>` : ""}
+      <p style="margin:0 0 16px 0;">A calendar invite is attached.</p>
+      <p style="margin:0 0 16px 0;">If you need to reschedule, just reply to this email.</p>
+      <p style="margin:24px 0 0 0; color:#5a5448;">— The Hours team</p>
+    </div>
+  `;
+
+  try {
+    await sendViaResend({
+      from: fromAddress(),
+      to: args.to,
+      subject,
+      text,
+      html,
+      attachments: [
+        {
+          filename: "walkthrough.ics",
+          content: Buffer.from(ics, "utf8").toString("base64"),
+          content_type: "text/calendar; charset=utf-8; method=REQUEST",
+        },
+      ],
+    });
+  } catch (err) {
+    console.error("[email] sendBookingConfirmation failed:", err);
+  }
+}
+
+export async function sendBookingAdminNotification(args: {
+  businessName: string;
+  clientName: string;
+  clientEmail: string;
+  start: Date;
+  end: Date;
+  assessmentId: string;
+  shareId: string;
+  notes?: string;
+}): Promise<void> {
+  const adminTo = process.env.RESEND_ADMIN_EMAIL;
+  if (!adminTo) {
+    console.warn("[email] RESEND_ADMIN_EMAIL not set; skipping booking admin notification");
+    return;
+  }
+  const displayBusiness = args.businessName?.trim() || "Unknown business";
+  const startSydney = formatSydneyForEmail(args.start);
+  const endSydneyTime = formatSydneyTimeForEmail(args.end);
+  const reportLink = `https://gethours.org/r/${args.shareId}`;
+  const adminLink = `https://gethours.org/admin/r/${args.assessmentId}`;
+  const subject = `[Hours] Walkthrough booked: ${displayBusiness} — ${startSydney}`;
+
+  const text = [
+    `New walkthrough booking.`,
+    "",
+    `Business: ${displayBusiness}`,
+    `Client: ${args.clientName} <${args.clientEmail}>`,
+    `When: ${startSydney} – ${endSydneyTime} (Sydney)`,
+    args.notes ? `Notes: ${args.notes}` : "",
+    "",
+    `Report: ${reportLink}`,
+    `Admin: ${adminLink}`,
+  ].filter(Boolean).join("\n");
+
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#1E1A14; max-width:560px; margin:0 auto; padding:24px;">
+      <p style="margin:0 0 16px 0;"><strong>New walkthrough booking.</strong></p>
+      <p style="margin:0 0 8px 0;">Business: ${escapeHtml(displayBusiness)}</p>
+      <p style="margin:0 0 8px 0;">Client: ${escapeHtml(args.clientName)} &lt;${escapeHtml(args.clientEmail)}&gt;</p>
+      <p style="margin:0 0 8px 0;">When: ${escapeHtml(startSydney)} – ${escapeHtml(endSydneyTime)} (Sydney)</p>
+      ${args.notes ? `<p style="margin:0 0 16px 0;"><strong>Notes:</strong> ${escapeHtml(args.notes)}</p>` : ""}
+      <p style="margin:0 0 8px 0;"><a href="${reportLink}">Open report</a></p>
+      <p style="margin:0 0 16px 0;"><a href="${adminLink}">Open in admin</a></p>
+    </div>
+  `;
+
+  try {
+    await sendViaResend({
+      from: fromAddress(),
+      to: adminTo,
+      subject,
+      text,
+      html,
+    });
+  } catch (err) {
+    console.error("[email] sendBookingAdminNotification failed:", err);
+  }
+}
+
+export async function sendBookingCancellation(args: {
+  to: string;
+  clientName: string;
+  start: Date;
+}): Promise<void> {
+  const greetingName = args.clientName.trim() || "there";
+  const startSydney = formatSydneyForEmail(args.start);
+  const subject = `Your Hours walkthrough — cancelled`;
+  const text = [
+    `Hi ${greetingName},`,
+    "",
+    `Your walkthrough on ${startSydney} (Sydney time) has been cancelled.`,
+    "",
+    `If this was a mistake or you'd like to rebook, reply to this email and we'll sort it out.`,
+    "",
+    "— The Hours team",
+  ].join("\n");
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#1E1A14; max-width:560px; margin:0 auto; padding:24px;">
+      <p style="margin:0 0 16px 0;">Hi ${escapeHtml(greetingName)},</p>
+      <p style="margin:0 0 16px 0;">Your walkthrough on <strong>${escapeHtml(startSydney)}</strong> (Sydney time) has been cancelled.</p>
+      <p style="margin:0 0 16px 0;">If this was a mistake or you'd like to rebook, reply to this email and we'll sort it out.</p>
+      <p style="margin:24px 0 0 0; color:#5a5448;">— The Hours team</p>
+    </div>
+  `;
+  try {
+    await sendViaResend({
+      from: fromAddress(),
+      to: args.to,
+      subject,
+      text,
+      html,
+    });
+  } catch (err) {
+    console.error("[email] sendBookingCancellation failed:", err);
+  }
+}
+
+function formatSydneyForEmail(d: Date): string {
+  return new Intl.DateTimeFormat("en-AU", {
+    timeZone: "Australia/Sydney",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(d);
+}
+
+function formatSydneyTimeForEmail(d: Date): string {
+  return new Intl.DateTimeFormat("en-AU", {
+    timeZone: "Australia/Sydney",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(d);
 }
