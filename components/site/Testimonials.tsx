@@ -34,12 +34,12 @@ export const Testimonials: React.FC = () => {
               key={i}
               className="flex h-full flex-col border border-white/10 bg-white/[0.02] p-8"
             >
-              <div className="mb-6 h-16 w-16 overflow-hidden rounded-full border border-primary-container/30">
+              <div className="mx-auto mb-6 h-32 w-32 overflow-hidden rounded-full border border-primary-container/30">
                 <Image
                   src={q.image}
                   alt=""
-                  width={64}
-                  height={64}
+                  width={128}
+                  height={128}
                   className="h-full w-full object-cover"
                 />
               </div>
