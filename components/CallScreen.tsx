@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { WaveformPlayer } from "./WaveformPlayer";
 import type { CallPhase, Utterance } from "./use-live-session";
+import { PROMISES } from "@/lib/promises";
 
 export type CallScreenProps = {
   phase: CallPhase;
@@ -152,7 +153,8 @@ export const CallScreen: React.FC<CallScreenProps> = ({
 const IdleState: React.FC<{ onStart: () => void }> = ({ onStart }) => (
   <div className="flex flex-1 flex-col items-center justify-center gap-6 px-8 pb-10">
     <p className="max-w-[280px] text-center text-[15px] leading-snug text-white/55">
-      Tap to start a twelve-minute call with Annie. Speak any language.
+      Tap to start your {PROMISES.callDurationLabel} with Annie. Speak any
+      language.
     </p>
 
     <button

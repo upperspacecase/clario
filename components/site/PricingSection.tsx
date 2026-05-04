@@ -1,10 +1,12 @@
+import { PROMISES } from "@/lib/promises";
+
 const includes = [
-  "12-minute call with Annie, your AI interviewer",
-  "Personalized written report, delivered within 24 hours",
+  `${PROMISES.callDurationLabel} with Annie, your AI interviewer`,
+  `Personalized written report, delivered ${PROMISES.reportSlaLabel}`,
   "Verified tool recommendations with pricing and install steps",
   "Effort × Impact matrix so you know where to start",
   "4-day quick-win plan you can hand to your team",
-  "30-minute follow-up consult to walk through the report",
+  "Free 30-minute implementation walkthrough + Q&A once your report is ready",
 ];
 
 export const PricingSection: React.FC = () => {

@@ -45,7 +45,7 @@ export async function sendCallConfirmation(args: {
     "",
     "Thanks for taking the call with Annie.",
     "",
-    "Your written report is being prepared. We will email it to this address as soon as it is ready (usually within a few minutes).",
+    "Your written report is being prepared. We will email it to this address as soon as it is ready (within 24 hours).",
     "",
     "If you need to reach us in the meantime, reply to this email.",
     "",
@@ -55,7 +55,7 @@ export async function sendCallConfirmation(args: {
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#1E1A14; max-width:560px; margin:0 auto; padding:24px;">
       <p style="margin:0 0 16px 0;">Hi ${escapeHtml(greetingName)},</p>
       <p style="margin:0 0 16px 0;">Thanks for taking the call with Annie.</p>
-      <p style="margin:0 0 16px 0;">Your written report is being prepared. We will email it to this address as soon as it is ready (usually within a few minutes).</p>
+      <p style="margin:0 0 16px 0;">Your written report is being prepared. We will email it to this address as soon as it is ready (within 24 hours).</p>
       <p style="margin:0 0 16px 0;">If you need to reach us in the meantime, reply to this email.</p>
       <p style="margin:24px 0 0 0; color:#5a5448;">— The Hours team</p>
     </div>

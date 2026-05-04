@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLiveSession } from "./use-live-session";
 import { PhoneStage } from "./PhoneStage";
 import { CallScreen } from "./CallScreen";
+import { PROMISES } from "@/lib/promises";
 
 const FALLBACK_WS_URL =
   process.env.NEXT_PUBLIC_WS_URL ??
@@ -109,8 +110,9 @@ export const HomeHero: React.FC = () => {
             <span className="material-symbols-outlined mt-0.5 text-[16px]">
               schedule
             </span>
-            One short AI assisted call. One clear report. Practical next steps
-            to save time, reduce friction, and create more room for growth.
+            One {PROMISES.callDurationLabel} with Annie. One clear report,{" "}
+            {PROMISES.reportSlaLabel}. Practical next steps to save time, reduce
+            friction, and create more room for growth.
           </p>
 
           {starting && (
