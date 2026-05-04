@@ -1,76 +1,82 @@
 # Hours assessment — data spec
 
-A handoff-ready summary of what gets gathered on the GetHours.org call and what comes out of the pipeline.
+A handoff-ready summary of what gets gathered on the GetHours.org assessment and what comes out of the pipeline.
 
-## What the call gathers
+> This is the data contract for the post-call pipeline (sub-skills 01–08), **not Sam's question list**. Sam's actual prompt lives in `server/system-instruction.ts`. Each field below is tagged with its `source`:
+> - **`form`** — collected by the post-call form at `/start/confirm/[id]`. Always present (the form is required to advance to payment / report generation).
+> - **`transcript`** — extracted from the call by sub-skills. Best-effort: pain conversation surfaces these naturally, but Sam doesn't interrogate for them. Missing fields get flagged as gaps in the report rather than failing the call.
+> - **`system`** — implicit metadata captured automatically by the WS relay or pipeline.
 
-Sam runs the call in five phases. Every facet listed under "must capture" is required for the report to be writable; the call is otherwise considered low-quality and gets flagged for re-do.
+## What gets gathered
 
-### Phase 1 — Identity (~60 sec)
-Captured verbally at the top of the call.
+### Identity (post-call form)
+Collected on the website immediately after Sam hangs up. Sam never asks for these on the call (she may ask the caller's first name only to address them by name; the form is the authoritative source).
 
-| Field | Required | Notes |
-|---|---|---|
-| Caller's first name | Yes | Used in addressing during the call |
-| Caller's email | Yes | Where the report is sent. Spell-back confirmation if accuracy is in doubt |
-| Business name | Yes | Used in the report personalization |
+| Field | Source | Required | Notes |
+|---|---|---|---|
+| Caller's first name (`clientName`) | form | Yes | Used in report personalisation. Sam may use the on-call name; form takes precedence |
+| Caller's email (`clientEmail`) | form | Yes | Where the report is sent |
+| Business name (`businessName`) | form | Yes | Used in report personalisation |
+| Caller's role (`callerRole`) | form | Optional | Owner / operator / manager — sets opportunity-cost framing |
+| Industry (`industry`) | form | Yes | One of 9 dropdown options. Used for hourly-rate default in the financial calc |
 
-### Phase 2 — Business context (~2–4 min)
-Lets the team write a recommendation that fits their actual setup, not generic advice.
+### Business context (transcript, best-effort)
+Sub-skills extract whatever the caller mentions in pain conversation. Nothing here is a Sam question — if it doesn't surface, the report flags the gap.
 
-| Field | Required | Notes |
-|---|---|---|
-| What the business does | Yes | One paragraph in their words |
-| How long they've been at it | Soft | Useful for tone / maturity assessment |
-| Team size + structure | Yes | Solo / small / larger; rough role breakdown |
-| Caller's role | Yes | Owner / operator / manager — sets opportunity-cost framing |
-| Industry | Yes | Used for hourly-rate default in the financial calc |
-| Current SaaS / tooling stack | Yes | What CRM, email, scheduling, accounting, support, etc. they already use. Critical so we don't recommend a tool that duplicates what they have |
-| What they sell, who buys, rough scale | Soft | Helps prioritise pain points by revenue impact |
+| Field | Source | Required | Notes |
+|---|---|---|---|
+| What the business does | transcript | Best-effort | One paragraph in their words. Usually surfaces while describing pain context |
+| How long they've been at it | transcript | Soft | Useful for tone / maturity assessment |
+| Team size + structure | transcript | Best-effort | Solo / small / larger; rough role breakdown. Not on the form — only available if the caller mentions it |
+| Current SaaS / tooling stack | transcript | Best-effort | CRM, email, scheduling, accounting, etc. Critical so we don't recommend a tool that duplicates what they have. Surfaces in pain context, not a checklist |
+| What they sell, who buys, rough scale | transcript | Soft | Helps prioritise pain points by revenue impact |
 
-### Phase 3 — Pain point excavation (~7–40 min) — the heart of the call
+### Pain point excavation (transcript) — the heart of the call
 **Required:** 5–8 distinct pain points captured. Real depth on the top 2–3.
 
 For each pain point:
 
-| Facet | Required | Notes |
+| Facet | Source | Required | Notes |
+|---|---|---|---|
+| Description | transcript | Yes | One concrete sentence — what's the problem |
+| Verbatim quote | transcript | Yes | Caller's own words; used directly in the report so they recognise themselves |
+| Frequency | transcript | Yes | Daily / weekly / ad-hoc / specific cadence |
+| Hours per week it consumes | transcript | Yes | If they don't know, estimate from the workflow they describe and flag the estimate |
+| Who does it | transcript | Yes | Caller, employee, contractor — owner time is the most expensive |
+| Current process | transcript | Yes | Step-by-step what they do today |
+| What they've tried | transcript | Top-3 only | Past attempts at fixing |
+| Cost of breaking | transcript | Top-3 only | What happens when this goes wrong — revenue, customers, sleep |
+| Specific recent example | transcript | If possible | Concrete example > abstract description |
+| Category | pipeline | Yes (post-call) | Tagged into one of: scheduling / support / marketing / sales / ops / finance / knowledge / communication / hiring / data / other |
+
+### Wrap signals (transcript)
+| Field | Source | Required | Notes |
+|---|---|---|---|
+| Recap of 3–4 themes | transcript | Yes | Sam reflects what she heard before closing |
+| "Anything else?" capture | transcript | Yes | Caller often saves the most important thing for the end |
+
+### Implicit metadata (system)
+Captured automatically.
+
+| Field | Source | Required |
 |---|---|---|
-| Description | Yes | One concrete sentence — what's the problem |
-| Verbatim quote | Yes | Caller's own words; used directly in the report so they recognise themselves |
-| Frequency | Yes | Daily / weekly / ad-hoc / specific cadence |
-| Hours per week it consumes | Yes | If they don't know, estimate from the workflow they describe and flag the estimate |
-| Who does it | Yes | Caller, employee, contractor — owner time is the most expensive |
-| Current process | Yes | Step-by-step what they do today |
-| What they've tried | Top-3 only | Past attempts at fixing; "have you tried…" |
-| Cost of breaking | Top-3 only | What happens when this goes wrong — revenue, customers, sleep |
-| Specific recent example | If possible | Concrete example > abstract description |
-| Category | Yes (post-call) | Tagged into one of: scheduling / support / marketing / sales / ops / finance / knowledge / communication / hiring / data / other |
-
-### Phase 4 — Wrap (~1–2 min)
-| Field | Required | Notes |
-|---|---|---|
-| Recap of 3–4 themes | Yes | Sam reflects what she heard before closing |
-| "Anything else?" capture | Yes | Caller often saves the most important thing for the end |
-| Expectation set | Yes | "Report goes to {email}. Includes a link to book a follow-up." |
-
-### Phase 5 — Implicit metadata
-Captured by the system, not Sam:
-
-| Field | Required |
-|---|---|
-| Call duration (sec) | Yes |
-| Call language(s) | Yes |
-| Audio recording (Opus) | No (deferred to v2) |
-| Voice session token / handles | Yes — for traceability |
-| Prompt version used | Yes — for A/B analysis |
+| Call duration (sec) | system | Yes |
+| Call language(s) | system | Yes |
+| Audio recording (Opus) | system | No (deferred to v2) |
+| Voice session token / handles | system | Yes — for traceability |
+| Prompt version used | system | Yes — for A/B analysis |
 
 ## Hard requirements for a valid call
-A call is **shippable** if:
-- Phase 1 (all 3 fields) captured
-- Phase 2: business description, team size, role, industry, current tools — all present
-- Phase 3: at least **5 pain points**, each with description + verbatim quote + frequency + hours/wk + who + current process. At least **2** also have what-they've-tried + cost-of-breaking.
 
-If any of those is missing, the call gets routed to `manual_review` for the team to either re-do or proceed manually.
+Form-sourced fields (identity + role + industry) are guaranteed present by the post-call form, not by Sam. Shippability hinges on the transcript.
+
+A call is **shippable** if:
+- At least **5 pain points** captured, each with description + verbatim quote + frequency + hours/wk + who + current process.
+- At least **2** of those pain points also have what-they've-tried + cost-of-breaking.
+
+Transcript-sourced business-context fields (team size, tooling stack, what-the-business-does) are best-effort. If they're missing, the report flags them as gaps and the team fills them in during manual review — the call is not failed for their absence.
+
+If the pain-point bar above is missed, the call gets routed to `manual_review` for the team to either re-do or proceed manually.
 
 ## What comes out — the report
 
