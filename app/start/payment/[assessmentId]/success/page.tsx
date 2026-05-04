@@ -20,6 +20,11 @@ export default async function PaymentSuccessPage({ params }: PageProps) {
   }
 
   const data = snap.data() as Record<string, unknown>;
+
+  // Redirect to payment page if not actually paid
+  if (!data.paidAt) {
+    redirect(`/start/payment/${assessmentId}`);
+  }
   const clientEmail = (data.clientEmail as string | null) ?? null;
 
   return (
