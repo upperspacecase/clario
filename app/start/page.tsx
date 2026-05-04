@@ -19,13 +19,23 @@ type StartResponse = {
   wsUrl: string;
 };
 
+const TEST_VOICES = ["Aoede", "Puck", "Charon", "Kore", "Fenrir"] as const;
+type TestVoice = (typeof TEST_VOICES)[number];
+
 export default function StartPage() {
   const router = useRouter();
   const live = useLiveSession({ wsUrl: FALLBACK_WS_URL });
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  const [testMode, setTestMode] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState<TestVoice>("Kore");
   const previousPhaseRef = useRef(live.phase);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setTestMode(new URLSearchParams(window.location.search).get("test") === "1");
+  }, []);
 
   const handleStart = useCallback(async () => {
     if (starting) return;
@@ -35,6 +45,7 @@ export default function StartPage() {
       const res = await fetch("/api/voice/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(testMode ? { voice: selectedVoice } : {}),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -48,7 +59,7 @@ export default function StartPage() {
     } finally {
       setStarting(false);
     }
-  }, [live, starting]);
+  }, [live, starting, testMode, selectedVoice]);
 
   useEffect(() => {
     const prev = previousPhaseRef.current;
@@ -80,6 +91,33 @@ export default function StartPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#121212] px-5 py-10 md:px-8">
       <div className="flex w-full max-w-[420px] flex-col items-center gap-4">
+        {testMode && (
+          <div className="w-full border border-white/15 bg-black/40 p-3 text-center">
+            <p className="mb-2 font-[Inter] text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a3a3a3]">
+              Voice test · pick one, then call
+            </p>
+            <div className="flex flex-wrap justify-center gap-1.5">
+              {TEST_VOICES.map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setSelectedVoice(v)}
+                  disabled={live.phase !== "idle" || starting}
+                  className={
+                    v === selectedVoice
+                      ? "bg-primary-container px-3 py-1.5 font-[Inter] text-[11px] font-semibold uppercase tracking-[0.06em] text-on-primary-fixed disabled:opacity-50"
+                      : "border border-white/20 px-3 py-1.5 font-[Inter] text-[11px] font-semibold uppercase tracking-[0.06em] text-white/70 transition-colors hover:bg-white/5 disabled:opacity-50"
+                  }
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 font-[Inter] text-[10px] text-white/40">
+              Selected: <span className="text-white/70">{selectedVoice}</span>
+            </p>
+          </div>
+        )}
         <PhoneStage>
           <CallScreen
             phase={live.phase}

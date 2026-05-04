@@ -9,8 +9,16 @@ export const dynamic = "force-dynamic";
 
 const WS_BASE_URL = "wss://voice-agent-ws.fly.dev/";
 
-export async function POST() {
+const ALLOWED_VOICES = new Set(["Aoede", "Puck", "Charon", "Kore", "Fenrir"]);
+
+export async function POST(req: Request) {
   try {
+    const body = (await req.json().catch(() => ({}))) as { voice?: unknown };
+    const requestedVoice =
+      typeof body.voice === "string" && ALLOWED_VOICES.has(body.voice)
+        ? body.voice
+        : undefined;
+
     const shareId = nanoid(10);
     const docRef = adminDb().collection("assessments").doc();
     const assessmentId = docRef.id;
@@ -52,7 +60,7 @@ export async function POST() {
       tayNotes: null,
     });
 
-    const voiceSessionToken = await signVoiceSessionToken(assessmentId, shareId);
+    const voiceSessionToken = await signVoiceSessionToken(assessmentId, shareId, requestedVoice);
     const wsUrl = `${WS_BASE_URL}?token=${encodeURIComponent(voiceSessionToken)}`;
 
     return NextResponse.json({
