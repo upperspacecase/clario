@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
+import { clientAuth } from "@/lib/firebase-client";
 import type { AssessmentStatus } from "@/lib/types";
 import { StatusChip } from "./StatusChip";
 
@@ -36,6 +40,76 @@ function formatRelative(date: Date | null): string {
   return date.toLocaleDateString();
 }
 
+function ProcessButton({ assessmentId }: { assessmentId: string }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onClick() {
+    setBusy(true);
+    setError(null);
+    try {
+      const user = clientAuth().currentUser;
+      const token = user ? await user.getIdToken() : null;
+      if (!token) {
+        setError("Not signed in");
+        return;
+      }
+      const res = await fetch(
+        `/api/admin/assessments/${assessmentId}/process`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        setError(body?.error ?? `HTTP ${res.status}`);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <button
+        onClick={onClick}
+        disabled={busy}
+        className="inline-flex items-center rounded-full border border-primary bg-primary px-3 py-1 text-xs font-medium text-on-primary transition hover:bg-primary/90 disabled:opacity-60"
+      >
+        {busy ? "…" : "Process"}
+      </button>
+      {error ? <span className="text-[11px] text-error">{error}</span> : null}
+    </div>
+  );
+}
+
+function CopyIdButton({ assessmentId }: { assessmentId: string }) {
+  const [copied, setCopied] = useState(false);
+  async function onClick() {
+    try {
+      await navigator.clipboard.writeText(assessmentId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {
+      // ignore — clipboard not available
+    }
+  }
+  return (
+    <button
+      onClick={onClick}
+      title="Copy assessment ID for /gethours-pipeline"
+      className="inline-flex items-center rounded-full border border-outline-variant bg-surface-container-low px-3 py-1 text-xs font-medium text-on-surface-variant transition hover:bg-surface-container"
+    >
+      {copied ? "Copied" : "Copy ID"}
+    </button>
+  );
+}
+
 export function AssessmentRow({ row }: { row: AssessmentRowData }) {
   const when = row.startedAt ?? row.createdAt;
   const showLink = row.status === "complete" && !!row.shareId;
@@ -65,7 +139,7 @@ export function AssessmentRow({ row }: { row: AssessmentRowData }) {
         {formatDuration(row.durationSec)}
       </div>
 
-      <div className="w-20 flex-shrink-0 text-right text-sm">
+      <div className="w-28 flex-shrink-0 text-right text-sm">
         {showLink ? (
           <Link
             href={`/report/${row.shareId}`}
@@ -73,6 +147,10 @@ export function AssessmentRow({ row }: { row: AssessmentRowData }) {
           >
             Report →
           </Link>
+        ) : row.status === "pending_processing" ? (
+          <ProcessButton assessmentId={row.id} />
+        ) : row.status === "processing" ? (
+          <CopyIdButton assessmentId={row.id} />
         ) : (
           <span className="text-outline">—</span>
         )}

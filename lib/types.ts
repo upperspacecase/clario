@@ -58,6 +58,7 @@ export interface Assessment {
   pipelineVersionId: string | null;
 
   createdAt: Timestamp;
+  queuedForProcessingAt: Timestamp | null;
   completedAt: Timestamp | null;
   emailedAt: Timestamp | null;
 
