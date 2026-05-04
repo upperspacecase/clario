@@ -1,19 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import {
-  Mic,
-  Phone,
-  PhoneOff,
-  Signal,
-  Wifi,
-  BatteryMedium,
-  Loader2,
-} from "lucide-react";
+import { Phone, PhoneOff } from "lucide-react";
 import { WaveformPlayer } from "./WaveformPlayer";
 import type { CallPhase, Utterance } from "./use-live-session";
-import { PROMISES } from "@/lib/promises";
-import { PhoneSteps } from "./PhoneSteps";
 
 export type CallScreenProps = {
   phase: CallPhase;
@@ -24,35 +14,9 @@ export type CallScreenProps = {
   onEnd: () => void;
 };
 
-function mmss(s: number) {
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return `${m}:${String(r).padStart(2, "0")}`;
-}
-
-function phaseStatus(phase: CallPhase, elapsed: number): string {
-  switch (phase) {
-    case "idle":
-      return "Ready to call";
-    case "requesting_mic":
-      return "Mic permission…";
-    case "connecting":
-      return "Connecting…";
-    case "live":
-      return `On call · ${mmss(elapsed)}`;
-    case "ending":
-      return "Wrapping up…";
-    case "ended":
-      return "Call ended";
-    case "error":
-      return "Error";
-  }
-}
-
 export const CallScreen: React.FC<CallScreenProps> = ({
   phase,
   utterances,
-  elapsed,
   onStart,
   onEnd,
 }) => {
@@ -64,8 +28,6 @@ export const CallScreen: React.FC<CallScreenProps> = ({
     phase === "requesting_mic" ||
     phase === "connecting" ||
     phase === "ending";
-
-  const showGenerating = phase === "ending";
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -79,58 +41,6 @@ export const CallScreen: React.FC<CallScreenProps> = ({
       className="flex h-full w-full flex-col"
       style={{ background: "#0a0a0a", color: "#fff" }}
     >
-      {/* Status bar */}
-      <div className="flex items-center justify-between px-6 pb-2 pt-1 text-[13px] font-bold text-white">
-        <span>9:41</span>
-        <div className="flex items-center gap-1" aria-hidden>
-          <Signal size={13} strokeWidth={2.5} />
-          <Wifi size={13} strokeWidth={2.5} />
-          <BatteryMedium size={18} strokeWidth={2.2} />
-        </div>
-      </div>
-
-      <PhoneSteps current={1} />
-
-      {/* Header */}
-      <div className="flex flex-col items-center gap-2 px-6 pt-4">
-        <div
-          className="flex h-14 w-14 items-center justify-center rounded-full"
-          style={{
-            background: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.12)",
-          }}
-        >
-          {showGenerating ? (
-            <Loader2
-              size={22}
-              strokeWidth={2.25}
-              className="animate-spin text-white"
-            />
-          ) : (
-            <Mic size={22} strokeWidth={2.25} className="text-white" />
-          )}
-        </div>
-        <p className="text-[22px] font-extrabold tracking-tight text-white">
-          Sam
-        </p>
-        <div className="flex items-center gap-2">
-          <span
-            className="inline-block h-[7px] w-[7px] rounded-full"
-            style={{
-              background:
-                phase === "live"
-                  ? "#22c55e"
-                  : phase === "error"
-                    ? "#ef4444"
-                    : "rgba(255,255,255,0.5)",
-            }}
-          />
-          <span className="text-[12px] font-bold uppercase tracking-[0.14em] text-white/60">
-            {phaseStatus(phase, elapsed)}
-          </span>
-        </div>
-      </div>
-
       {isIdle ? (
         <IdleState onStart={onStart} />
       ) : (
@@ -148,16 +58,15 @@ export const CallScreen: React.FC<CallScreenProps> = ({
 };
 
 const IdleState: React.FC<{ onStart: () => void }> = ({ onStart }) => (
-  <div className="flex flex-1 flex-col items-center justify-center gap-6 px-8 pb-10">
-    <p className="max-w-[280px] text-center text-[15px] leading-snug text-white/55">
-      Tap to start your {PROMISES.callDurationLabel} with Sam. Speak any
-      language.
+  <div className="flex flex-1 flex-col items-center justify-center gap-8 px-8 pb-10">
+    <p className="text-center text-[18px] font-semibold leading-snug text-white">
+      Begin your assessment
     </p>
 
     <button
       type="button"
       onClick={onStart}
-      aria-label="Call Sam"
+      aria-label="Begin your assessment"
       className="hours-call-btn relative flex h-[76px] w-[76px] items-center justify-center rounded-full transition-transform duration-150 hover:scale-[1.04] active:scale-[0.98]"
       style={{
         background: "#22c55e",
@@ -167,10 +76,6 @@ const IdleState: React.FC<{ onStart: () => void }> = ({ onStart }) => (
     >
       <Phone size={30} strokeWidth={2.25} fill="white" className="text-white" />
     </button>
-
-    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
-      Call now
-    </p>
   </div>
 );
 
