@@ -64,7 +64,7 @@ export const RoiCalculator: React.FC = () => {
   }, [hoursLost, teamSize, hourlyCost]);
 
   return (
-    <section className="relative border-t border-white/5 bg-[#1a1a1a] py-[80px] text-surface-container md:py-[120px]">
+    <section className="relative border-t border-white/5 py-[80px] text-surface-container md:py-[120px]">
       <div className="mx-auto max-w-[1120px] px-5 md:px-8">
         <div className="mb-12 md:mb-16 md:w-2/3">
           <h2 className="mb-6 font-serif text-[clamp(28px,5vw,40px)] leading-[1.2] text-white">

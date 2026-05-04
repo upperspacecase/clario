@@ -14,15 +14,7 @@ export const HomeHero: React.FC = () => {
   };
 
   return (
-    <section className="relative overflow-hidden bg-[#1a1a1a] bg-grain py-[96px] text-surface-container md:py-[160px]">
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(circle at center, #242424 0%, #1a1a1a 100%)",
-        }}
-        aria-hidden
-      />
+    <section className="relative overflow-hidden py-[96px] text-surface-container md:py-[160px]">
       <div className="relative z-10 mx-auto grid max-w-[1120px] grid-cols-1 items-center gap-12 px-5 md:grid-cols-12 md:gap-8 md:px-8">
         <div className="pr-0 md:col-span-7 md:pr-12">
           <h1 className="mb-5 font-serif text-[clamp(34px,6vw,64px)] leading-[1.1] tracking-[-0.02em] text-white md:mb-6">

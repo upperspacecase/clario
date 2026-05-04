@@ -20,7 +20,12 @@ html {
 
 html,
 body {
-  background: #121212;
+  background-color: #1a1a1a;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(242, 210, 78, 0.08), transparent 60%),
+    radial-gradient(ellipse 60% 80% at 0% 0%, rgba(116, 90, 39, 0.25), transparent 70%),
+    linear-gradient(180deg, #1f1a12 0%, #1a1a1a 40%, #141414 100%);
+  background-attachment: fixed;
   color: var(--ink);
   font-family: Inter, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;

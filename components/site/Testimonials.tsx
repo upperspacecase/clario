@@ -20,7 +20,7 @@ const quotes = [
 
 export const Testimonials: React.FC = () => {
   return (
-    <section className="border-t border-white/5 bg-[#1a1a1a] py-[80px] text-surface-container md:py-[120px]">
+    <section className="border-t border-white/5 py-[80px] text-surface-container md:py-[120px]">
       <div className="mx-auto max-w-[1120px] px-5 md:px-8">
         <div className="mb-16 text-center md:mb-20">
           <h2 className="font-serif text-[clamp(28px,5vw,40px)] leading-[1.2] text-white">
