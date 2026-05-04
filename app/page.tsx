@@ -4,6 +4,7 @@ import { RoiCalculator } from "@/components/site/RoiCalculator";
 import { HowItWorks } from "@/components/site/HowItWorks";
 import { SampleReport } from "@/components/site/SampleReport";
 import { Testimonials } from "@/components/site/Testimonials";
+import { PricingSection } from "@/components/site/PricingSection";
 import { FinalCta } from "@/components/site/FinalCta";
 
 export default function Page() {
@@ -15,6 +16,7 @@ export default function Page() {
         <HowItWorks />
         <SampleReport />
         <Testimonials />
+        <PricingSection />
         <FinalCta />
       </main>
       <SiteFooter />
