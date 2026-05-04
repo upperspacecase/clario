@@ -64,6 +64,15 @@ interface PipelineRunRow {
   completedAt: Date | null;
 }
 
+interface ReportVersionRow {
+  versionId: string;
+  pipelineRunId: string | null;
+  pipelineVersionId: string;
+  generatedAt: Date | null;
+  hoursPerWeek: number | null;
+  monthlyValue: number | null;
+}
+
 function tsToDate(value: unknown): Date | null {
   if (value instanceof Timestamp) return value.toDate();
   return null;
@@ -87,6 +96,7 @@ export default function AdminAssessmentPage({ params }: PageProps) {
   const [assessment, setAssessment] = useState<AssessmentSnapshot | null>(null);
   const [transcript, setTranscript] = useState<TranscriptRow[]>([]);
   const [pipelineRuns, setPipelineRuns] = useState<PipelineRunRow[]>([]);
+  const [reportVersions, setReportVersions] = useState<ReportVersionRow[]>([]);
   const [report, setReport] = useState<ReportData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showTranscript, setShowTranscript] = useState(false);
@@ -163,6 +173,30 @@ export default function AdminAssessmentPage({ params }: PageProps) {
             triggeredBy: data.triggeredBy ?? "cli",
             startedAt: tsToDate(data.startedAt),
             completedAt: tsToDate(data.completedAt),
+          };
+        }),
+      );
+    });
+    return unsub;
+  }, [id]);
+
+  useEffect(() => {
+    const q = query(
+      collection(clientDb(), "assessments", id, "reportVersions"),
+      orderBy("generatedAt", "desc"),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setReportVersions(
+        snap.docs.map((doc) => {
+          const data = doc.data() as Record<string, unknown>;
+          const headline = (data.headline as Headline | undefined) ?? null;
+          return {
+            versionId: doc.id,
+            pipelineRunId: (data.pipelineRunId as string | null) ?? null,
+            pipelineVersionId: (data.pipelineVersionId as string) ?? "",
+            generatedAt: tsToDate(data.generatedAt),
+            hoursPerWeek: headline?.hoursPerWeek ?? null,
+            monthlyValue: headline?.monthlyValue ?? null,
           };
         }),
       );
@@ -421,6 +455,46 @@ export default function AdminAssessmentPage({ params }: PageProps) {
                     {fmtDate(r.startedAt)}
                   </span>
                   <span className="text-xs text-outline">via {r.triggeredBy}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card title={`Report versions (${reportVersions.length})`}>
+          {reportVersions.length === 0 ? (
+            <p className="text-sm text-on-surface-variant">
+              No reports yet. Re-running the pipeline will archive each successful
+              version here. The customer always sees the latest at /r/{assessment.shareId ?? "—"}.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {reportVersions.map((v, i) => (
+                <li
+                  key={v.versionId}
+                  className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-outline-variant/60 pb-2 last:border-b-0"
+                >
+                  <span
+                    className={
+                      "rounded px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] " +
+                      (i === 0
+                        ? "bg-primary/10 text-primary"
+                        : "bg-surface-container-high text-on-surface-variant")
+                    }
+                  >
+                    {i === 0 ? "live" : `v${reportVersions.length - i}`}
+                  </span>
+                  <span className="text-xs text-on-surface-variant">
+                    {fmtDate(v.generatedAt)}
+                  </span>
+                  {v.hoursPerWeek != null && v.monthlyValue != null ? (
+                    <span className="text-xs text-outline">
+                      {v.hoursPerWeek}h/wk · ${v.monthlyValue}/mo
+                    </span>
+                  ) : null}
+                  <span className="font-mono text-[11px] text-outline">
+                    {v.pipelineVersionId || v.versionId}
+                  </span>
                 </li>
               ))}
             </ul>

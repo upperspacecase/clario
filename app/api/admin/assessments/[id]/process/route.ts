@@ -34,10 +34,16 @@ export async function POST(
   const data = snap.data() as Record<string, unknown>;
   const currentStatus = data.status as AssessmentStatus | undefined;
 
-  if (currentStatus !== "pending_processing" && currentStatus !== "failed") {
+  const allowed: AssessmentStatus[] = [
+    "pending_processing",
+    "failed",
+    "manual_review",
+    "complete",
+  ];
+  if (!currentStatus || !allowed.includes(currentStatus)) {
     return NextResponse.json(
       {
-        error: "Not in pending_processing or failed",
+        error: `Cannot run pipeline from status ${currentStatus ?? "unknown"}`,
         status: currentStatus ?? null,
       },
       { status: 409 },

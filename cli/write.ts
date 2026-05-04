@@ -7,6 +7,7 @@
 import { readFile } from "fs/promises";
 import { resolve } from "path";
 import { FieldValue } from "firebase-admin/firestore";
+import { nanoid } from "nanoid";
 import { adminDb } from "../lib/firebase-admin.js";
 
 type AssessmentPatch = {
@@ -94,7 +95,11 @@ export async function runWrite(opts: {
   if (!existing.exists) {
     throw new Error(`assessment not found: assessments/${assessmentId}`);
   }
-  const existingShareId = (existing.data() as { shareId?: string }).shareId;
+  const existingData = existing.data() as {
+    shareId?: string;
+    latestPipelineRunId?: string;
+  };
+  const existingShareId = existingData.shareId;
   if (!existingShareId) {
     throw new Error(`assessment ${assessmentId} has no shareId`);
   }
@@ -113,12 +118,19 @@ export async function runWrite(opts: {
     .collection("publicReports")
     .doc(payload.publicReport.shareId);
 
+  const runId = existingData.latestPipelineRunId ?? null;
+  const versionId = runId ?? nanoid(12);
+  const reportVersionRef = assessmentRef
+    .collection("reportVersions")
+    .doc(versionId);
+
   const batch = db.batch();
   batch.update(assessmentRef, {
     headline: payload.assessmentPatch.headline,
     executiveSummary: payload.assessmentPatch.executiveSummary,
     fourDayPlan: payload.assessmentPatch.fourDayPlan,
     pipelineVersionId: payload.assessmentPatch.pipelineVersionId,
+    latestReportVersionId: versionId,
     status: "manual_review",
     completedAt: FieldValue.serverTimestamp(),
   });
@@ -130,10 +142,17 @@ export async function runWrite(opts: {
     },
     { merge: true },
   );
+  batch.set(reportVersionRef, {
+    versionId,
+    pipelineRunId: runId,
+    pipelineVersionId: payload.assessmentPatch.pipelineVersionId,
+    generatedAt: FieldValue.serverTimestamp(),
+    ...payload.publicReport,
+  });
 
   await batch.commit();
 
   console.log(
-    `[assess-cli write] id=${assessmentId} shareId=${payload.publicReport.shareId} status=manual_review`,
+    `[assess-cli write] id=${assessmentId} shareId=${payload.publicReport.shareId} versionId=${versionId} status=manual_review`,
   );
 }

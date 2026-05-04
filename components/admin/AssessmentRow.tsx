@@ -82,15 +82,27 @@ function PipelineButton({
   const [feedback, setFeedback] = useState<"queued" | "copied" | null>(null);
 
   const command = `/gethours-pipeline ${assessmentId}`;
-  const canQueue = status === "pending_processing" || status === "failed";
+  const canQueue =
+    status === "pending_processing" ||
+    status === "failed" ||
+    status === "manual_review" ||
+    status === "complete";
   const canRecopy = status === "processing";
   const enabled = canQueue || canRecopy;
 
   let label: string;
   let tooltip: string;
   if (canQueue) {
-    label = status === "failed" ? "Re-run" : "Process";
-    tooltip = `Queue for processing and copy ${command} to your clipboard. Paste it in your terminal.`;
+    if (status === "manual_review" || status === "complete") {
+      label = "Re-run";
+      tooltip = `Run the pipeline again and copy ${command} to your clipboard. The new report replaces the public link; the previous version is archived in this assessment's history.`;
+    } else if (status === "failed") {
+      label = "Re-run";
+      tooltip = `Re-queue for processing and copy ${command} to your clipboard. Paste it in your terminal.`;
+    } else {
+      label = "Process";
+      tooltip = `Queue for processing and copy ${command} to your clipboard. Paste it in your terminal.`;
+    }
   } else if (canRecopy) {
     label = "Copy cmd";
     tooltip = `Already queued. Re-copy ${command} if you lost it from your clipboard.`;
@@ -102,7 +114,7 @@ function PipelineButton({
     tooltip = "Wait — customer hasn't confirmed details yet.";
   } else {
     label = "Process";
-    tooltip = "Pipeline already ran. Use Send report instead.";
+    tooltip = "Not available in this state.";
   }
 
   if (feedback === "queued") label = "Paste in terminal →";

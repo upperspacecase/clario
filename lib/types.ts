@@ -57,6 +57,7 @@ export interface Assessment {
 
   promptVersionId: string | null;
   pipelineVersionId: string | null;
+  latestReportVersionId: string | null;
 
   createdAt: Timestamp;
   queuedForProcessingAt: Timestamp | null;
@@ -165,6 +166,24 @@ export interface PublicReportView {
   userAgent: string;
   referrer: string | null;
   ipHash: string;
+}
+
+export interface ReportVersion {
+  versionId: string;
+  pipelineRunId: string | null;
+  pipelineVersionId: string;
+  generatedAt: Timestamp;
+  shareId: string;
+  assessmentId: string;
+  clientName: string;
+  businessName: string;
+  headline: Headline;
+  executiveSummary: string;
+  painPoints: PainPoint[];
+  recommendations: Recommendation[];
+  fourDayPlan: FourDayPlanItem[];
+  upsells: Upsell[];
+  bookingUrl: string;
 }
 
 export interface PromptVersion {
