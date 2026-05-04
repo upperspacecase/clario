@@ -18,6 +18,8 @@ export interface AssessmentRowData {
   startedAt: Date | null;
   createdAt: Date | null;
   durationSec: number | null;
+  paidAt: Date | null;
+  amountPaidUsd: number | null;
 }
 
 function formatDuration(sec: number | null): string {
@@ -38,6 +40,28 @@ function formatRelative(date: Date | null): string {
   const diffDay = Math.round(diffHr / 24);
   if (diffDay < 7) return `${diffDay}d ago`;
   return date.toLocaleDateString();
+}
+
+function PaymentChip({
+  paidAt,
+  amountUsd,
+}: {
+  paidAt: Date | null;
+  amountUsd: number | null;
+}) {
+  if (paidAt) {
+    const label = amountUsd != null ? `Paid · $${amountUsd}` : "Paid";
+    return (
+      <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-primary">
+        {label}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center rounded-full bg-surface-container-high px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-on-surface-variant">
+      Unpaid
+    </span>
+  );
 }
 
 function ProcessButton({ assessmentId }: { assessmentId: string }) {
@@ -127,8 +151,9 @@ export function AssessmentRow({ row }: { row: AssessmentRowData }) {
         </div>
       </div>
 
-      <div className="w-28 flex-shrink-0">
+      <div className="flex w-28 flex-shrink-0 flex-col items-start gap-1">
         <StatusChip status={row.status} />
+        <PaymentChip paidAt={row.paidAt} amountUsd={row.amountPaidUsd} />
       </div>
 
       <div className="hidden w-32 flex-shrink-0 text-sm text-on-surface-variant sm:block">

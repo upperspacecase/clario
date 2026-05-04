@@ -54,24 +54,25 @@ export default function StartPage() {
     const prev = previousPhaseRef.current;
     previousPhaseRef.current = live.phase;
 
-    if (assessmentId) {
-      const callEnded =
-        prev === "live" || prev === "ending" || prev === "report_generating";
-      if (
-        callEnded &&
-        (live.phase === "idle" || live.phase === "report_ready")
-      ) {
-        router.push(`/start/confirm/${assessmentId}`);
-        return;
+    if (!assessmentId) {
+      if (live.phase === "report_ready" && live.sessionId) {
+        router.push(`/report/${live.sessionId}`);
       }
-      if (live.phase === "report_ready") {
-        router.push(`/start/confirm/${assessmentId}`);
-        return;
-      }
+      return;
     }
 
-    if (!assessmentId && live.phase === "report_ready" && live.sessionId) {
-      router.push(`/report/${live.sessionId}`);
+    const wasActive =
+      prev === "live" ||
+      prev === "ending" ||
+      prev === "report_generating";
+    const isOver =
+      live.phase === "idle" ||
+      live.phase === "ending" ||
+      live.phase === "report_ready" ||
+      live.phase === "error";
+
+    if (wasActive && isOver) {
+      router.push(`/start/confirm/${assessmentId}`);
     }
   }, [assessmentId, live.phase, live.sessionId, router]);
 

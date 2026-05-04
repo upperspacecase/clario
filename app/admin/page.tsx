@@ -79,6 +79,8 @@ export default function AdminPage() {
             startedAt: tsToDate(data.callStartedAt),
             createdAt: tsToDate(data.createdAt),
             durationSec: (data.callDurationSec as number | null) ?? null,
+            paidAt: tsToDate(data.paidAt),
+            amountPaidUsd: (data.amountPaidUsd as number | null) ?? null,
           };
         });
         setRows(next);
