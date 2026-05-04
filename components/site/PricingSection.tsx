@@ -1,12 +1,57 @@
 import { PROMISES } from "@/lib/promises";
 
-const includes = [
-  `${PROMISES.callDurationLabel} with Annie, your AI interviewer`,
-  `Personalized written report, delivered ${PROMISES.reportSlaLabel}`,
-  "Verified tool recommendations with pricing and install steps",
-  "Effort × Impact matrix so you know where to start",
-  "4-day quick-win plan you can hand to your team",
-  "Free 30-minute implementation walkthrough + Q&A once your report is ready",
+type Tier = {
+  id: "audit" | "install";
+  name: string;
+  tagline: string;
+  price: string;
+  priceNote: string;
+  forWho: string;
+  includes: string[];
+  cta: string;
+  guarantee: string;
+  popular?: boolean;
+};
+
+const tiers: Tier[] = [
+  {
+    id: "audit",
+    name: "Hours Audit",
+    tagline: "The full audit. The plan. A clear path back to your time.",
+    price: "$1,000",
+    priceNote: "one-time · per audit",
+    forWho: "For owners ready to commit and execute the plan themselves.",
+    includes: [
+      `${PROMISES.callDurationLabel} with Annie, your AI interviewer`,
+      `Personalized written report, delivered ${PROMISES.reportSlaLabel}`,
+      "Verified tool recommendations with pricing and install steps",
+      "Effort × Impact matrix",
+      "4-day quick-win plan",
+      `Free ${PROMISES.followUpLabel}`,
+    ],
+    cta: "Get My Hours Audit",
+    guarantee:
+      "If your report doesn't surface at least 8 hours per week of recoverable time, full refund.",
+    popular: true,
+  },
+  {
+    id: "install",
+    name: "Hours Install",
+    tagline: "Don't just get the plan — get it done with you.",
+    price: "$3,500",
+    priceNote: "one-time · 30-day engagement",
+    forWho: "For owners who want hours back now, not after they self-install.",
+    includes: [
+      "Everything in the Hours Audit",
+      "30-day private Slack channel with Tay",
+      "3 done-with-you screen-share install sessions",
+      "Week 1, 2, and 4 accountability check-ins",
+      "One-page decision-maker brief for your team",
+    ],
+    cta: "Start the Install",
+    guarantee:
+      "If you don't recover at least 5 hours per week of working time within 30 days, full refund — and you keep all the install work.",
+  },
 ];
 
 export const PricingSection: React.FC = () => {
@@ -15,98 +60,98 @@ export const PricingSection: React.FC = () => {
       id="pricing"
       className="relative overflow-hidden border-t border-white/5 bg-[#121212] bg-grain py-[64px] text-surface-container md:py-[120px]"
     >
-      <div className="relative z-10 mx-auto max-w-[1120px] px-5 md:px-8">
+      <div className="relative z-10 mx-auto max-w-[1080px] px-5 md:px-8">
         <div className="mb-12 text-center md:mb-16">
-          <h2 className="mb-4 font-serif text-[clamp(28px,5vw,44px)] leading-[1.15] tracking-[-0.01em] text-surface-container">
-            One audit. One report. A clear path back to your time.
+          <h2 className="mb-4 font-serif text-[clamp(28px,5vw,48px)] leading-[1.1] tracking-[-0.02em] text-surface-container">
+            Stop being your business&apos;s bottleneck.
           </h2>
           <p className="mx-auto max-w-2xl font-[Inter] text-base leading-[1.6] text-[#a3a3a3] md:text-lg">
-            Most owners we talk to are losing 10 or more hours a week to admin
-            and disconnected tools. The Hours Audit finds where, why, and what
-            to do about it.
+            Two ways to get hours back. Pick the one that matches how done you
+            want it.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-px overflow-hidden border border-white/10 bg-white/10 md:grid-cols-5">
-          {/* Offer card — left 3/5 */}
-          <div className="bg-[#141414] p-8 sm:p-10 md:col-span-3">
-            <p className="mb-3 font-[Inter] text-[12px] font-semibold uppercase tracking-[0.18em] text-[#737373]">
-              The Hours Audit
-            </p>
-
-            <div className="mb-6 flex items-baseline gap-3">
-              <span className="font-serif text-[clamp(48px,7vw,72px)] leading-none tracking-[-0.02em] text-surface-container">
-                $1,000
-              </span>
-              <span className="font-[Inter] text-sm text-[#a3a3a3]">
-                one-time · per audit
-              </span>
-            </div>
-
-            <ul className="mb-8 space-y-3">
-              {includes.map((item) => (
-                <li
-                  key={item}
-                  className="flex items-start gap-3 font-[Inter] text-[15px] leading-[1.55] text-surface-container/90"
-                >
-                  <span
-                    aria-hidden
-                    className="material-symbols-outlined mt-0.5 text-[18px] text-primary-container"
-                  >
-                    check
-                  </span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-
-            <a
-              href="/#phone"
-              className="mb-4 inline-block bg-primary-container px-10 py-4 font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-on-primary-fixed transition-opacity hover:opacity-80"
+        <div className="mx-auto grid max-w-[860px] grid-cols-1 gap-6 md:grid-cols-2 md:gap-5">
+          {tiers.map((tier) => (
+            <article
+              key={tier.id}
+              className={
+                tier.popular
+                  ? "relative flex flex-col border-2 border-primary-container bg-[#161616] p-8 sm:p-10"
+                  : "relative flex flex-col border border-white/10 bg-[#141414] p-8 sm:p-10"
+              }
             >
-              Get My Hours Audit
-            </a>
+              {tier.popular && (
+                <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 bg-primary-container px-4 py-1 font-[Inter] text-[11px] font-semibold uppercase tracking-[0.18em] text-on-primary-fixed">
+                  Most popular
+                </span>
+              )}
 
-            <p className="font-[Inter] text-sm leading-[1.55] text-[#737373]">
-              No card required to start. We confirm your call slot first, then
-              send a single invoice.
-            </p>
-          </div>
+              <p className="mb-2 font-[Inter] text-[12px] font-semibold uppercase tracking-[0.18em] text-[#737373]">
+                {tier.name}
+              </p>
+              <p className="mb-6 font-serif text-lg leading-[1.35] text-surface-container/90">
+                {tier.tagline}
+              </p>
 
-          {/* Trust column — right 2/5 */}
-          <div className="flex flex-col gap-8 bg-[#101010] p-8 sm:p-10 md:col-span-2">
-            <div>
-              <p className="mb-3 font-[Inter] text-[12px] font-semibold uppercase tracking-[0.18em] text-primary-container/80">
-                Our guarantee
-              </p>
-              <p className="font-serif text-lg leading-[1.4] text-surface-container">
-                If your report doesn&apos;t surface at least{" "}
-                <span className="text-primary-container">10 hours a week</span>{" "}
-                of recoverable time, you pay nothing.
-              </p>
-            </div>
+              <div className="mb-6 flex items-baseline gap-3">
+                <span className="font-serif text-[clamp(40px,5.5vw,56px)] leading-none tracking-[-0.02em] text-surface-container">
+                  {tier.price}
+                </span>
+                <span className="font-[Inter] text-xs text-[#a3a3a3]">
+                  {tier.priceNote}
+                </span>
+              </div>
 
-            <div className="h-px bg-white/10" />
+              <p className="mb-6 font-[Inter] text-sm leading-[1.55] text-[#a3a3a3]">
+                {tier.forWho}
+              </p>
 
-            <div>
-              <p className="mb-3 font-[Inter] text-[12px] font-semibold uppercase tracking-[0.18em] text-[#737373]">
-                Why we cap it
+              <ul className="mb-8 space-y-3">
+                {tier.includes.map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-start gap-3 font-[Inter] text-[14px] leading-[1.55] text-surface-container/90"
+                  >
+                    <span
+                      aria-hidden
+                      className="material-symbols-outlined mt-0.5 text-[18px] text-primary-container"
+                    >
+                      check
+                    </span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <a
+                href={`/?tier=${tier.id}#phone`}
+                className={
+                  tier.popular
+                    ? "mb-4 inline-block bg-primary-container px-6 py-3.5 text-center font-[Inter] text-[12px] font-semibold uppercase tracking-[0.05em] text-on-primary-fixed transition-opacity hover:opacity-80"
+                    : "mb-4 inline-block border border-primary-container px-6 py-3.5 text-center font-[Inter] text-[12px] font-semibold uppercase tracking-[0.05em] text-primary-container transition-colors hover:bg-primary-container/10"
+                }
+              >
+                {tier.cta}
+              </a>
+
+              <p className="mt-auto border-t border-white/5 pt-4 font-[Inter] text-[12px] leading-[1.5] text-[#737373]">
+                <span className="font-semibold uppercase tracking-[0.14em] text-[#a3a3a3]">
+                  Guarantee
+                </span>
+                <br />
+                {tier.guarantee}
               </p>
-              <p className="font-[Inter] text-[15px] leading-[1.55] text-[#a3a3a3]">
-                Every report is personally reviewed before it lands in your
-                inbox. We take five audits a week so each one gets the
-                attention it deserves.
-              </p>
-            </div>
-          </div>
+            </article>
+          ))}
         </div>
 
-        <p className="mt-8 text-center font-[Inter] text-sm leading-[1.6] text-[#737373]">
-          Use the calculator above with your own numbers. If the audit
-          doesn&apos;t pay for itself in the first month, the guarantee covers
-          you.
+        <p className="mt-10 text-center font-[Inter] text-sm leading-[1.6] text-[#737373]">
+          We onboard a small cohort each month — limited Install and Audit
+          slots per intake.
         </p>
       </div>
     </section>
   );
 };
+
