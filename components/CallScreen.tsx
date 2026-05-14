@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Image from "next/image";
 import { Phone, PhoneOff } from "lucide-react";
 import { WaveformPlayer } from "./WaveformPlayer";
 import type { CallPhase, Utterance } from "./use-live-session";
@@ -58,24 +59,45 @@ export const CallScreen: React.FC<CallScreenProps> = ({
 };
 
 const IdleState: React.FC<{ onStart: () => void }> = ({ onStart }) => (
-  <div className="flex flex-1 flex-col items-center justify-between px-8 pb-12 pt-14">
-    <p className="text-center text-[18px] font-semibold leading-snug text-white">
-      Begin your assessment
-    </p>
+  <div className="flex flex-1 flex-col items-center px-8 pb-10 pt-12">
+    <Image
+      src="/hrs-logo-light.png"
+      alt="hrs"
+      width={696}
+      height={358}
+      priority
+      className="h-12 w-auto"
+    />
 
-    <button
-      type="button"
-      onClick={onStart}
-      aria-label="Begin your assessment"
-      className="hours-call-btn relative flex h-[76px] w-[76px] items-center justify-center rounded-full transition-transform duration-150 hover:scale-[1.04] active:scale-[0.98]"
-      style={{
-        background: "#22c55e",
-        boxShadow:
-          "0 10px 24px rgba(34, 197, 94, 0.45), inset 0 1px 0 rgba(255,255,255,0.2)",
-      }}
-    >
-      <Phone size={30} strokeWidth={2.25} fill="white" className="text-white" />
-    </button>
+    <div className="mt-14 text-center">
+      <h2 className="text-[22px] font-bold leading-tight text-white">
+        Start Assessment
+      </h2>
+      <p className="mx-auto mt-2 max-w-[230px] text-[14px] leading-snug text-white/65">
+        Tap to start your 2 minute introductory call
+      </p>
+    </div>
+
+    <div className="flex-1" />
+
+    <div className="flex flex-col items-center">
+      <button
+        type="button"
+        onClick={onStart}
+        aria-label="Begin your assessment"
+        className="hours-call-btn relative flex h-[76px] w-[76px] items-center justify-center rounded-full transition-transform duration-150 hover:scale-[1.04] active:scale-[0.98]"
+        style={{
+          background: "#22c55e",
+          boxShadow:
+            "0 0 32px rgba(34, 197, 94, 0.55), 0 0 64px rgba(34, 197, 94, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+        }}
+      >
+        <Phone size={30} strokeWidth={2.25} fill="white" className="text-white" />
+      </button>
+      <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/40">
+        Call now
+      </p>
+    </div>
   </div>
 );
 
