@@ -39,6 +39,85 @@ function fromAddress(): string {
   return process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev";
 }
 
+// ---------- branded HTML email shell ----------
+// Single template every email body composes into. Mirrors the cream + olive +
+// terracotta brand from the site (see app/r/[shareId]/page.tsx and the
+// BookingPicker). System sans for body, Georgia for the wordmark — both
+// reliable across mail clients.
+
+const BRAND = {
+  bgPage: "#F8F2E6",
+  bgCard: "#FBF7EB",
+  border: "rgba(162,138,67,0.34)",
+  ink: "#1E1A14",
+  inkSoft: "#5a5448",
+  olive: "#A28A43",
+  terracotta: "#C05A3E",
+};
+
+function renderBrandedEmail(opts: {
+  preheader?: string;
+  body: string; // already-built HTML for the middle slot
+}): string {
+  const preheader = opts.preheader
+    ? `<div style="display:none;overflow:hidden;line-height:1px;max-height:0;max-width:0;opacity:0;color:transparent;">${escapeHtml(opts.preheader)}</div>`
+    : "";
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hours</title>
+</head>
+<body style="margin:0;padding:0;background-color:${BRAND.bgPage};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;color:${BRAND.ink};">
+${preheader}
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:${BRAND.bgPage};">
+  <tr><td align="center" style="padding:32px 16px;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;background-color:${BRAND.bgCard};border:1px solid ${BRAND.border};border-radius:10px;">
+      <tr><td style="padding:28px 32px 0 32px;">
+        <div style="font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:700;color:${BRAND.olive};letter-spacing:-0.01em;">Hours</div>
+        <div style="height:1px;background:${BRAND.border};margin:20px 0 24px 0;"></div>
+      </td></tr>
+      <tr><td style="padding:0 32px 8px 32px;font-size:15px;line-height:1.55;color:${BRAND.ink};">
+${opts.body}
+      </td></tr>
+      <tr><td style="padding:24px 32px 28px 32px;">
+        <div style="height:1px;background:${BRAND.border};margin:0 0 16px 0;"></div>
+        <div style="font-size:12px;color:${BRAND.inkSoft};line-height:1.5;">
+          Hours — get your time back. <a href="https://gethours.org" style="color:${BRAND.olive};text-decoration:none;">gethours.org</a>
+        </div>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`;
+}
+
+function brandP(html: string): string {
+  return `<p style="margin:0 0 16px 0;font-size:15px;line-height:1.55;color:${BRAND.ink};">${html}</p>`;
+}
+
+function brandH(html: string): string {
+  return `<h1 style="margin:0 0 16px 0;font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:1.25;font-weight:700;color:${BRAND.ink};letter-spacing:-0.005em;">${html}</h1>`;
+}
+
+function brandMeta(html: string): string {
+  return `<p style="margin:0 0 8px 0;font-size:14px;line-height:1.5;color:${BRAND.inkSoft};">${html}</p>`;
+}
+
+function brandSignoff(html: string): string {
+  return `<p style="margin:24px 0 0 0;font-size:14px;color:${BRAND.inkSoft};">${html}</p>`;
+}
+
+function brandButton(href: string, label: string): string {
+  return `<p style="margin:0 0 16px 0;"><a href="${href}" style="display:inline-block;background:${BRAND.terracotta};color:${BRAND.bgPage};text-decoration:none;padding:12px 24px;border-radius:9999px;font-weight:600;font-size:14px;letter-spacing:0.01em;">${escapeHtml(label)}</a></p>`;
+}
+
+function brandLink(href: string, label: string): string {
+  return `<a href="${href}" style="color:${BRAND.olive};text-decoration:underline;">${escapeHtml(label)}</a>`;
+}
+
 export async function sendCallConfirmation(args: {
   to: string;
   clientName: string;
@@ -58,15 +137,18 @@ export async function sendCallConfirmation(args: {
     "",
     "— The Hours team",
   ].join("\n");
-  const html = `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#1E1A14; max-width:560px; margin:0 auto; padding:24px;">
-      <p style="margin:0 0 16px 0;">Hi ${escapeHtml(greetingName)},</p>
-      <p style="margin:0 0 16px 0;">Thanks for taking the call with Sam.</p>
-      <p style="margin:0 0 16px 0;">Your written report is being prepared. We will email it to this address as soon as it is ready (within 24 hours).</p>
-      <p style="margin:0 0 16px 0;">If you need to reach us in the meantime, reply to this email.</p>
-      <p style="margin:24px 0 0 0; color:#5a5448;">— The Hours team</p>
-    </div>
-  `;
+  const html = renderBrandedEmail({
+    preheader: "Your written report is being prepared — within 24 hours.",
+    body: [
+      brandH("Thanks for the call."),
+      brandP(`Hi ${escapeHtml(greetingName)} — thanks for taking the call with Sam.`),
+      brandP(
+        "Your written report is being prepared. We will email it to this address as soon as it is ready (within 24 hours).",
+      ),
+      brandP("If you need to reach us in the meantime, reply to this email."),
+      brandSignoff("— The Hours team"),
+    ].join("\n"),
+  });
   try {
     await sendViaResend({
       from: fromAddress(),
@@ -103,15 +185,20 @@ export async function sendAdminNotification(args: {
     "",
     `Admin view: ${adminLink}`,
   ].join("\n");
-  const html = `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#1E1A14; max-width:560px; margin:0 auto; padding:24px;">
-      <p style="margin:0 0 16px 0;"><strong>New Hours assessment in.</strong></p>
-      <p style="margin:0 0 8px 0;">Business: ${escapeHtml(displayBusiness)}</p>
-      <p style="margin:0 0 8px 0;">Assessment ID: <code>${escapeHtml(assessmentId)}</code></p>
-      <p style="margin:0 0 16px 0;">Share ID: <code>${escapeHtml(shareId)}</code></p>
-      <p style="margin:0 0 16px 0;"><a href="${adminLink}">Open in admin</a></p>
-    </div>
-  `;
+  const html = renderBrandedEmail({
+    preheader: `New assessment: ${displayBusiness}`,
+    body: [
+      brandH("New assessment in."),
+      brandMeta(`<strong>Business:</strong> ${escapeHtml(displayBusiness)}`),
+      brandMeta(
+        `<strong>Assessment ID:</strong> <code style="font-family:Menlo,Consolas,monospace;font-size:13px;">${escapeHtml(assessmentId)}</code>`,
+      ),
+      brandMeta(
+        `<strong>Share ID:</strong> <code style="font-family:Menlo,Consolas,monospace;font-size:13px;">${escapeHtml(shareId)}</code>`,
+      ),
+      `<div style="margin-top:20px;">${brandButton(adminLink, "Open in admin")}</div>`,
+    ].join("\n"),
+  });
   try {
     await sendViaResend({
       from: fromAddress(),
@@ -145,15 +232,21 @@ export async function sendReportReady(args: {
     "",
     "— The Hours team",
   ].join("\n");
-  const html = `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#1E1A14; max-width:560px; margin:0 auto; padding:24px;">
-      <p style="margin:0 0 16px 0;">Hi ${escapeHtml(greetingName)},</p>
-      <p style="margin:0 0 16px 0;">Your Hours report is ready: <a href="${reportUrl}">${reportUrl}</a></p>
-      <p style="margin:0 0 16px 0;">It walks through where time is going in your business, the highest-impact tools to fix it, and a 4-day plan to get going.</p>
-      <p style="margin:0 0 16px 0;">There's a link at the bottom of the report to book a free 60-minute walkthrough where we go through it together and answer your questions.</p>
-      <p style="margin:24px 0 0 0; color:#5a5448;">— The Hours team</p>
-    </div>
-  `;
+  const html = renderBrandedEmail({
+    preheader: "Your Hours report is ready.",
+    body: [
+      brandH("Your report is ready."),
+      brandP(`Hi ${escapeHtml(greetingName)},`),
+      brandP(
+        "It walks through where time is going in your business, the highest-impact tools to fix it, and a 4-day plan to get going.",
+      ),
+      brandButton(reportUrl, "Open your report"),
+      brandP(
+        "There's a link at the bottom of the report to book a free 60-minute walkthrough where we go through it together and answer your questions.",
+      ),
+      brandSignoff("— The Hours team"),
+    ].join("\n"),
+  });
   try {
     await sendViaResend({
       from: fromAddress(),
@@ -273,18 +366,32 @@ export async function sendBookingConfirmation(args: {
     "— The Hours team",
   ].filter(Boolean).join("\n");
 
-  const html = `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#1E1A14; max-width:560px; margin:0 auto; padding:24px;">
-      <p style="margin:0 0 16px 0;">Hi ${escapeHtml(greetingName)},</p>
-      <p style="margin:0 0 16px 0;">You're booked in for your free 60-minute implementation walkthrough + Q&amp;A.</p>
-      <p style="margin:0 0 8px 0;"><strong>When:</strong> ${escapeHtml(startSydney)} – ${escapeHtml(endSydneyTime)} (Sydney time)</p>
-      ${args.joinUrl ? `<p style="margin:0 0 16px 0;"><strong>Join:</strong> <a href="${escapeHtml(args.joinUrl)}">${escapeHtml(args.joinUrl)}</a></p>` : `<p style="margin:0 0 16px 0;">Tay will email you the joining details before the call.</p>`}
-      ${args.notes ? `<p style="margin:0 0 16px 0;"><strong>Your note:</strong> ${escapeHtml(args.notes)}</p>` : ""}
-      <p style="margin:0 0 16px 0;">A calendar invite is attached.</p>
-      <p style="margin:0 0 16px 0;">If you need to reschedule, just reply to this email.</p>
-      <p style="margin:24px 0 0 0; color:#5a5448;">— The Hours team</p>
-    </div>
-  `;
+  const html = renderBrandedEmail({
+    preheader: `Walkthrough booked: ${startSydney}`,
+    body: [
+      brandH("You're booked."),
+      brandP(`Hi ${escapeHtml(greetingName)},`),
+      brandP(
+        "You're booked in for your free 60-minute implementation walkthrough + Q&amp;A.",
+      ),
+      brandMeta(
+        `<strong>When:</strong> ${escapeHtml(startSydney)} – ${escapeHtml(endSydneyTime)} (Sydney time)`,
+      ),
+      args.joinUrl
+        ? brandMeta(
+            `<strong>Join:</strong> ${brandLink(args.joinUrl, args.joinUrl)}`,
+          )
+        : brandP("Tay will email you the joining details before the call."),
+      args.notes
+        ? brandMeta(`<strong>Your note:</strong> ${escapeHtml(args.notes)}`)
+        : "",
+      brandP("A calendar invite is attached."),
+      brandP("If you need to reschedule, just reply to this email."),
+      brandSignoff("— The Hours team"),
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  });
 
   try {
     await sendViaResend({
@@ -340,17 +447,26 @@ export async function sendBookingAdminNotification(args: {
     `Admin: ${adminLink}`,
   ].filter(Boolean).join("\n");
 
-  const html = `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#1E1A14; max-width:560px; margin:0 auto; padding:24px;">
-      <p style="margin:0 0 16px 0;"><strong>New walkthrough booking.</strong></p>
-      <p style="margin:0 0 8px 0;">Business: ${escapeHtml(displayBusiness)}</p>
-      <p style="margin:0 0 8px 0;">Client: ${escapeHtml(args.clientName)} &lt;${escapeHtml(args.clientEmail)}&gt;</p>
-      <p style="margin:0 0 8px 0;">When: ${escapeHtml(startSydney)} – ${escapeHtml(endSydneyTime)} (Sydney)</p>
-      ${args.notes ? `<p style="margin:0 0 16px 0;"><strong>Notes:</strong> ${escapeHtml(args.notes)}</p>` : ""}
-      <p style="margin:0 0 8px 0;"><a href="${reportLink}">Open report</a></p>
-      <p style="margin:0 0 16px 0;"><a href="${adminLink}">Open in admin</a></p>
-    </div>
-  `;
+  const html = renderBrandedEmail({
+    preheader: `${displayBusiness} booked a walkthrough — ${startSydney}`,
+    body: [
+      brandH("New walkthrough booking."),
+      brandMeta(`<strong>Business:</strong> ${escapeHtml(displayBusiness)}`),
+      brandMeta(
+        `<strong>Client:</strong> ${escapeHtml(args.clientName)} &lt;${escapeHtml(args.clientEmail)}&gt;`,
+      ),
+      brandMeta(
+        `<strong>When:</strong> ${escapeHtml(startSydney)} – ${escapeHtml(endSydneyTime)} (Sydney)`,
+      ),
+      args.notes
+        ? brandMeta(`<strong>Notes:</strong> ${escapeHtml(args.notes)}`)
+        : "",
+      `<div style="margin-top:20px;">${brandButton(adminLink, "Open in admin")}</div>`,
+      brandMeta(brandLink(reportLink, "Open report")),
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  });
 
   try {
     await sendViaResend({
@@ -382,14 +498,20 @@ export async function sendBookingCancellation(args: {
     "",
     "— The Hours team",
   ].join("\n");
-  const html = `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#1E1A14; max-width:560px; margin:0 auto; padding:24px;">
-      <p style="margin:0 0 16px 0;">Hi ${escapeHtml(greetingName)},</p>
-      <p style="margin:0 0 16px 0;">Your walkthrough on <strong>${escapeHtml(startSydney)}</strong> (Sydney time) has been cancelled.</p>
-      <p style="margin:0 0 16px 0;">If this was a mistake or you'd like to rebook, reply to this email and we'll sort it out.</p>
-      <p style="margin:24px 0 0 0; color:#5a5448;">— The Hours team</p>
-    </div>
-  `;
+  const html = renderBrandedEmail({
+    preheader: `Walkthrough on ${startSydney} — cancelled`,
+    body: [
+      brandH("Walkthrough cancelled."),
+      brandP(`Hi ${escapeHtml(greetingName)},`),
+      brandP(
+        `Your walkthrough on <strong>${escapeHtml(startSydney)}</strong> (Sydney time) has been cancelled.`,
+      ),
+      brandP(
+        "If this was a mistake or you'd like to rebook, reply to this email and we'll sort it out.",
+      ),
+      brandSignoff("— The Hours team"),
+    ].join("\n"),
+  });
   try {
     await sendViaResend({
       from: fromAddress(),
