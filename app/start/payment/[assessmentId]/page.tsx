@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { adminDb } from "@/lib/firebase-admin";
 import { getAssessmentPriceCents, isFreePilotMode } from "@/lib/stripe";
-import { PhoneScreenWrap } from "@/components/PhoneScreenWrap";
+import { PhoneSteps } from "@/components/PhoneSteps";
+import { CheckoutCalculator } from "@/components/CheckoutCalculator";
 import { PayButton } from "./PayButton";
 
 export const runtime = "nodejs";
@@ -29,9 +30,12 @@ export default async function PaymentPage({ params }: PageProps) {
   if (!snap.exists) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#121212] px-5 py-10 md:px-8">
-        <div className="w-full max-w-[420px]">
-          <PhoneScreenWrap current={2}>
-            <h1 className="text-[18px] font-extrabold tracking-tight text-white">
+        <div className="w-full max-w-[520px]">
+          <div className="mb-4">
+            <PhoneSteps current={2} />
+          </div>
+          <div className="rounded-lg border border-[#27272a] bg-[#0a0a0a] p-6 md:p-8">
+            <h1 className="text-[20px] font-extrabold tracking-tight text-white">
               Assessment not found
             </h1>
             <p className="mt-2 text-[13px] leading-snug text-white/60">
@@ -43,7 +47,7 @@ export default async function PaymentPage({ params }: PageProps) {
             >
               Return home
             </Link>
-          </PhoneScreenWrap>
+          </div>
         </div>
       </main>
     );
@@ -82,15 +86,18 @@ export default async function PaymentPage({ params }: PageProps) {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#121212] px-5 py-10 md:px-8">
-      <div className="w-full max-w-[420px]">
-        <PhoneScreenWrap current={2}>
+      <div className="w-full max-w-[520px]">
+        <div className="mb-4">
+          <PhoneSteps current={2} />
+        </div>
+        <div className="rounded-lg border border-[#27272a] bg-[#0a0a0a] p-6 md:p-8">
           <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#A28A43]">
             Payment
           </p>
-          <h1 className="mb-2 text-[20px] font-extrabold tracking-tight text-white">
+          <h1 className="mb-2 text-[22px] font-extrabold tracking-tight text-white">
             Almost there.
           </h1>
-          <p className="mb-5 text-[12px] leading-snug text-white/55">
+          <p className="mb-5 text-[13px] leading-snug text-white/55">
             Pay for your Hours assessment. Our team writes the report and emails
             it to <span className="text-white/80">{clientEmail}</span> within 24
             hours.
@@ -111,13 +118,20 @@ export default async function PaymentPage({ params }: PageProps) {
             </p>
           </div>
 
+          <div className="mb-5">
+            <CheckoutCalculator
+              assessmentId={assessmentId}
+              costUsd={priceUsd}
+            />
+          </div>
+
           <PayButton assessmentId={assessmentId} priceLabel={priceLabel} />
 
           <p className="mt-3 text-[11px] text-white/40">
             Secure payment via Stripe. You will be redirected to Stripe to
             complete the transaction.
           </p>
-        </PhoneScreenWrap>
+        </div>
       </div>
     </main>
   );
