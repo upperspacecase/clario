@@ -1,6 +1,5 @@
 import { adminAuth } from "@/lib/firebase-admin";
-
-const ALLOWED_EMAIL = "tay@life-time.co";
+import { isAdminEmail } from "@/lib/admin-emails";
 
 export class AdminAuthError extends Error {
   status: number;
@@ -25,9 +24,9 @@ export async function requireAdmin(req: Request): Promise<{ uid: string; email: 
     throw new AdminAuthError("Invalid token", 401);
   }
 
-  if (decoded.email !== ALLOWED_EMAIL || decoded.email_verified !== true) {
+  if (!isAdminEmail(decoded.email) || decoded.email_verified !== true) {
     throw new AdminAuthError("Forbidden", 403);
   }
 
-  return { uid: decoded.uid, email: decoded.email };
+  return { uid: decoded.uid, email: decoded.email! };
 }

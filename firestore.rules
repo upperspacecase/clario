@@ -3,8 +3,9 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function isAdmin() {
+      // Keep in sync with lib/admin-emails.ts.
       return request.auth != null
-        && request.auth.token.email == 'tay@life-time.co'
+        && request.auth.token.email in ['tay@life-time.co', 'taytoddpattison@gmail.com']
         && request.auth.token.email_verified == true;
     }
 

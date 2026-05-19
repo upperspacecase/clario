@@ -3,14 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { Timestamp } from "firebase-admin/firestore";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { isAdminEmail } from "@/lib/admin-emails";
 import { cancelBooking, listBookings } from "@/lib/bookings";
 import { sendBookingCancellation } from "@/lib/email";
 
-const ALLOWED_EMAIL = "tay@life-time.co";
-
 async function requireAdmin(idToken: string): Promise<void> {
   const decoded = await adminAuth().verifyIdToken(idToken);
-  if (decoded.email !== ALLOWED_EMAIL || !decoded.email_verified) {
+  if (!isAdminEmail(decoded.email) || !decoded.email_verified) {
     throw new Error("Forbidden");
   }
 }

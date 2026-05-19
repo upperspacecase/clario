@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { isAdminEmail } from "@/lib/admin-emails";
 import { sendReportReady } from "@/lib/email";
 import type { AssessmentStatus } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const ALLOWED_EMAIL = "tay@life-time.co";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function requireAdmin(req: Request): Promise<string | null> {
@@ -16,7 +16,7 @@ async function requireAdmin(req: Request): Promise<string | null> {
   if (!m) return null;
   try {
     const decoded = await adminAuth().verifyIdToken(m[1]);
-    if (decoded.email !== ALLOWED_EMAIL || !decoded.email_verified) return null;
+    if (!isAdminEmail(decoded.email) || !decoded.email_verified) return null;
     return decoded.uid;
   } catch {
     return null;

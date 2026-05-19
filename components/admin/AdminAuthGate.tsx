@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { clientAuth } from "@/lib/firebase-client";
-
-const ALLOWED_EMAIL = "tay@life-time.co";
+import { isAdminEmail } from "@/lib/admin-emails";
 
 type AuthState =
   | { kind: "loading" }
@@ -24,7 +23,7 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
         setState({ kind: "signed_out" });
         return;
       }
-      if (user.email === ALLOWED_EMAIL && user.emailVerified) {
+      if (isAdminEmail(user.email) && user.emailVerified) {
         setState({ kind: "allowed", user });
       } else {
         setState({ kind: "denied", user });
