@@ -13,7 +13,8 @@
     "server": "tsx watch server/live.ts",
     "server:once": "tsx server/live.ts",
     "assess-cli": "tsx cli/assess-cli.ts",
-    "seed:config": "tsx scripts/seed-config.ts"
+    "seed:config": "tsx scripts/seed-config.ts",
+    "seed:prompt": "tsx scripts/seed-prompt.ts"
   },
   "dependencies": {
     "@google/genai": "^1.50.1",

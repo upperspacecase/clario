@@ -1,13 +1,30 @@
-// Editable system instruction for the Live discovery agent.
-// Tweak this without touching tool or report code.
+// One-time seed: creates prompts/default and sets config/global.activePromptId.
+// Idempotent — bails if an active prompt is already set. Run with:
+//   npx tsx scripts/seed-prompt.ts
 //
-// Template variables substituted server-side before the prompt is sent to
-// Gemini Live. Add new ones here and replace in buildSystemInstruction below.
+// The prompt body below is the canonical bootstrap. After seeding, edit via
+// /admin/prompts — Firestore is the source of truth from that point on.
 
-export const SYSTEM_INSTRUCTION_TEMPLATE = `
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+import { config as loadDotenv } from "dotenv";
+
+const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+loadDotenv({ path: join(REPO_ROOT, ".env.local"), quiet: true });
+loadDotenv({ path: join(REPO_ROOT, ".env"), quiet: true });
+
+import {
+  createPrompt,
+  activatePrompt,
+  getActivePromptId,
+  getPrompt,
+  listPrompts,
+} from "../lib/prompts.js";
+
+const DEFAULT_PROMPT = `
 # IDENTITY
 
-You are {agentName}, a friendly AI interviewer from GetHours.org. You help business operators talk through how their work week actually goes, so the team behind GetHours can build them a personalized report on where AI and software could give them their time back.
+You are Sam, a friendly AI interviewer from GetHours.org. You help business operators talk through how their work week actually goes, so the team behind GetHours can build them a personalized report on where AI and software could give them their time back.
 
 You are not a salesperson, a consultant, or an advisor. You ask short questions and listen.
 
@@ -29,7 +46,7 @@ This is the most important rule on this call: do less talking, more listening.
 - When you do speak, reflect back what you heard in their words before asking the next thing. A short reflection beats a long question.
 - Match their energy. If they're concise, you're concise. If they're chatty, follow the thread.
 - Use their first name sparingly — a couple of times across the whole call, never every turn.
-- Never claim to be human. If asked: "I'm an AI — my name's {agentName}. The report at the end is built by real humans using everything we talk about."
+- Never claim to be human. If asked: "I'm an AI — my name's Sam. The report at the end is built by real humans using everything we talk about."
 - Use "assessment," "report," or "conversation." Avoid the word "audit."
 
 If you find yourself talking more than them, stop. Re-ask the last question or just say "tell me more about that."
@@ -151,12 +168,44 @@ If they ask: "That's exactly what the team handles after this call. They'll send
 When the call connects, begin Phase 0.
 `;
 
-export interface SystemInstructionVars {
-  agentName: string;
+async function main() {
+  const existingActiveId = await getActivePromptId();
+  if (existingActiveId) {
+    const existing = await getPrompt(existingActiveId);
+    if (existing) {
+      console.log(
+        `[seed-prompt] active prompt already set — skipping. id=${existingActiveId} name=${JSON.stringify(existing.name)}`,
+      );
+      return;
+    }
+    console.warn(
+      `[seed-prompt] config/global.activePromptId=${existingActiveId} but doc is missing — will re-seed`,
+    );
+  }
+
+  const all = await listPrompts();
+  if (all.length > 0 && !existingActiveId) {
+    const first = all[0];
+    console.log(
+      `[seed-prompt] prompts collection has ${all.length} doc(s) already — activating the oldest: ${first.id}`,
+    );
+    await activatePrompt(first.id);
+    return;
+  }
+
+  const created = await createPrompt({
+    name: "Default (Sam, UK)",
+    prompt: DEFAULT_PROMPT.trim(),
+    voice: "Aoede",
+    model: "gemini-3.1-flash-live-preview",
+  });
+  await activatePrompt(created.id);
+  console.log(
+    `[seed-prompt] created and activated prompts/${created.id} name=${JSON.stringify(created.name)}`,
+  );
 }
 
-export function buildSystemInstruction(vars: SystemInstructionVars): string {
-  return SYSTEM_INSTRUCTION_TEMPLATE.replace(/\{agentName\}/g, vars.agentName);
-}
-
-export const SYSTEM_INSTRUCTION = SYSTEM_INSTRUCTION_TEMPLATE;
+main().catch((e) => {
+  console.error("[seed-prompt] failed:", e instanceof Error ? e.stack : e);
+  process.exit(1);
+});

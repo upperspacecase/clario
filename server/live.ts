@@ -19,17 +19,18 @@ import {
   type LiveServerMessage,
 } from "@google/genai";
 import { randomUUID } from "crypto";
-import { buildSystemInstruction } from "./system-instruction.js";
 import { TOOL_DECLARATIONS } from "./tools.js";
 import { TranscriptBuffer } from "./firestore-writer.js";
 import { verifyVoiceSessionToken } from "../lib/voice-token.js";
 import { adminDb } from "../lib/firebase-admin.js";
+import {
+  getActivePrompt,
+  toSnapshot,
+  type PromptSnapshot,
+} from "../lib/prompts.js";
 import { FieldValue } from "firebase-admin/firestore";
 
 const PORT = Number(process.env.LIVE_WS_PORT ?? 3043);
-const MODEL = process.env.LIVE_MODEL ?? "gemini-3.1-flash-live-preview";
-const VOICE = process.env.LIVE_VOICE ?? "Kore";
-const AGENT_NAME = process.env.LIVE_AGENT_NAME ?? "Sam";
 
 if (!process.env.GEMINI_API_KEY) {
   console.error("[SERVER] GEMINI_API_KEY missing — aborting");
@@ -64,7 +65,7 @@ const httpServer = createServer((req: IncomingMessage, res: ServerResponse) => {
   const url = new URL(req.url ?? "/", `http://localhost:${PORT}`);
 
   if (req.method === "GET" && url.pathname === "/health") {
-    sendJson(res, 200, { ok: true, model: MODEL, voice: VOICE });
+    sendJson(res, 200, { ok: true });
     return;
   }
 
@@ -110,6 +111,7 @@ wss.on("connection", async (ws, req) => {
   let voiceSessionUuid: string | null = null;
   let currentSessionHandle = "";
   let transcriptBuffer: TranscriptBuffer | null = null;
+  let promptSnapshot: PromptSnapshot | null = null;
   const clientConnectedAtMs = Date.now();
 
   const reqUrl = new URL(req.url ?? "/", `http://localhost:${PORT}`);
@@ -117,11 +119,37 @@ wss.on("connection", async (ws, req) => {
 
   console.log(`[SERVER] WS opened session=${sessionId} token=${token ? "yes" : "no"}`);
 
-  // Kick off async setup (token verify + Firestore read) but DO NOT await it
-  // here — message and close listeners must be registered synchronously so
-  // the client's `start` message isn't lost during the setup window.
+  // Kick off async setup (token verify + active prompt fetch + Firestore
+  // writes) but DO NOT await it here — message and close listeners must be
+  // registered synchronously so the client's `start` message isn't lost
+  // during the setup window.
   let setupRejected: string | null = null;
   const setupPromise = (async () => {
+    // Active prompt is required for any session — tokenized or not. Without
+    // it we have nothing to send to Gemini, so fail closed.
+    try {
+      const activePrompt = await getActivePrompt();
+      if (!activePrompt) {
+        setupRejected = "no_active_prompt";
+        console.error(
+          `[SERVER] session=${sessionId} no active prompt configured — closing`,
+        );
+        send(ws, { type: "error", message: "no_active_prompt" });
+        try { ws.close(1011, "no_active_prompt"); } catch {}
+        return;
+      }
+      promptSnapshot = toSnapshot(activePrompt);
+      console.log(
+        `[SERVER] session=${sessionId} active prompt=${promptSnapshot.id} name=${JSON.stringify(promptSnapshot.name)} voice=${promptSnapshot.voice} model=${promptSnapshot.model}`,
+      );
+    } catch (e) {
+      setupRejected = e instanceof Error ? e.message : String(e);
+      console.error(`[SERVER] session=${sessionId} active prompt fetch failed:`, setupRejected);
+      send(ws, { type: "error", message: "prompt_fetch_failed" });
+      try { ws.close(1011, "prompt_fetch_failed"); } catch {}
+      return;
+    }
+
     if (!token) {
       console.warn(
         `[SERVER] session=${sessionId} no token — Firestore writes disabled`,
@@ -150,9 +178,10 @@ wss.on("connection", async (ws, req) => {
       await docRef.update({
         voiceSessionId: voiceSessionUuid,
         callStartedAt: FieldValue.serverTimestamp(),
+        promptUsed: promptSnapshot,
       });
       console.log(
-        `[FIRESTORE] assessment marked in_call assessment=${assessmentId} voiceSessionId=${voiceSessionUuid}`,
+        `[FIRESTORE] assessment marked in_call assessment=${assessmentId} voiceSessionId=${voiceSessionUuid} promptId=${promptSnapshot.id}`,
       );
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -197,21 +226,25 @@ wss.on("connection", async (ws, req) => {
   };
 
   const openLive = async (resumeHandle?: string) => {
+    if (!promptSnapshot) {
+      const msg = "no_active_prompt";
+      console.error(`[GEMINI-LIVE] openLive without prompt session=${sessionId}`);
+      send(ws, { type: "error", message: msg });
+      return;
+    }
+    const snapshot = promptSnapshot;
     try {
       console.log(
-        `[GEMINI-LIVE] open session=${sessionId} model=${MODEL} voice=${VOICE} resume=${resumeHandle ? "yes" : "no"}`,
+        `[GEMINI-LIVE] open session=${sessionId} promptId=${snapshot.id} model=${snapshot.model} voice=${snapshot.voice} resume=${resumeHandle ? "yes" : "no"}`,
       );
-      const systemInstruction = buildSystemInstruction({
-        agentName: AGENT_NAME,
-      });
       let myReconnectTriggered = false;
       const newSession = await ai.live.connect({
-        model: MODEL,
+        model: snapshot.model,
         config: {
           responseModalities: [Modality.AUDIO],
-          systemInstruction,
+          systemInstruction: snapshot.prompt,
           speechConfig: {
-            voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICE } },
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: snapshot.voice } },
           },
           inputAudioTranscription: {},
           outputAudioTranscription: {},
@@ -538,7 +571,5 @@ wss.on("connection", async (ws, req) => {
 });
 
 httpServer.listen(PORT, () => {
-  console.log(
-    `[SERVER] listening http+ws on :${PORT} (model=${MODEL} voice=${VOICE})`
-  );
+  console.log(`[SERVER] listening http+ws on :${PORT}`);
 });

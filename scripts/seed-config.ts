@@ -20,7 +20,6 @@ async function main() {
     maxCallDurationSec: 2400,
     bookingUrlBase: "https://gethours.org/r",
     notificationEmail: "tay@life-time.co",
-    activePromptId: null as string | null,
     updatedAt: FieldValue.serverTimestamp(),
   };
 
