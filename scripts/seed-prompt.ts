@@ -195,6 +195,7 @@ async function main() {
 
   const created = await createPrompt({
     name: "Default (Sam, UK)",
+    persona: "",
     prompt: DEFAULT_PROMPT.trim(),
     voice: "Aoede",
     model: "gemini-3.1-flash-live-preview",

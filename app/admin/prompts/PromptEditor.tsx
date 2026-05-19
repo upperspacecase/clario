@@ -15,6 +15,7 @@ import {
 
 type FormState = {
   name: string;
+  persona: string;
   prompt: string;
   voice: VoiceId;
   model: ModelId;
@@ -47,6 +48,7 @@ export function PromptEditor({ id }: { id: string }) {
         }
         setForm({
           name: data.prompt.name,
+          persona: data.prompt.persona,
           prompt: data.prompt.prompt,
           voice: data.prompt.voice,
           model: data.prompt.model,
@@ -198,15 +200,38 @@ export function PromptEditor({ id }: { id: string }) {
             </div>
           </div>
 
+          <div className="rounded-lg border-2 border-[#A28A43]/40 bg-[#A28A43]/5 p-4">
+            <div className="mb-2 flex items-baseline justify-between">
+              <label className="block text-xs font-bold uppercase tracking-[0.16em] text-[#A28A43]">
+                Persona — voice, accent, languages, identity
+              </label>
+              <span className="text-[10px] text-on-surface-variant">
+                Who the agent is. Prepended to the prompt at runtime.
+              </span>
+            </div>
+            <textarea
+              value={form.persona}
+              onChange={(e) => setForm({ ...form, persona: e.target.value })}
+              rows={8}
+              placeholder="Leave blank to send only the prompt below. Otherwise: accent, energy, languages, name use, pacing."
+              className="w-full rounded border border-outline-variant bg-surface p-3 font-mono text-[13px] leading-snug text-on-surface placeholder:text-on-surface-variant/40 focus:border-primary focus:outline-none"
+            />
+          </div>
+
           <div>
-            <label className="block text-xs font-medium uppercase tracking-wide text-on-surface-variant">
-              Prompt (system instruction)
-            </label>
+            <div className="mb-2 flex items-baseline justify-between">
+              <label className="block text-xs font-bold uppercase tracking-[0.16em] text-on-surface-variant">
+                Prompt — what the agent does
+              </label>
+              <span className="text-[10px] text-on-surface-variant">
+                The contract — phases, questions, behavior rules.
+              </span>
+            </div>
             <textarea
               value={form.prompt}
               onChange={(e) => setForm({ ...form, prompt: e.target.value })}
               rows={28}
-              className="mt-1 w-full rounded border border-outline-variant bg-surface-container-low p-3 font-mono text-[13px] leading-snug text-on-surface focus:border-primary focus:outline-none"
+              className="w-full rounded border border-outline-variant bg-surface-container-low p-3 font-mono text-[13px] leading-snug text-on-surface focus:border-primary focus:outline-none"
             />
           </div>
 

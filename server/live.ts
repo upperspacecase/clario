@@ -260,16 +260,19 @@ wss.on("connection", async (ws, req) => {
       return;
     }
     const snapshot = promptSnapshot;
+    const systemInstruction = snapshot.persona.trim()
+      ? `${snapshot.persona.trim()}\n\n---\n\n${snapshot.prompt}`
+      : snapshot.prompt;
     try {
       console.log(
-        `[GEMINI-LIVE] open session=${sessionId} promptId=${snapshot.id} model=${snapshot.model} voice=${snapshot.voice} resume=${resumeHandle ? "yes" : "no"}`,
+        `[GEMINI-LIVE] open session=${sessionId} promptId=${snapshot.id} model=${snapshot.model} voice=${snapshot.voice} personaChars=${snapshot.persona.length} promptChars=${snapshot.prompt.length} resume=${resumeHandle ? "yes" : "no"}`,
       );
       let myReconnectTriggered = false;
       const newSession = await ai.live.connect({
         model: snapshot.model,
         config: {
           responseModalities: [Modality.AUDIO],
-          systemInstruction: snapshot.prompt,
+          systemInstruction,
           speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: snapshot.voice } },
           },

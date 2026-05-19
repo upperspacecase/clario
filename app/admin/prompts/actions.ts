@@ -29,22 +29,31 @@ async function requireAdmin(idToken: string): Promise<void> {
 
 function validateBody(body: {
   name: string;
+  persona: string;
   prompt: string;
   voice: string;
   model: string;
-}): { name: string; prompt: string; voice: VoiceId; model: ModelId } {
+}): {
+  name: string;
+  persona: string;
+  prompt: string;
+  voice: VoiceId;
+  model: ModelId;
+} {
   const name = body.name.trim();
+  const persona = body.persona; // may be empty; preserve newlines, no forced trim
   const prompt = body.prompt.trim();
   if (!name) throw new Error("Name is required");
   if (!prompt) throw new Error("Prompt is required");
   if (!isVoice(body.voice)) throw new Error(`Invalid voice: ${body.voice}`);
   if (!isModel(body.model)) throw new Error(`Invalid model: ${body.model}`);
-  return { name, prompt, voice: body.voice, model: body.model };
+  return { name, persona, prompt, voice: body.voice, model: body.model };
 }
 
 export async function createPromptAction(args: {
   idToken: string;
   name: string;
+  persona: string;
   prompt: string;
   voice: string;
   model: string;
@@ -60,6 +69,7 @@ export async function updatePromptAction(args: {
   idToken: string;
   id: string;
   name: string;
+  persona: string;
   prompt: string;
   voice: string;
   model: string;

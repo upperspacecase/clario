@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { clientAuth } from "@/lib/firebase-client";
 import { MODELS, VOICES } from "@/lib/agent-options";
+import { DEFAULT_PERSONA } from "./defaults";
 import {
   activatePromptAction,
   createPromptAction,
@@ -66,6 +67,7 @@ export function PromptsClient() {
       const created = await createPromptAction({
         idToken,
         name: "New prompt",
+        persona: DEFAULT_PERSONA,
         prompt: "You are an AI interviewer. Listen more than you talk.",
         voice: VOICES[0],
         model: MODELS[0],

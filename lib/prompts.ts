@@ -15,6 +15,7 @@ import {
 export interface PromptDoc {
   id: string;
   name: string;
+  persona: string;
   prompt: string;
   voice: VoiceId;
   model: ModelId;
@@ -25,6 +26,7 @@ export interface PromptDoc {
 export interface PromptSnapshot {
   id: string;
   name: string;
+  persona: string;
   prompt: string;
   voice: VoiceId;
   model: ModelId;
@@ -47,6 +49,7 @@ function rowToDoc(id: string, data: Record<string, unknown>): PromptDoc {
   return {
     id,
     name: typeof data.name === "string" ? data.name : "",
+    persona: typeof data.persona === "string" ? data.persona : "",
     prompt: typeof data.prompt === "string" ? data.prompt : "",
     voice,
     model,
@@ -59,6 +62,7 @@ export function toSnapshot(doc: PromptDoc): PromptSnapshot {
   return {
     id: doc.id,
     name: doc.name,
+    persona: doc.persona,
     prompt: doc.prompt,
     voice: doc.voice,
     model: doc.model,
@@ -93,6 +97,7 @@ export async function getActivePrompt(): Promise<PromptDoc | null> {
 
 export interface PromptInput {
   name: string;
+  persona: string;
   prompt: string;
   voice: VoiceId;
   model: ModelId;
@@ -102,6 +107,7 @@ export async function createPrompt(input: PromptInput): Promise<PromptDoc> {
   const ref = adminDb().collection("prompts").doc();
   await ref.set({
     name: input.name,
+    persona: input.persona,
     prompt: input.prompt,
     voice: input.voice,
     model: input.model,
