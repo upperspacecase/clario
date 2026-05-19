@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PlaybackQueue } from "./playback-queue";
-import { acquireWakeLock, type WakeLockHandle } from "@/lib/wake-lock";
+import { keepAwake, type KeepAwakeHandle } from "@/lib/wake-lock";
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
@@ -53,8 +53,7 @@ export function useLiveSession({ wsUrl: defaultWsUrl }: Options) {
   const playbackRef = useRef<PlaybackQueue | null>(null);
   const startTimeRef = useRef<number>(0);
   const timerRef = useRef<number | null>(null);
-  const wakeLockRef = useRef<WakeLockHandle | null>(null);
-  const visibilityHandlerRef = useRef<(() => void) | null>(null);
+  const keepAwakeRef = useRef<KeepAwakeHandle | null>(null);
 
   const appendUtterance = useCallback((who: "agent" | "user", text: string) => {
     setUtterances((prev) => {
@@ -69,20 +68,9 @@ export function useLiveSession({ wsUrl: defaultWsUrl }: Options) {
   }, []);
 
   const releaseWakeLock = useCallback(async () => {
-    if (wakeLockRef.current) {
-      try {
-        await wakeLockRef.current.release();
-      } catch {
-        /* ignore */
-      }
-      wakeLockRef.current = null;
-    }
-    if (visibilityHandlerRef.current) {
-      document.removeEventListener(
-        "visibilitychange",
-        visibilityHandlerRef.current,
-      );
-      visibilityHandlerRef.current = null;
+    if (keepAwakeRef.current) {
+      await keepAwakeRef.current.release();
+      keepAwakeRef.current = null;
     }
   }, []);
 
@@ -177,22 +165,7 @@ export function useLiveSession({ wsUrl: defaultWsUrl }: Options) {
           wsOpenRef.current = true;
           ws.send(JSON.stringify({ type: "start" }));
 
-          const handle = await acquireWakeLock();
-          if (handle) {
-            wakeLockRef.current = handle;
-            const onVisibility = async () => {
-              if (
-                document.visibilityState === "visible" &&
-                wsOpenRef.current &&
-                !wakeLockRef.current
-              ) {
-                const reacquired = await acquireWakeLock();
-                if (reacquired) wakeLockRef.current = reacquired;
-              }
-            };
-            visibilityHandlerRef.current = onVisibility;
-            document.addEventListener("visibilitychange", onVisibility);
-          }
+          keepAwakeRef.current = await keepAwake();
         };
 
         ws.onmessage = (ev) => {
