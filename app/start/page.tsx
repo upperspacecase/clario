@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLiveSession } from "@/components/use-live-session";
 import { PhoneStage } from "@/components/PhoneStage";
-import { CallScreen } from "@/components/CallScreen";
+import { CallScreen, type CallStartFields } from "@/components/CallScreen";
 
 const FALLBACK_WS_URL =
   process.env.NEXT_PUBLIC_WS_URL ??
@@ -20,37 +20,68 @@ type StartResponse = {
 };
 
 export default function StartPage() {
+  return (
+    <Suspense fallback={null}>
+      <StartInner />
+    </Suspense>
+  );
+}
+
+function StartInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const live = useLiveSession({ wsUrl: FALLBACK_WS_URL });
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [voiceSessionToken, setVoiceSessionToken] = useState<string | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const finalizingRef = useRef(false);
+  const autoStartedRef = useRef(false);
 
-  const handleStart = useCallback(async () => {
-    if (starting) return;
-    setStarting(true);
-    setStartError(null);
-    try {
-      const res = await fetch("/api/voice/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error ?? `start failed (${res.status})`);
+  const initialFirstName = (searchParams.get("firstName") ?? "").trim();
+  const initialBusinessName = (searchParams.get("businessName") ?? "").trim();
+
+  const handleStart = useCallback(
+    async (fields: CallStartFields) => {
+      if (starting) return;
+      setStarting(true);
+      setStartError(null);
+      try {
+        const res = await fetch("/api/voice/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            firstName: fields.firstName,
+            businessName: fields.businessName,
+          }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body?.error ?? `start failed (${res.status})`);
+        }
+        const data = (await res.json()) as StartResponse;
+        setAssessmentId(data.assessmentId);
+        setVoiceSessionToken(data.voiceSessionToken);
+        await live.start({ wsUrl: data.wsUrl });
+      } catch (e) {
+        setStartError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setStarting(false);
       }
-      const data = (await res.json()) as StartResponse;
-      setAssessmentId(data.assessmentId);
-      setVoiceSessionToken(data.voiceSessionToken);
-      await live.start({ wsUrl: data.wsUrl });
-    } catch (e) {
-      setStartError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setStarting(false);
-    }
-  }, [live, starting]);
+    },
+    [live, starting],
+  );
+
+  useEffect(() => {
+    if (autoStartedRef.current) return;
+    if (!initialFirstName || !initialBusinessName) return;
+    if (live.phase !== "idle") return;
+    autoStartedRef.current = true;
+    void handleStart({
+      firstName: initialFirstName,
+      businessName: initialBusinessName,
+    });
+  }, [initialFirstName, initialBusinessName, live.phase, handleStart]);
 
   useEffect(() => {
     if (live.phase !== "ended") return;
@@ -84,6 +115,8 @@ export default function StartPage() {
             utterances={live.utterances}
             elapsed={live.elapsed}
             level={live.level}
+            initialFirstName={initialFirstName}
+            initialBusinessName={initialBusinessName}
             onStart={handleStart}
             onEnd={live.end}
           />

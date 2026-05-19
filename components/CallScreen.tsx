@@ -1,23 +1,32 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Phone, PhoneOff } from "lucide-react";
 import { WaveformPlayer } from "./WaveformPlayer";
 import type { CallPhase, Utterance } from "./use-live-session";
+
+export type CallStartFields = {
+  firstName: string;
+  businessName: string;
+};
 
 export type CallScreenProps = {
   phase: CallPhase;
   utterances: Utterance[];
   elapsed: number;
   level: number;
-  onStart: () => void;
+  initialFirstName?: string;
+  initialBusinessName?: string;
+  onStart: (fields: CallStartFields) => void;
   onEnd: () => void;
 };
 
 export const CallScreen: React.FC<CallScreenProps> = ({
   phase,
   utterances,
+  initialFirstName,
+  initialBusinessName,
   onStart,
   onEnd,
 }) => {
@@ -43,7 +52,11 @@ export const CallScreen: React.FC<CallScreenProps> = ({
       style={{ background: "#0a0a0a", color: "#fff" }}
     >
       {isIdle ? (
-        <IdleState onStart={onStart} />
+        <IdleState
+          initialFirstName={initialFirstName ?? ""}
+          initialBusinessName={initialBusinessName ?? ""}
+          onStart={onStart}
+        />
       ) : (
         <LiveState
           utterances={utterances}
@@ -58,47 +71,111 @@ export const CallScreen: React.FC<CallScreenProps> = ({
   );
 };
 
-const IdleState: React.FC<{ onStart: () => void }> = ({ onStart }) => (
-  <div className="flex flex-1 flex-col items-center px-8 pb-10 pt-12">
-    <Image
-      src="/hrs-logo-light.png"
-      alt="hrs"
-      width={696}
-      height={358}
-      priority
-      className="h-12 w-auto"
+const IdleState: React.FC<{
+  initialFirstName: string;
+  initialBusinessName: string;
+  onStart: (fields: CallStartFields) => void;
+}> = ({ initialFirstName, initialBusinessName, onStart }) => {
+  const [firstName, setFirstName] = useState(initialFirstName);
+  const [businessName, setBusinessName] = useState(initialBusinessName);
+  const canStart = firstName.trim().length > 0 && businessName.trim().length > 0;
+
+  const submit = () => {
+    if (!canStart) return;
+    onStart({
+      firstName: firstName.trim(),
+      businessName: businessName.trim(),
+    });
+  };
+
+  return (
+    <div className="flex flex-1 flex-col items-center px-6 pb-8 pt-10">
+      <Image
+        src="/hrs-logo-light.png"
+        alt="hrs"
+        width={696}
+        height={358}
+        priority
+        className="h-10 w-auto"
+      />
+
+      <div className="mt-6 text-center">
+        <h2 className="text-[20px] font-bold leading-tight text-white">
+          Start Assessment
+        </h2>
+        <p className="mx-auto mt-1.5 max-w-[260px] text-[12px] leading-snug text-white/60">
+          Two quick details so Sam can address you by name.
+        </p>
+      </div>
+
+      <div className="mt-5 flex w-full flex-col gap-3">
+        <PhoneInput
+          label="First name"
+          autoComplete="given-name"
+          value={firstName}
+          onChange={setFirstName}
+          onEnter={submit}
+        />
+        <PhoneInput
+          label="Business name"
+          autoComplete="organization"
+          value={businessName}
+          onChange={setBusinessName}
+          onEnter={submit}
+        />
+      </div>
+
+      <div className="flex-1" />
+
+      <div className="flex flex-col items-center">
+        <button
+          type="button"
+          onClick={submit}
+          disabled={!canStart}
+          aria-label="Begin your assessment"
+          className="hours-call-btn relative flex h-[68px] w-[68px] items-center justify-center rounded-full transition-transform duration-150 hover:scale-[1.04] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+          style={{
+            background: "#22c55e",
+            boxShadow: canStart
+              ? "0 0 32px rgba(34, 197, 94, 0.55), 0 0 64px rgba(34, 197, 94, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)"
+              : "inset 0 1px 0 rgba(255,255,255,0.1)",
+          }}
+        >
+          <Phone size={26} strokeWidth={2.25} fill="white" className="text-white" />
+        </button>
+        <p className="mt-2.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/40">
+          Call now
+        </p>
+      </div>
+    </div>
+  );
+};
+
+const PhoneInput: React.FC<{
+  label: string;
+  value: string;
+  autoComplete: string;
+  onChange: (v: string) => void;
+  onEnter: () => void;
+}> = ({ label, value, autoComplete, onChange, onEnter }) => (
+  <label className="flex flex-col gap-1">
+    <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/45">
+      {label}
+    </span>
+    <input
+      type="text"
+      autoComplete={autoComplete}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          onEnter();
+        }
+      }}
+      className="h-9 w-full rounded-md border border-white/10 bg-black/60 px-2.5 text-[14px] text-white placeholder:text-white/25 focus:border-[#22c55e]/60 focus:outline-none"
     />
-
-    <div className="mt-14 text-center">
-      <h2 className="text-[22px] font-bold leading-tight text-white">
-        Start Assessment
-      </h2>
-      <p className="mx-auto mt-2 max-w-[230px] text-[14px] leading-snug text-white/65">
-        Tap to start your 2 minute introductory call
-      </p>
-    </div>
-
-    <div className="flex-1" />
-
-    <div className="flex flex-col items-center">
-      <button
-        type="button"
-        onClick={onStart}
-        aria-label="Begin your assessment"
-        className="hours-call-btn relative flex h-[76px] w-[76px] items-center justify-center rounded-full transition-transform duration-150 hover:scale-[1.04] active:scale-[0.98]"
-        style={{
-          background: "#22c55e",
-          boxShadow:
-            "0 0 32px rgba(34, 197, 94, 0.55), 0 0 64px rgba(34, 197, 94, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
-        }}
-      >
-        <Phone size={30} strokeWidth={2.25} fill="white" className="text-white" />
-      </button>
-      <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/40">
-        Call now
-      </p>
-    </div>
-  </div>
+  </label>
 );
 
 const LiveState: React.FC<{

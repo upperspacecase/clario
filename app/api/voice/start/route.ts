@@ -9,8 +9,20 @@ export const dynamic = "force-dynamic";
 
 const WS_BASE_URL = "wss://voice-agent-ws.fly.dev/";
 
-export async function POST() {
+const MAX_NAME_LEN = 80;
+
+function sanitizeShortString(input: unknown): string | null {
+  if (typeof input !== "string") return null;
+  const trimmed = input.trim().slice(0, MAX_NAME_LEN);
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+export async function POST(req: Request) {
   try {
+    const body = await req.json().catch(() => ({}));
+    const firstName = sanitizeShortString(body?.firstName);
+    const businessName = sanitizeShortString(body?.businessName);
+
     const shareId = nanoid(10);
     const docRef = adminDb().collection("assessments").doc();
     const assessmentId = docRef.id;
@@ -19,13 +31,13 @@ export async function POST() {
       id: assessmentId,
       shareId,
 
-      firstName: null,
-      businessName: null,
+      firstName,
+      businessName,
       website: null,
       location: null,
       teamSize: null,
 
-      clientName: null,
+      clientName: firstName,
       clientEmail: null,
       industry: null,
       callerRole: null,

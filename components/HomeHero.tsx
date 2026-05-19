@@ -3,14 +3,18 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PhoneStage } from "./PhoneStage";
-import { CallScreen } from "./CallScreen";
+import { CallScreen, type CallStartFields } from "./CallScreen";
 import { PROMISES } from "@/lib/promises";
 
 export const HomeHero: React.FC = () => {
   const router = useRouter();
 
-  const goToStart = () => {
-    router.push("/start");
+  const goToStart = (fields: CallStartFields) => {
+    const params = new URLSearchParams({
+      firstName: fields.firstName,
+      businessName: fields.businessName,
+    });
+    router.push(`/start?${params.toString()}`);
   };
 
   return (

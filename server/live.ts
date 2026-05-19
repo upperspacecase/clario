@@ -32,6 +32,25 @@ import { FieldValue } from "firebase-admin/firestore";
 
 const PORT = Number(process.env.LIVE_WS_PORT ?? 3043);
 
+function escapeForBracketText(input: string): string {
+  return input.replace(/["\\\]]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function buildKickoffText(
+  firstName: string | null,
+  businessName: string | null,
+): string {
+  const safeName = firstName ? escapeForBracketText(firstName) : "";
+  const safeBiz = businessName ? escapeForBracketText(businessName) : "";
+  if (safeName && safeBiz) {
+    return `[The user is now connected. Their first name is "${safeName}" and they are from "${safeBiz}". Greet them by name and skip asking for their name. Begin Phase 0 of your contract.]`;
+  }
+  if (safeName) {
+    return `[The user is now connected. Their first name is "${safeName}". Greet them by name and skip asking for their name. Begin Phase 0 of your contract.]`;
+  }
+  return "[The user is now connected. Begin Phase 0 of your contract.]";
+}
+
 if (!process.env.GEMINI_API_KEY) {
   console.error("[SERVER] GEMINI_API_KEY missing — aborting");
   process.exit(1);
@@ -112,6 +131,8 @@ wss.on("connection", async (ws, req) => {
   let currentSessionHandle = "";
   let transcriptBuffer: TranscriptBuffer | null = null;
   let promptSnapshot: PromptSnapshot | null = null;
+  let callerFirstName: string | null = null;
+  let callerBusinessName: string | null = null;
   const clientConnectedAtMs = Date.now();
 
   const reqUrl = new URL(req.url ?? "/", `http://localhost:${PORT}`);
@@ -175,13 +196,19 @@ wss.on("connection", async (ws, req) => {
     }
     try {
       const docRef = adminDb().collection("assessments").doc(assessmentId!);
+      const docSnap = await docRef.get();
+      const docData = docSnap.data() ?? {};
+      const fn = docData.firstName;
+      const bn = docData.businessName;
+      callerFirstName = typeof fn === "string" && fn.trim().length > 0 ? fn.trim() : null;
+      callerBusinessName = typeof bn === "string" && bn.trim().length > 0 ? bn.trim() : null;
       await docRef.update({
         voiceSessionId: voiceSessionUuid,
         callStartedAt: FieldValue.serverTimestamp(),
         promptUsed: promptSnapshot,
       });
       console.log(
-        `[FIRESTORE] assessment marked in_call assessment=${assessmentId} voiceSessionId=${voiceSessionUuid} promptId=${promptSnapshot.id}`,
+        `[FIRESTORE] assessment marked in_call assessment=${assessmentId} voiceSessionId=${voiceSessionUuid} promptId=${promptSnapshot.id} firstName=${callerFirstName ? "yes" : "no"} businessName=${callerBusinessName ? "yes" : "no"}`,
       );
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -326,16 +353,16 @@ wss.on("connection", async (ws, req) => {
               liveSession
             ) {
               kickoffSent = true;
+              const kickoffText = buildKickoffText(
+                callerFirstName,
+                callerBusinessName,
+              );
               try {
                 liveSession.sendClientContent({
                   turns: [
                     {
                       role: "user",
-                      parts: [
-                        {
-                          text: "[The user is now connected. Begin Phase 0 of your contract.]",
-                        },
-                      ],
+                      parts: [{ text: kickoffText }],
                     },
                   ],
                   turnComplete: true,
