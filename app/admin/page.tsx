@@ -10,6 +10,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { signOut } from "firebase/auth";
+import Link from "next/link";
 import { clientAuth, clientDb } from "@/lib/firebase-client";
 import type { AssessmentStatus } from "@/lib/types";
 import {
@@ -142,12 +143,32 @@ export default function AdminPage() {
               Most recent 50 calls, live.
             </p>
           </div>
-          <button
-            onClick={() => signOut(clientAuth())}
-            className="text-sm text-on-surface-variant hover:text-on-surface"
-          >
-            Sign out
-          </button>
+          <div className="flex items-center gap-4 text-sm">
+            <Link
+              href="/admin/prompts"
+              className="text-on-surface-variant hover:text-on-surface"
+            >
+              Prompts
+            </Link>
+            <Link
+              href="/admin/availability"
+              className="text-on-surface-variant hover:text-on-surface"
+            >
+              Availability
+            </Link>
+            <Link
+              href="/admin/bookings"
+              className="text-on-surface-variant hover:text-on-surface"
+            >
+              Bookings
+            </Link>
+            <button
+              onClick={() => signOut(clientAuth())}
+              className="text-on-surface-variant hover:text-on-surface"
+            >
+              Sign out
+            </button>
+          </div>
         </header>
 
         <div className="mt-6 flex flex-wrap gap-2">
