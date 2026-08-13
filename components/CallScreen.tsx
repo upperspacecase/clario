@@ -151,20 +151,23 @@ const IdleState: React.FC<{
   );
 };
 
-const PhoneInput: React.FC<{
+export const PhoneInput: React.FC<{
   label: string;
   value: string;
   autoComplete: string;
+  type?: string;
+  placeholder?: string;
   onChange: (v: string) => void;
   onEnter: () => void;
-}> = ({ label, value, autoComplete, onChange, onEnter }) => (
+}> = ({ label, value, autoComplete, type = "text", placeholder, onChange, onEnter }) => (
   <label className="flex flex-col gap-1">
     <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/45">
       {label}
     </span>
     <input
-      type="text"
+      type={type}
       autoComplete={autoComplete}
+      placeholder={placeholder}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       onKeyDown={(e) => {

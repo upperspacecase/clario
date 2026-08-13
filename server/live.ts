@@ -19,8 +19,11 @@ import {
   type LiveServerMessage,
 } from "@google/genai";
 import { randomUUID } from "crypto";
+import twilio from "twilio";
 import { TOOL_DECLARATIONS } from "./tools.js";
 import { TranscriptBuffer } from "./firestore-writer.js";
+import { mulaw8kToPcm16k, pcm24kToMulaw8k } from "./audio.js";
+import { finalizeAssessment } from "../lib/finalize.js";
 import { verifyVoiceSessionToken } from "../lib/voice-token.js";
 import { adminDb } from "../lib/firebase-admin.js";
 import {
@@ -57,6 +60,13 @@ if (!process.env.GEMINI_API_KEY) {
 }
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+// Only needed to hang up the PSTN leg when the agent ends the interview.
+// Absent in local browser-only development, so keep it optional.
+const twilioClient =
+  process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN
+    ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+    : null;
 
 // ------- HTTP server (health only) -------
 
@@ -136,9 +146,78 @@ wss.on("connection", async (ws, req) => {
   const clientConnectedAtMs = Date.now();
 
   const reqUrl = new URL(req.url ?? "/", `http://localhost:${PORT}`);
-  const token = reqUrl.searchParams.get("token");
 
-  console.log(`[SERVER] WS opened session=${sessionId} token=${token ? "yes" : "no"}`);
+  // Two transports share this handler. The browser widget connects to "/" and
+  // carries its token in the query string. Twilio Media Streams connect to
+  // "/media" and deliver the token in the `start` event's customParameters,
+  // which lands a few ms after the socket opens — hence the deferred token.
+  const isTwilio = reqUrl.pathname === "/media";
+  let resolveToken!: (t: string | null) => void;
+  const tokenPromise = new Promise<string | null>((r) => {
+    resolveToken = r;
+  });
+  if (!isTwilio) resolveToken(reqUrl.searchParams.get("token"));
+
+  // Twilio-only call state.
+  let streamSid: string | null = null;
+  let callSid: string | null = null;
+  const pendingMulaw: Buffer[] = [];
+
+  console.log(
+    `[SERVER] WS opened session=${sessionId} transport=${isTwilio ? "twilio" : "browser"}`,
+  );
+
+  // The browser widget's JSON protocol means nothing to Twilio's socket, so
+  // swallow those frames there. Audio and barge-in have real Twilio
+  // equivalents and are handled separately below.
+  const notify = (msg: ServerToClient) => {
+    if (!isTwilio) send(ws, msg);
+  };
+
+  // Gemini emits PCM16 24k; Twilio wants base64 μ-law 8k wrapped in a media
+  // envelope. Frames can arrive before Twilio's `start` gives us a streamSid,
+  // so hold them until it does.
+  const sendAudioOut = (base64Pcm24k: string) => {
+    if (!isTwilio) {
+      send(ws, { type: "audio", data: base64Pcm24k });
+      return;
+    }
+    const mulaw = pcm24kToMulaw8k(Buffer.from(base64Pcm24k, "base64"));
+    if (!streamSid) {
+      pendingMulaw.push(mulaw);
+      return;
+    }
+    ws.send(
+      JSON.stringify({
+        event: "media",
+        streamSid,
+        media: { payload: mulaw.toString("base64") },
+      }),
+    );
+  };
+
+  const flushPendingAudio = () => {
+    if (!streamSid || pendingMulaw.length === 0) return;
+    console.log(
+      `[TWILIO] flushing ${pendingMulaw.length} buffered audio frames session=${sessionId}`,
+    );
+    for (const mulaw of pendingMulaw.splice(0)) {
+      ws.send(
+        JSON.stringify({
+          event: "media",
+          streamSid,
+          media: { payload: mulaw.toString("base64") },
+        }),
+      );
+    }
+  };
+
+  // Barge-in: drop audio Twilio has buffered but not yet played.
+  const clearPlayback = () => {
+    if (isTwilio && streamSid) {
+      ws.send(JSON.stringify({ event: "clear", streamSid }));
+    }
+  };
 
   // Kick off async setup (token verify + active prompt fetch + Firestore
   // writes) but DO NOT await it here — message and close listeners must be
@@ -155,7 +234,7 @@ wss.on("connection", async (ws, req) => {
         console.error(
           `[SERVER] session=${sessionId} no active prompt configured — closing`,
         );
-        send(ws, { type: "error", message: "no_active_prompt" });
+        notify({ type: "error", message: "no_active_prompt" });
         try { ws.close(1011, "no_active_prompt"); } catch {}
         return;
       }
@@ -166,10 +245,14 @@ wss.on("connection", async (ws, req) => {
     } catch (e) {
       setupRejected = e instanceof Error ? e.message : String(e);
       console.error(`[SERVER] session=${sessionId} active prompt fetch failed:`, setupRejected);
-      send(ws, { type: "error", message: "prompt_fetch_failed" });
+      notify({ type: "error", message: "prompt_fetch_failed" });
       try { ws.close(1011, "prompt_fetch_failed"); } catch {}
       return;
     }
+
+    // Browser resolves this synchronously; Twilio resolves it on `start`.
+    // The active-prompt fetch above runs in parallel with that wait.
+    const token = await tokenPromise;
 
     if (!token) {
       console.warn(
@@ -219,12 +302,26 @@ wss.on("connection", async (ws, req) => {
     }
   })();
 
-  send(ws, { type: "session", id: sessionId });
+  notify({ type: "session", id: sessionId });
 
   const endCall = (reason: string) => {
     if (endTriggered) return;
     endTriggered = true;
-    send(ws, { type: "end_signal", reason });
+    notify({ type: "end_signal", reason });
+
+    // On the phone there is no UI to close the call, so hang up the PSTN leg.
+    // Delay it so the agent's spoken goodbye finishes playing first — audio
+    // already handed to Twilio is still in flight.
+    if (isTwilio && callSid && twilioClient) {
+      const sid = callSid;
+      setTimeout(() => {
+        twilioClient.calls(sid).update({ status: "completed" }).then(
+          () => console.log(`[TWILIO] hung up call=${sid} reason=${reason}`),
+          (e) => console.error(`[TWILIO] hangup failed call=${sid}:`, e),
+        );
+      }, 2500);
+    }
+
     try {
       liveSession?.close();
     } catch {
@@ -256,7 +353,7 @@ wss.on("connection", async (ws, req) => {
     if (!promptSnapshot) {
       const msg = "no_active_prompt";
       console.error(`[GEMINI-LIVE] openLive without prompt session=${sessionId}`);
-      send(ws, { type: "error", message: msg });
+      notify({ type: "error", message: msg });
       return;
     }
     const snapshot = promptSnapshot;
@@ -286,7 +383,7 @@ wss.on("connection", async (ws, req) => {
             console.log(
               `[GEMINI-LIVE] open session=${sessionId} resume=${resumeHandle ? "yes" : "no"}`,
             );
-            if (!resumeHandle) send(ws, { type: "ready" });
+            if (!resumeHandle) notify({ type: "ready" });
           },
           onmessage: async (msg: LiveServerMessage) => {
             // Debug: surface the shape of every non-audio message.
@@ -389,7 +486,7 @@ wss.on("connection", async (ws, req) => {
                       `[GEMINI-LIVE] audio from gemini session=${sessionId} frames=${audioFramesFromGemini}`
                     );
                   }
-                  send(ws, { type: "audio", data: part.inlineData.data });
+                  sendAudioOut(part.inlineData.data);
                 }
               }
             }
@@ -397,7 +494,13 @@ wss.on("connection", async (ws, req) => {
             // Transcriptions
             const inputT = msg.serverContent?.inputTranscription?.text;
             if (inputT) {
-              send(ws, { type: "transcript", who: "user", text: inputT });
+              notify({ type: "transcript", who: "user", text: inputT });
+              // Untokenized sessions have nowhere to persist the transcript,
+              // so surface it in the log. Tokenized calls stay quiet — their
+              // text belongs in Firestore, not stdout.
+              if (!transcriptBuffer) {
+                console.log(`[TRANSCRIPT] user: ${inputT}`);
+              }
               if (transcriptBuffer) {
                 transcriptBuffer.push({
                   role: "user",
@@ -410,7 +513,10 @@ wss.on("connection", async (ws, req) => {
 
             const outputT = msg.serverContent?.outputTranscription?.text;
             if (outputT) {
-              send(ws, { type: "transcript", who: "agent", text: outputT });
+              notify({ type: "transcript", who: "agent", text: outputT });
+              if (!transcriptBuffer) {
+                console.log(`[TRANSCRIPT] agent: ${outputT}`);
+              }
               if (transcriptBuffer) {
                 transcriptBuffer.push({
                   role: "agent",
@@ -423,11 +529,12 @@ wss.on("connection", async (ws, req) => {
 
             // Barge-in
             if (msg.serverContent?.interrupted) {
-              send(ws, { type: "interrupted" });
+              notify({ type: "interrupted" });
+              clearPlayback();
             }
 
             if (msg.serverContent?.turnComplete) {
-              send(ws, { type: "turn_complete" });
+              notify({ type: "turn_complete" });
             }
 
             // Tool calls
@@ -465,7 +572,7 @@ wss.on("connection", async (ws, req) => {
               `[GEMINI-LIVE] error session=${sessionId}:`,
               e.message
             );
-            send(ws, { type: "error", message: e.message });
+            notify({ type: "error", message: e.message });
           },
           onclose: (e) => {
             console.log(
@@ -490,16 +597,84 @@ wss.on("connection", async (ws, req) => {
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       console.error(`[GEMINI-LIVE] connect failed session=${sessionId}:`, msg);
-      send(ws, { type: "error", message: msg });
+      notify({ type: "error", message: msg });
+    }
+  };
+
+  // Twilio Media Streams protocol. Note the ordering constraint: `start`
+  // carries the token that setupPromise is waiting on, so it must resolve the
+  // token *before* awaiting setup, or the two deadlock.
+  const handleTwilioMessage = async (raw: unknown) => {
+    let evt: {
+      event?: string;
+      start?: {
+        streamSid?: string;
+        callSid?: string;
+        customParameters?: Record<string, string>;
+      };
+      media?: { payload?: string };
+    };
+    try {
+      evt = JSON.parse(String(raw));
+    } catch {
+      return;
+    }
+
+    if (evt.event === "start") {
+      streamSid = evt.start?.streamSid ?? null;
+      callSid = evt.start?.callSid ?? null;
+      const twilioToken = evt.start?.customParameters?.token ?? null;
+      console.log(
+        `[TWILIO] start session=${sessionId} stream=${streamSid} call=${callSid} token=${twilioToken ? "yes" : "no"}`,
+      );
+      resolveToken(twilioToken);
+      flushPendingAudio();
+
+      await setupPromise;
+      if (setupRejected) return;
+      if (!liveSession) await openLive();
+      return;
+    }
+
+    if (evt.event === "media") {
+      // Frames arriving before Gemini is connected are dropped. The agent
+      // speaks first, so the caller is silent during that window.
+      if (!liveSession || !evt.media?.payload) return;
+      const pcm16 = mulaw8kToPcm16k(Buffer.from(evt.media.payload, "base64"));
+      try {
+        liveSession.sendRealtimeInput({
+          audio: { data: pcm16.toString("base64"), mimeType: "audio/pcm;rate=16000" },
+        });
+        audioFramesToGemini++;
+        if (audioFramesToGemini % 250 === 1) {
+          console.log(
+            `[GEMINI-LIVE] audio forwarded session=${sessionId} frames=${audioFramesToGemini}`,
+          );
+        }
+      } catch (e) {
+        console.error("[GEMINI-LIVE] sendRealtimeInput failed:", e);
+      }
+      return;
+    }
+
+    if (evt.event === "stop") {
+      console.log(`[TWILIO] stop session=${sessionId}`);
+      // The leg is already down; clearing callSid skips the hangup REST call
+      // that would otherwise fail against a completed call.
+      callSid = null;
+      endCall("caller_hung_up");
+      return;
     }
   };
 
   ws.on("message", async (raw) => {
+    if (isTwilio) return handleTwilioMessage(raw);
+
     let msg: ClientToServer;
     try {
       msg = JSON.parse(raw.toString()) as ClientToServer;
     } catch {
-      return send(ws, { type: "error", message: "bad_json" });
+      return notify({ type: "error", message: "bad_json" });
     }
 
     // Wait for setup (token verify + Firestore prefetch) before handling any
@@ -557,6 +732,10 @@ wss.on("connection", async (ws, req) => {
 
   ws.on("close", async () => {
     console.log(`[SERVER] WS closed session=${sessionId}`);
+    // If the socket died before Twilio's `start` arrived, nothing ever
+    // resolved the token and setupPromise would never settle — hanging the
+    // transcript flush below. Resolving twice is a no-op.
+    resolveToken(null);
     await setupPromise.catch(() => undefined);
     if (!endTriggered) endCall("client_disconnect");
 
@@ -589,6 +768,14 @@ wss.on("connection", async (ws, req) => {
         console.log(
           `[FIRESTORE] assessment call ended assessment=${assessmentId} durationSec=${callDurationSec}`,
         );
+        // No browser survives a phone call to POST /api/voice/finalize, so run
+        // the same bookkeeping here.
+        if (isTwilio) {
+          const result = await finalizeAssessment(assessmentId);
+          console.log(
+            `[FINALIZE] assessment=${assessmentId} ${result.ok ? `status=${result.status} needsConfirmation=${result.needsConfirmation}` : `failed=${result.reason}`}`,
+          );
+        }
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         console.error(

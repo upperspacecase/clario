@@ -1,22 +1,14 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useLiveSession } from "@/components/use-live-session";
+import { Suspense, useCallback, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { PhoneStage } from "@/components/PhoneStage";
-import { CallScreen, type CallStartFields } from "@/components/CallScreen";
+import { CallRequestForm, type CallRequestFields } from "@/components/CallRequestForm";
 
-const FALLBACK_WS_URL =
-  process.env.NEXT_PUBLIC_WS_URL ??
-  (typeof window !== "undefined"
-    ? `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.hostname}:3043`
-    : "ws://localhost:3043");
-
-type StartResponse = {
+type CallResponse = {
   assessmentId: string;
   shareId: string;
-  voiceSessionToken: string;
-  wsUrl: string;
+  callSid: string;
 };
 
 export default function StartPage() {
@@ -28,108 +20,64 @@ export default function StartPage() {
 }
 
 function StartInner() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const live = useLiveSession({ wsUrl: FALLBACK_WS_URL });
-  const [assessmentId, setAssessmentId] = useState<string | null>(null);
-  const [voiceSessionToken, setVoiceSessionToken] = useState<string | null>(null);
-  const [startError, setStartError] = useState<string | null>(null);
-  const [starting, setStarting] = useState(false);
-  const finalizingRef = useRef(false);
-  const autoStartedRef = useRef(false);
+  const [phase, setPhase] = useState<"idle" | "dialling" | "ringing">("idle");
+  const [error, setError] = useState<string | null>(null);
 
-  const initialFirstName = (searchParams.get("firstName") ?? "").trim();
-  const initialBusinessName = (searchParams.get("businessName") ?? "").trim();
-
-  const handleStart = useCallback(
-    async (fields: CallStartFields) => {
-      if (starting) return;
-      setStarting(true);
-      setStartError(null);
-      try {
-        const res = await fetch("/api/voice/start", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            firstName: fields.firstName,
-            businessName: fields.businessName,
-          }),
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body?.error ?? `start failed (${res.status})`);
-        }
-        const data = (await res.json()) as StartResponse;
-        setAssessmentId(data.assessmentId);
-        setVoiceSessionToken(data.voiceSessionToken);
-        await live.start({ wsUrl: data.wsUrl });
-      } catch (e) {
-        setStartError(e instanceof Error ? e.message : String(e));
-      } finally {
-        setStarting(false);
+  const handleSubmit = useCallback(async (fields: CallRequestFields) => {
+    setPhase("dialling");
+    setError(null);
+    try {
+      const res = await fetch("/api/voice/call", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fields),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error ?? `Could not place the call (${res.status})`);
       }
-    },
-    [live, starting],
-  );
-
-  useEffect(() => {
-    if (autoStartedRef.current) return;
-    if (!initialFirstName || !initialBusinessName) return;
-    if (live.phase !== "idle") return;
-    autoStartedRef.current = true;
-    void handleStart({
-      firstName: initialFirstName,
-      businessName: initialBusinessName,
-    });
-  }, [initialFirstName, initialBusinessName, live.phase, handleStart]);
-
-  useEffect(() => {
-    if (live.phase !== "ended") return;
-    if (!assessmentId || !voiceSessionToken) return;
-    if (finalizingRef.current) return;
-
-    finalizingRef.current = true;
-    void (async () => {
-      try {
-        await fetch("/api/voice/finalize", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ assessmentId, voiceSessionToken }),
-        });
-      } catch (e) {
-        console.error("[CLIENT] finalize failed", e);
-      } finally {
-        router.push(`/start/confirm/${assessmentId}`);
-      }
-    })();
-  }, [assessmentId, voiceSessionToken, live.phase, router]);
-
-  const displayedError = live.error ?? startError;
+      (await res.json()) as CallResponse;
+      setPhase("ringing");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      setPhase("idle");
+    }
+  }, []);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#121212] px-5 py-10 md:px-8">
       <div className="flex w-full max-w-[420px] flex-col items-center gap-4">
         <PhoneStage>
-          <CallScreen
-            phase={live.phase}
-            utterances={live.utterances}
-            elapsed={live.elapsed}
-            level={live.level}
-            initialFirstName={initialFirstName}
-            initialBusinessName={initialBusinessName}
-            onStart={handleStart}
-            onEnd={live.end}
-          />
+          {phase === "ringing" ? (
+            <RingingState />
+          ) : (
+            <CallRequestForm
+              busy={phase === "dialling"}
+              initialFirstName={(searchParams.get("firstName") ?? "").trim()}
+              initialBusinessName={(searchParams.get("businessName") ?? "").trim()}
+              onSubmit={handleSubmit}
+            />
+
+          )}
         </PhoneStage>
-        {starting && (
-          <p className="text-[12px] uppercase tracking-[0.18em] text-white/50">
-            Connecting…
-          </p>
-        )}
-        {displayedError && (
-          <p className="text-[12px] text-red-400">{displayedError}</p>
-        )}
+        {error && <p className="text-[12px] text-red-400">{error}</p>}
       </div>
     </main>
   );
 }
+
+const RingingState: React.FC = () => (
+  <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
+    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#22c55e]/15">
+      <span className="h-3 w-3 animate-pulse rounded-full bg-[#22c55e]" />
+    </div>
+    <h2 className="mt-5 text-[20px] font-bold leading-tight text-white">
+      Your phone is ringing
+    </h2>
+    <p className="mt-2 max-w-[260px] text-[12px] leading-snug text-white/60">
+      Answer and Sam will take it from there. Your report lands in your inbox
+      within 24 hours of the call.
+    </p>
+  </div>
+);

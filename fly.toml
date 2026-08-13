@@ -10,7 +10,7 @@ primary_region = "syd"
 
 [env]
   LIVE_WS_PORT = "8080"
-  LIVE_MODEL = "gemini-3.1-flash-live-preview"
+  LIVE_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025"
   REPORT_MODEL = "gemini-3-flash-preview"
   LIVE_VOICE = "Aoede"
   LIVE_AGENT_NAME = "Sam"
