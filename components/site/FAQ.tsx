@@ -2,7 +2,7 @@ import { PROMISES } from "@/lib/promises";
 
 const faqs = [
   {
-    q: `What happens during the ${PROMISES.callDurationLabel}?`,
+    q: "What happens during the call?",
     a: "A focused conversation covering your client journey, internal communication, and tool stack. You leave with a verified written report and a 4-day quick-win install playbook.",
   },
   {

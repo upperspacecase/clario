@@ -1,22 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { PhoneStage } from "./PhoneStage";
-import { CallScreen, type CallStartFields } from "./CallScreen";
+import { CallRequestPanel } from "./CallRequestPanel";
 import { PROMISES } from "@/lib/promises";
 
 export const HomeHero: React.FC = () => {
-  const router = useRouter();
-
-  const goToStart = (fields: CallStartFields) => {
-    const params = new URLSearchParams({
-      firstName: fields.firstName,
-      businessName: fields.businessName,
-    });
-    router.push(`/start?${params.toString()}`);
-  };
-
   return (
     <section className="relative overflow-hidden py-[96px] text-surface-container md:py-[160px]">
       <div className="relative z-10 mx-auto grid max-w-[1120px] grid-cols-1 items-center gap-12 px-5 md:grid-cols-12 md:gap-8 md:px-8">
@@ -32,36 +19,18 @@ export const HomeHero: React.FC = () => {
             it back.
           </p>
 
-          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:gap-4">
-            <Link
-              href="/start"
-              className="bg-primary-container px-8 py-4 text-center font-[Inter] text-[13px] font-semibold uppercase tracking-[0.05em] text-on-primary-fixed transition-opacity hover:opacity-90"
-            >
-              Get My Hours Assessment
-            </Link>
-          </div>
-
           <p className="flex items-start gap-2 font-[Inter] text-sm leading-[1.6] text-[#737373]">
             <span className="material-symbols-outlined mt-0.5 text-[16px]">
               schedule
             </span>
-            One {PROMISES.callDurationLabel}. One clear report,{" "}
+            {PROMISES.callDurationLabel}. One clear report,{" "}
             {PROMISES.reportSlaLabel}. Practical next steps to save time, reduce
             friction, and create more room for growth.
           </p>
         </div>
 
         <div className="relative flex justify-center md:col-span-5">
-          <PhoneStage>
-            <CallScreen
-              phase="idle"
-              utterances={[]}
-              elapsed={0}
-              level={0}
-              onStart={goToStart}
-              onEnd={() => {}}
-            />
-          </PhoneStage>
+          <CallRequestPanel />
         </div>
       </div>
     </section>

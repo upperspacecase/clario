@@ -3,9 +3,9 @@
 // page) imports from here so promises stay aligned. See docs/PROMISES.md.
 
 export const PROMISES = {
-  callDurationLabel: "60-minute conversation",
+  callDurationLabel: "Phone call, as long as you need",
   callDurationSentence:
-    "About 60 minutes, with a checkpoint mid-way to wrap or keep going.",
+    "Sam rings you and you talk for as long as it's useful — some calls run twenty minutes, some over an hour.",
   reportSlaLabel: "within 24 hours",
   reportSlaSentence: "Your report will land in your inbox within 24 hours.",
   followUpLabel: "free 60-minute implementation walkthrough + Q&A",

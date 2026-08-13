@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Phone } from "lucide-react";
 import { PhoneInput } from "./CallScreen";
+import { PROMISES } from "@/lib/promises";
 
 export type CallRequestFields = {
   firstName: string;
@@ -132,7 +133,7 @@ export const CallRequestForm: React.FC<{
           {busy ? "Dialling…" : "Call me now"}
         </p>
         <p className="mt-2 max-w-[240px] text-center text-[11px] leading-snug text-white/40">
-          Set aside about 45 minutes. Sam will ring the number above.
+          {PROMISES.callDurationSentence}
         </p>
       </div>
     </div>
