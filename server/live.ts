@@ -162,6 +162,12 @@ wss.on("connection", async (ws, req) => {
   let streamSid: string | null = null;
   let callSid: string | null = null;
   const pendingMulaw: Buffer[] = [];
+  // Latency instrumentation: how long after the caller picks up before they
+  // hear anything, and how long each of their turns waits for a reply.
+  let twilioStartMs = 0;
+  let firstAudioLogged = false;
+  let lastUserAudioMs = 0;
+  let awaitingReply = false;
 
   console.log(
     `[SERVER] WS opened session=${sessionId} transport=${isTwilio ? "twilio" : "browser"}`,
@@ -181,6 +187,14 @@ wss.on("connection", async (ws, req) => {
     if (!isTwilio) {
       send(ws, { type: "audio", data: base64Pcm24k });
       return;
+    }
+    if (!firstAudioLogged && twilioStartMs) {
+      firstAudioLogged = true;
+      console.log(`[LATENCY] greeting session=${sessionId} ${Date.now() - twilioStartMs}ms after start`);
+    }
+    if (awaitingReply && lastUserAudioMs) {
+      awaitingReply = false;
+      console.log(`[LATENCY] reply session=${sessionId} ${Date.now() - lastUserAudioMs}ms after caller stopped`);
     }
     const mulaw = pcm24kToMulaw8k(Buffer.from(base64Pcm24k, "base64"));
     if (!streamSid) {
@@ -373,6 +387,10 @@ wss.on("connection", async (ws, req) => {
           speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: snapshot.voice } },
           },
+          // The 2.5 native-audio model enables dynamic thinking by default,
+          // which puts a pause before every spoken reply. On a phone call that
+          // reads as lag, so turn it off. (3.1 already defaults to minimal.)
+          thinkingConfig: { thinkingBudget: 0 },
           inputAudioTranscription: {},
           outputAudioTranscription: {},
           tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
@@ -494,6 +512,10 @@ wss.on("connection", async (ws, req) => {
             // Transcriptions
             const inputT = msg.serverContent?.inputTranscription?.text;
             if (inputT) {
+              // Marks that the caller has been heard; the next audio frame out
+              // closes the loop and reports how long they waited.
+              lastUserAudioMs = Date.now();
+              awaitingReply = true;
               notify({ type: "transcript", who: "user", text: inputT });
               // Untokenized sessions have nowhere to persist the transcript,
               // so surface it in the log. Tokenized calls stay quiet — their
@@ -623,6 +645,7 @@ wss.on("connection", async (ws, req) => {
     if (evt.event === "start") {
       streamSid = evt.start?.streamSid ?? null;
       callSid = evt.start?.callSid ?? null;
+      twilioStartMs = Date.now();
       const twilioToken = evt.start?.customParameters?.token ?? null;
       console.log(
         `[TWILIO] start session=${sessionId} stream=${streamSid} call=${callSid} token=${twilioToken ? "yes" : "no"}`,

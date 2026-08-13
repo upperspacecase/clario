@@ -1,9 +1,12 @@
 # Fly.io config for the voice-agent WS/HTTP server.
-# Runs in syd (Sydney) for low-latency audio to AU users; min 1 machine to
-# avoid cold starts during a call.
+# Region tracks Twilio, not the caller: every 20ms audio frame goes
+# Twilio edge -> here -> Gemini and back, while the caller's own leg is
+# ordinary PSTN. The Twilio account is US (us1, Ashburn), so iad keeps that
+# round trip short. Sydney added most of a planet to it.
+# min 1 machine to avoid cold starts during a call.
 
 app = "voice-agent-ws"
-primary_region = "syd"
+primary_region = "iad"
 
 [build]
   dockerfile = "Dockerfile.server"
