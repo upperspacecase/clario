@@ -29,24 +29,24 @@ const faqs = [
 
 export const FAQ: React.FC = () => {
   return (
-    <section className="border-t border-white/5 py-[80px] text-surface-container md:py-[120px]">
+    <section className="py-[80px] md:py-[120px]">
       <div className="mx-auto max-w-4xl px-5 md:px-8">
-        <h2 className="mb-16 text-center font-serif text-[clamp(28px,5vw,40px)] leading-[1.2] text-white md:mb-20">
+        <h2 className="mb-14 text-center text-[clamp(28px,4.5vw,44px)] font-bold leading-[1.1] tracking-[-0.02em] text-[#0B3049] md:mb-16">
           Frequently Asked Questions
         </h2>
-        <div className="space-y-4">
+        <div className="space-y-3">
           {faqs.map((item) => (
             <details
               key={item.q}
-              className="group border border-white/10 bg-white/[0.02] p-6 [&_summary::-webkit-details-marker]:hidden"
+              className="group rounded-2xl border border-[#0B3049]/8 bg-white p-6 [&_summary::-webkit-details-marker]:hidden"
             >
-              <summary className="flex cursor-pointer list-none items-center justify-between font-[Inter] text-base font-semibold text-white md:text-lg">
+              <summary className="flex cursor-pointer list-none items-center justify-between text-base font-semibold text-[#0B3049] md:text-lg">
                 {item.q}
-                <span className="material-symbols-outlined text-primary-container transition group-open:rotate-180">
+                <span className="material-symbols-outlined text-[#16a34a] transition group-open:rotate-180">
                   expand_more
                 </span>
               </summary>
-              <p className="mt-4 font-[Inter] text-base leading-[1.6] text-[#a3a3a3]">
+              <p className="mt-4 text-base leading-[1.6] text-[#476582]">
                 {item.a}
               </p>
             </details>

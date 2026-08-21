@@ -24,12 +24,10 @@ const Slider: React.FC<{
   return (
     <div>
       <div className="mb-4 flex items-baseline justify-between">
-        <label className="font-[Inter] text-[11px] font-semibold uppercase tracking-widest text-[#a3a3a3]">
+        <label className="text-[11px] font-semibold uppercase tracking-widest text-[#476582]">
           {label}
         </label>
-        <span className="font-[Inter] text-base text-primary-container">
-          {display}
-        </span>
+        <span className="text-base font-semibold text-[#0B3049]">{display}</span>
       </div>
       <RadixSlider.Root
         className="relative flex h-6 w-full touch-none select-none items-center"
@@ -40,12 +38,10 @@ const Slider: React.FC<{
         onValueChange={(v) => onChange(v[0] ?? min)}
         aria-label={label}
       >
-        <RadixSlider.Track className="relative h-[2px] w-full grow bg-white/10">
-          <RadixSlider.Range className="absolute h-full bg-primary-container" />
+        <RadixSlider.Track className="relative h-[3px] w-full grow rounded-full bg-[#0B3049]/10">
+          <RadixSlider.Range className="absolute h-full rounded-full bg-[#16a34a]" />
         </RadixSlider.Track>
-        <RadixSlider.Thumb
-          className="block h-4 w-4 rounded-full bg-primary-container shadow-[0_0_10px_rgba(201,169,110,0.3)] transition-transform duration-150 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a] active:scale-95"
-        />
+        <RadixSlider.Thumb className="block h-4 w-4 rounded-full bg-[#16a34a] shadow-[0_2px_8px_rgba(22,163,74,0.4)] transition-transform duration-150 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-95" />
       </RadixSlider.Root>
     </div>
   );
@@ -64,13 +60,13 @@ export const RoiCalculator: React.FC = () => {
   }, [hoursLost, teamSize, hourlyCost]);
 
   return (
-    <section className="relative border-t border-white/5 py-[80px] text-surface-container md:py-[120px]">
-      <div className="mx-auto max-w-[1120px] px-5 md:px-8">
+    <section className="relative py-[80px] md:py-[120px]">
+      <div className="mx-auto max-w-[1200px] px-5 md:px-8">
         <div className="mb-12 md:mb-16 md:w-2/3">
-          <h2 className="mb-6 font-serif text-[clamp(28px,5vw,40px)] leading-[1.2] text-white">
-            What are those lost hours really costing you?
+          <h2 className="mb-5 text-[clamp(28px,4.5vw,44px)] font-bold leading-[1.1] tracking-[-0.02em] text-[#0B3049]">
+            What are those lost hours costing you?
           </h2>
-          <p className="max-w-2xl font-[Inter] text-base leading-relaxed text-[#a3a3a3] md:text-lg">
+          <p className="max-w-2xl text-base leading-relaxed text-[#476582] md:text-lg">
             Small businesses increasingly report that AI tools and systems help
             them save time, improve productivity, and reduce operating costs.
             Use the calculator to estimate what repetitive admin, slow
@@ -79,7 +75,7 @@ export const RoiCalculator: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
+        <div className="grid grid-cols-1 gap-8 rounded-[28px] border border-[#0B3049]/6 bg-white p-8 md:grid-cols-12 md:p-12">
           <div className="space-y-12 pr-0 pt-4 md:col-span-5 md:pr-8">
             <Slider
               label="Hours spent on repetitive tasks per week"
@@ -107,31 +103,29 @@ export const RoiCalculator: React.FC = () => {
             />
           </div>
 
-          <div className="mt-12 flex flex-col gap-4 md:col-span-7 md:mt-0">
-            <div className="flex flex-col justify-center border border-white/5 bg-[#1f1f1f] p-8">
-              <span className="mb-3 font-[Inter] text-[11px] font-semibold uppercase tracking-widest text-[#737373]">
+          <div className="mt-4 flex flex-col gap-4 md:col-span-7 md:mt-0">
+            <div className="flex flex-col justify-center rounded-2xl bg-[#F6F4EF] p-7">
+              <span className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[#6B8199]">
                 Hours / Month
               </span>
-              <span className="font-serif text-[40px] leading-none text-white">
+              <span className="text-[36px] font-bold leading-none tracking-[-0.02em] text-[#0B3049]">
                 {Math.round(hoursPerMonth)}{" "}
-                <span className="ml-1 font-sans text-xl text-[#737373]">
-                  hrs
-                </span>
+                <span className="ml-1 text-lg font-medium text-[#6B8199]">hrs</span>
               </span>
             </div>
-            <div className="flex flex-col justify-center border border-white/5 bg-[#1f1f1f] p-8">
-              <span className="mb-3 font-[Inter] text-[11px] font-semibold uppercase tracking-widest text-[#737373]">
+            <div className="flex flex-col justify-center rounded-2xl bg-[#F6F4EF] p-7">
+              <span className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[#6B8199]">
                 Cost / Month
               </span>
-              <span className="font-serif text-[40px] leading-none text-white">
+              <span className="text-[36px] font-bold leading-none tracking-[-0.02em] text-[#0B3049]">
                 {fmtUsd(costPerMonth)}
               </span>
             </div>
-            <div className="flex flex-col justify-center border border-white/5 bg-[#1f1f1f] p-8">
-              <span className="mb-3 font-[Inter] text-[11px] font-semibold uppercase tracking-widest text-[#737373]">
+            <div className="flex flex-col justify-center rounded-2xl bg-[#DDF2E4] p-7">
+              <span className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[#15803d]">
                 Savings / Year
               </span>
-              <span className="font-serif text-[40px] leading-none text-white">
+              <span className="text-[36px] font-bold leading-none tracking-[-0.02em] text-[#15803d]">
                 {fmtUsd(savingsPerYear)}
               </span>
             </div>

@@ -1,37 +1,16 @@
 "use client";
 
-import { useCallback, useState } from "react";
 import { PhoneStage } from "./PhoneStage";
-import { CallRequestForm, type CallRequestFields } from "./CallRequestForm";
+import { CallRequestForm } from "./CallRequestForm";
+import { useCallRequest } from "./use-call-request";
 
-// Owns the whole request-a-call flow so the homepage and /start render the
-// same thing. They used to have separate implementations and drifted.
+// Owns the whole request-a-call flow inside the dark phone chrome. Used by
+// /start; the homepage renders the same flow via HeroCallForm.
 export const CallRequestPanel: React.FC<{
   initialFirstName?: string;
   initialBusinessName?: string;
 }> = ({ initialFirstName, initialBusinessName }) => {
-  const [phase, setPhase] = useState<"idle" | "dialling" | "ringing">("idle");
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = useCallback(async (fields: CallRequestFields) => {
-    setPhase("dialling");
-    setError(null);
-    try {
-      const res = await fetch("/api/voice/call", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fields),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error ?? `Could not place the call (${res.status})`);
-      }
-      setPhase("ringing");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-      setPhase("idle");
-    }
-  }, []);
+  const { phase, error, submit } = useCallRequest();
 
   return (
     <div className="flex w-full flex-col items-center gap-3">
@@ -43,7 +22,7 @@ export const CallRequestPanel: React.FC<{
             busy={phase === "dialling"}
             initialFirstName={initialFirstName}
             initialBusinessName={initialBusinessName}
-            onSubmit={handleSubmit}
+            onSubmit={submit}
           />
         )}
       </PhoneStage>

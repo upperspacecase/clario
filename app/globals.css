@@ -70,6 +70,29 @@ body.page-light {
   }
 }
 
+/* Homepage process strip: the hovered (or keyboard-focused) card grows and
+   reveals its details; with nothing hovered, the first card holds the
+   expanded state. Grow values live here rather than in utility classes so
+   the not(:hover) fallback and the hover state can't drift apart. */
+@media (min-width: 768px) {
+  .process-cards > .process-card {
+    flex-grow: 1;
+  }
+  .process-cards > .process-card:hover,
+  .process-cards > .process-card:focus-within,
+  .process-cards > .process-card:focus {
+    flex-grow: 2.6;
+  }
+  .process-cards:not(:hover):not(:focus-within) > .process-card:first-child {
+    flex-grow: 2.6;
+  }
+  .process-cards:not(:hover):not(:focus-within) > .process-card:first-child .card-details,
+  .process-cards:not(:hover):not(:focus-within) > .process-card:first-child .card-wash {
+    opacity: 1;
+    transition-delay: 150ms;
+  }
+}
+
 /* Focus ring */
 :focus-visible {
   outline: 2px solid var(--olive);

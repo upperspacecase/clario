@@ -5,19 +5,9 @@ import Image from "next/image";
 import { Phone } from "lucide-react";
 import { PhoneInput } from "./CallScreen";
 import { PROMISES } from "@/lib/promises";
+import { E164, EMAIL, type CallRequestFields } from "./use-call-request";
 
-export type CallRequestFields = {
-  firstName: string;
-  businessName: string;
-  website: string;
-  email: string;
-  phone: string;
-};
-
-// Matches the server check in app/api/voice/call/route.ts. Twilio needs a full
-// country code; a bare national number silently dials the wrong country.
-const E164 = /^\+[1-9]\d{7,14}$/;
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export type { CallRequestFields };
 
 export const CallRequestForm: React.FC<{
   busy: boolean;
