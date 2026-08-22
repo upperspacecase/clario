@@ -8,6 +8,7 @@ export type CallRequestFields = {
   website: string;
   email: string;
   phone: string;
+  workflowId: string;
 };
 
 // Match the server checks in app/api/voice/call/route.ts. Twilio needs a full

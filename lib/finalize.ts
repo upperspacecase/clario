@@ -5,6 +5,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "./firebase-admin";
 import { sendAdminNotification, sendCallConfirmation } from "./email";
+import { enqueueJob } from "./jobs";
 import type { AssessmentStatus } from "./types";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -45,6 +46,36 @@ export async function finalizeAssessment(
 
   if (currentStatus && currentStatus !== "in_call") {
     return { ok: true, status: currentStatus, needsConfirmation };
+  }
+
+  // PRD phone flow: the workflow was chosen on the form, so the transcript
+  // goes straight to extraction and the engine takes it from there. Legacy
+  // whole-operation calls keep the awaiting_details path.
+  const isPrdFlow =
+    data.tier === "free" &&
+    Array.isArray(data.selectedWorkflows) &&
+    data.selectedWorkflows.length > 0;
+
+  if (isPrdFlow) {
+    await docRef.update({
+      status: "pending_processing" satisfies AssessmentStatus,
+      queuedForProcessingAt: FieldValue.serverTimestamp(),
+    });
+    await enqueueJob("extract_observations", assessmentId);
+    if (clientEmail && EMAIL_REGEX.test(clientEmail)) {
+      await sendCallConfirmation({ to: clientEmail, clientName: clientName ?? "" });
+      await docRef.update({ confirmationEmailedAt: FieldValue.serverTimestamp() });
+    }
+    await sendAdminNotification({
+      businessName: businessName ?? "Unknown business",
+      assessmentId,
+      shareId,
+    });
+    return {
+      ok: true,
+      status: "pending_processing" as AssessmentStatus,
+      needsConfirmation: false,
+    };
   }
 
   await docRef.update({

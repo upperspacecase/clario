@@ -6,6 +6,7 @@ import { Phone } from "lucide-react";
 import { PhoneInput } from "./CallScreen";
 import { PROMISES } from "@/lib/promises";
 import { E164, EMAIL, type CallRequestFields } from "./use-call-request";
+import { WORKFLOWS } from "@/lib/taxonomy";
 
 export type { CallRequestFields };
 
@@ -20,6 +21,7 @@ export const CallRequestForm: React.FC<{
   const [website, setWebsite] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [workflowId, setWorkflowId] = useState("");
 
   const normalizedPhone = phone.replace(/[\s()-]/g, "");
   const canSubmit =
@@ -27,6 +29,7 @@ export const CallRequestForm: React.FC<{
     businessName.trim().length > 0 &&
     EMAIL.test(email.trim()) &&
     E164.test(normalizedPhone) &&
+    workflowId.length > 0 &&
     !busy;
 
   const submit = () => {
@@ -37,6 +40,7 @@ export const CallRequestForm: React.FC<{
       website: website.trim(),
       email: email.trim(),
       phone: normalizedPhone,
+      workflowId,
     });
   };
 
@@ -92,6 +96,23 @@ export const CallRequestForm: React.FC<{
           onChange={setEmail}
           onEnter={submit}
         />
+        <label className="flex flex-col gap-1">
+          <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/45">
+            Which workflow costs you most?
+          </span>
+          <select
+            value={workflowId}
+            onChange={(e) => setWorkflowId(e.target.value)}
+            className="h-9 w-full rounded-md border border-white/10 bg-black/60 px-2 text-[14px] text-white focus:border-[#22c55e]/60 focus:outline-none"
+          >
+            <option value="">Choose one…</option>
+            {WORKFLOWS.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <PhoneInput
           label="Phone (with country code)"
           type="tel"

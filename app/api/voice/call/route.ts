@@ -5,6 +5,15 @@ import twilio from "twilio";
 import { adminDb } from "@/lib/firebase-admin";
 import { signVoiceSessionToken } from "@/lib/voice-token";
 import { checkAndRecordCall } from "@/lib/rate-limit";
+import { isWorkflowId } from "@/lib/taxonomy";
+import { SCHEMA_VERSION } from "@/lib/assessment-schema";
+import { logEvent } from "@/lib/events";
+
+// Shown next to the call button; the tap is the explicit request (FR-09) and
+// this text version is what the consent record points at.
+const CALL_CONSENT_VERSION = "ai_call_v1";
+const CALL_CONSENT_TEXT =
+  "By tapping Call me now you request a phone call from Sam, an AI interviewer, and agree to transcription of the call so Hours can prepare your assessment.";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -78,13 +87,34 @@ export async function POST(req: Request) {
     );
   }
 
+  const workflowId = isWorkflowId(body?.workflowId) ? body.workflowId : null;
+
   const shareId = nanoid(10);
   const docRef = adminDb().collection("assessments").doc();
   const assessmentId = docRef.id;
 
+  const consentRef = adminDb().collection("consents").doc();
+  await consentRef.set({
+    assessmentId,
+    channel: "phone",
+    kind: "ai_call",
+    textVersion: CALL_CONSENT_VERSION,
+    text: CALL_CONSENT_TEXT,
+    grantedAt: FieldValue.serverTimestamp(),
+    ip,
+    userAgent: req.headers.get("user-agent"),
+  });
+
   await docRef.set({
     id: assessmentId,
     shareId,
+    schemaVersion: SCHEMA_VERSION,
+    tier: "free",
+    channel: "phone",
+    selectedWorkflows: workflowId ? [workflowId] : [],
+    locale: { country: null, timezone: null, currency: "USD" },
+    parentAssessmentId: null,
+    consentIds: [consentRef.id],
 
     firstName,
     businessName,
@@ -135,6 +165,11 @@ export async function POST(req: Request) {
       timeLimit: CALL_TIME_LIMIT_SEC,
     });
     await docRef.update({ twilioCallSid: call.sid });
+    void logEvent("intake_channel_selected", { assessmentId, channel: "phone" });
+    if (workflowId) {
+      void logEvent("workflow_selected", { assessmentId, channel: "phone", meta: { workflowId } });
+    }
+    void logEvent("intake_started", { assessmentId, channel: "phone" });
     return NextResponse.json({ assessmentId, shareId, callSid: call.sid });
   } catch (err) {
     // The doc would otherwise sit in `in_call` forever with no call attached.

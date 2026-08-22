@@ -28,9 +28,11 @@ import { verifyVoiceSessionToken } from "../lib/voice-token.js";
 import { adminDb } from "../lib/firebase-admin.js";
 import {
   getActivePrompt,
+  getPrompt,
   toSnapshot,
   type PromptSnapshot,
 } from "../lib/prompts.js";
+import { getWorkflow } from "../lib/taxonomy.js";
 import { FieldValue } from "firebase-admin/firestore";
 
 const PORT = Number(process.env.LIVE_WS_PORT ?? 3043);
@@ -42,16 +44,27 @@ function escapeForBracketText(input: string): string {
 function buildKickoffText(
   firstName: string | null,
   businessName: string | null,
+  workflowLabel: string | null,
 ): string {
   const safeName = firstName ? escapeForBracketText(firstName) : "";
   const safeBiz = businessName ? escapeForBracketText(businessName) : "";
+  const parts: string[] = ["The user is now connected."];
   if (safeName && safeBiz) {
-    return `[The user is now connected. Their first name is "${safeName}" and they are from "${safeBiz}". Greet them by name and skip asking for their name. Begin Phase 0 of your contract.]`;
+    parts.push(
+      `Their first name is "${safeName}" and they are from "${safeBiz}". Greet them by name and skip asking for their name.`,
+    );
+  } else if (safeName) {
+    parts.push(
+      `Their first name is "${safeName}". Greet them by name and skip asking for their name.`,
+    );
   }
-  if (safeName) {
-    return `[The user is now connected. Their first name is "${safeName}". Greet them by name and skip asking for their name. Begin Phase 0 of your contract.]`;
+  if (workflowLabel) {
+    parts.push(
+      `On the form they chose the workflow "${escapeForBracketText(workflowLabel)}" as the one costing them most — that is the sole focus of this call.`,
+    );
   }
-  return "[The user is now connected. Begin Phase 0 of your contract.]";
+  parts.push("Begin Phase 0 of your contract.");
+  return `[${parts.join(" ")}]`;
 }
 
 if (!process.env.GEMINI_API_KEY) {
@@ -143,6 +156,7 @@ wss.on("connection", async (ws, req) => {
   let promptSnapshot: PromptSnapshot | null = null;
   let callerFirstName: string | null = null;
   let callerBusinessName: string | null = null;
+  let callerWorkflowLabel: string | null = null;
   const clientConnectedAtMs = Date.now();
 
   const reqUrl = new URL(req.url ?? "/", `http://localhost:${PORT}`);
@@ -299,6 +313,28 @@ wss.on("connection", async (ws, req) => {
       const bn = docData.businessName;
       callerFirstName = typeof fn === "string" && fn.trim().length > 0 ? fn.trim() : null;
       callerBusinessName = typeof bn === "string" && bn.trim().length > 0 ? bn.trim() : null;
+
+      // PRD free calls focus on one pre-selected workflow and run a
+      // dedicated prompt (config/global.freeCallPromptId). Whole-operation
+      // calls keep the globally active prompt.
+      const selected = Array.isArray(docData.selectedWorkflows)
+        ? (docData.selectedWorkflows[0] as string | undefined)
+        : undefined;
+      if (docData.tier === "free" && selected) {
+        callerWorkflowLabel = getWorkflow(selected)?.label ?? null;
+        const cfg = await adminDb().collection("config").doc("global").get();
+        const freeId = cfg.data()?.freeCallPromptId;
+        if (typeof freeId === "string" && freeId.length > 0) {
+          const freePrompt = await getPrompt(freeId);
+          if (freePrompt) {
+            promptSnapshot = toSnapshot(freePrompt);
+            console.log(
+              `[SERVER] session=${sessionId} using free-call prompt=${promptSnapshot.id} workflow=${selected}`,
+            );
+          }
+        }
+      }
+
       await docRef.update({
         voiceSessionId: voiceSessionUuid,
         callStartedAt: FieldValue.serverTimestamp(),
@@ -474,6 +510,7 @@ wss.on("connection", async (ws, req) => {
               const kickoffText = buildKickoffText(
                 callerFirstName,
                 callerBusinessName,
+                callerWorkflowLabel,
               );
               try {
                 liveSession.sendClientContent({

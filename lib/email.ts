@@ -212,19 +212,19 @@ export async function sendCallConfirmation(args: {
     "",
     "Thanks for taking the call with Sam.",
     "",
-    "Your written report is being prepared. We will email it to this address as soon as it is ready (within 24 hours).",
+    "Your written assessment is being prepared. We will email it to this address as soon as it is ready — within 1 hour for the free assessment.",
     "",
     "If you need to reach us in the meantime, reply to this email.",
     "",
     "— The Hours team",
   ].join("\n");
   const html = renderBrandedEmail({
-    preheader: "Your written report is being prepared — within 24 hours.",
+    preheader: "Your assessment is being prepared.",
     body: [
       brandH("Thanks for the call."),
       brandP(`Hi ${escapeHtml(greetingName)} — thanks for taking the call with Sam.`),
       brandP(
-        "Your written report is being prepared. We will email it to this address as soon as it is ready (within 24 hours).",
+        "Your written assessment is being prepared. We will email it to this address as soon as it is ready — within 1 hour for the free assessment.",
       ),
       brandP("If you need to reach us in the meantime, reply to this email."),
       brandSignoff("— The Hours team"),

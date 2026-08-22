@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PROMISES } from "@/lib/promises";
+import { WORKFLOWS } from "@/lib/taxonomy";
 import {
   E164,
   EMAIL,
@@ -31,6 +32,7 @@ const Fields: React.FC<{
   const [website, setWebsite] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [workflowId, setWorkflowId] = useState("");
 
   const normalizedPhone = phone.replace(/[\s()-]/g, "");
   const canSubmit =
@@ -38,6 +40,7 @@ const Fields: React.FC<{
     businessName.trim().length > 0 &&
     EMAIL.test(email.trim()) &&
     E164.test(normalizedPhone) &&
+    workflowId.length > 0 &&
     !busy;
 
   const submit = () => {
@@ -48,6 +51,7 @@ const Fields: React.FC<{
       website: website.trim(),
       email: email.trim(),
       phone: normalizedPhone,
+      workflowId,
     });
   };
 
@@ -74,6 +78,23 @@ const Fields: React.FC<{
         <Field label="Business name" autoComplete="organization" value={businessName} onChange={setBusinessName} onEnter={submit} />
         <Field label="Website" autoComplete="url" placeholder="acme.co" value={website} onChange={setWebsite} onEnter={submit} />
         <Field label="Email" type="email" autoComplete="email" placeholder="you@acme.co" value={email} onChange={setEmail} onEnter={submit} />
+        <label className="flex flex-col gap-1.5 sm:col-span-2">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#476582]">
+            Which workflow costs you most?
+          </span>
+          <select
+            value={workflowId}
+            onChange={(e) => setWorkflowId(e.target.value)}
+            className="h-11 w-full rounded-xl border border-[#0B3049]/12 bg-[#F8F7F4] px-3 text-[15px] text-[#0B3049] focus:border-[#16a34a] focus:bg-white focus:outline-none"
+          >
+            <option value="">Choose one…</option>
+            {WORKFLOWS.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <div className="sm:col-span-2">
           <Field
             label="Phone (with country code)"
@@ -98,6 +119,10 @@ const Fields: React.FC<{
 
       <p className="mt-3 text-center text-[12px] leading-snug text-[#476582]">
         {PROMISES.callDurationSentence}
+      </p>
+      <p className="mt-2 text-center text-[11px] leading-snug text-[#6B8199]">
+        By tapping Call me now you request a call from Sam, an AI interviewer,
+        and agree to transcription so we can prepare your assessment.
       </p>
       <p className="mt-2 text-center text-[12px] text-[#6B8199]">
         Prefer to type?{" "}
