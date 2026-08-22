@@ -177,7 +177,7 @@ export const FreeReport: React.FC<{ data: FreeReportData }> = ({ data }) => {
             delivered within 24 hours — backed by the $10,000 guarantee.
           </p>
           <a
-            href="/#pricing"
+            href={`/api/full/upgrade?shareId=${data.shareId}`}
             className="inline-block rounded-full bg-[#16a34a] px-8 py-3.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#15803d]"
           >
             Get the Full Assessment

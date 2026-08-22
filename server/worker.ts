@@ -4,12 +4,16 @@
 import { claimNextJob, completeJob, failJob } from "../lib/jobs.js";
 import { generateFreeReport } from "../lib/engine.js";
 import { extractObservations } from "../lib/extract.js";
+import { extractFullObservations } from "../lib/extract-full.js";
+import { generateFullReport } from "../lib/engine-full.js";
 
 const POLL_MS = 5_000;
 
 async function handle(jobId: string, type: string, assessmentId: string): Promise<void> {
   if (type === "generate_free_report") return generateFreeReport(assessmentId);
   if (type === "extract_observations") return extractObservations(assessmentId);
+  if (type === "extract_full_observations") return extractFullObservations(assessmentId);
+  if (type === "generate_full_report") return generateFullReport(assessmentId);
   throw new Error(`unknown job type ${type}`);
 }
 

@@ -3,6 +3,8 @@ import { FieldValue } from "firebase-admin/firestore";
 import type Stripe from "stripe";
 import { adminDb } from "@/lib/firebase-admin";
 import { getStripe } from "@/lib/stripe";
+import { logEvent } from "@/lib/events";
+import { sendFullIntakeInvite } from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -87,17 +89,32 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       ? session.payment_intent
       : (session.payment_intent?.id ?? null);
 
-  await adminDb()
-    .collection("assessments")
-    .doc(assessmentId)
-    .update({
-      paidAt: FieldValue.serverTimestamp(),
-      amountPaidUsd,
-      stripeCheckoutSessionId: session.id,
-      stripePaymentIntentId: paymentIntentId,
-    });
+  const docRef = adminDb().collection("assessments").doc(assessmentId);
+  await docRef.update({
+    paidAt: FieldValue.serverTimestamp(),
+    amountPaidUsd,
+    stripeCheckoutSessionId: session.id,
+    stripePaymentIntentId: paymentIntentId,
+  });
 
   console.log(
     `[stripe-webhook] paid assessment=${assessmentId} amount=${amountPaidUsd} pi=${paymentIntentId}`,
   );
+
+  // Paid Full Assessment (PRD): move to awaiting the 45-minute intake and
+  // send the invite. Duplicate webhook deliveries are safe — the email only
+  // fires on the first transition out of awaiting_payment.
+  const doc = (await docRef.get()).data() ?? {};
+  if (doc.tier === "full" && doc.status === "awaiting_payment") {
+    await docRef.update({ status: "awaiting_details" });
+    void logEvent("full_assessment_paid", { assessmentId });
+    const email = doc.clientEmail as string | null;
+    if (email) {
+      await sendFullIntakeInvite({
+        to: email,
+        clientName: (doc.clientName as string | null) ?? "",
+        shareId: (doc.shareId as string) ?? "",
+      });
+    }
+  }
 }

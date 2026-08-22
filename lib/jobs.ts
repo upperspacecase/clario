@@ -5,7 +5,11 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "./firebase-admin";
 
-export type JobType = "extract_observations" | "generate_free_report" | "generate_full_report";
+export type JobType =
+  | "extract_observations"
+  | "generate_free_report"
+  | "extract_full_observations"
+  | "generate_full_report";
 export type JobStatus = "queued" | "running" | "done" | "failed";
 
 export interface Job {

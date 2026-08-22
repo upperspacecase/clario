@@ -52,16 +52,20 @@ export async function finalizeAssessment(
   // goes straight to extraction and the engine takes it from there. Legacy
   // whole-operation calls keep the awaiting_details path.
   const isPrdFlow =
-    data.tier === "free" &&
-    Array.isArray(data.selectedWorkflows) &&
-    data.selectedWorkflows.length > 0;
+    (data.tier === "free" &&
+      Array.isArray(data.selectedWorkflows) &&
+      data.selectedWorkflows.length > 0) ||
+    data.tier === "full";
 
   if (isPrdFlow) {
     await docRef.update({
       status: "pending_processing" satisfies AssessmentStatus,
       queuedForProcessingAt: FieldValue.serverTimestamp(),
     });
-    await enqueueJob("extract_observations", assessmentId);
+    await enqueueJob(
+      data.tier === "full" ? "extract_full_observations" : "extract_observations",
+      assessmentId,
+    );
     if (clientEmail && EMAIL_REGEX.test(clientEmail)) {
       await sendCallConfirmation({ to: clientEmail, clientName: clientName ?? "" });
       await docRef.update({ confirmationEmailedAt: FieldValue.serverTimestamp() });

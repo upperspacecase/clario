@@ -2,6 +2,7 @@ import type { Timestamp } from "firebase-admin/firestore";
 
 export type AssessmentStatus =
   | "intake_started" // written form in progress (PRD flow)
+  | "awaiting_payment" // full assessment created, checkout not completed
   | "in_call"
   | "awaiting_details"
   | "pending_processing"

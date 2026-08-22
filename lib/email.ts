@@ -199,6 +199,45 @@ export async function sendFreeReportDelivery(args: {
   }
 }
 
+export async function sendFullIntakeInvite(args: {
+  to: string;
+  clientName: string;
+  shareId: string;
+}): Promise<void> {
+  const { to, clientName, shareId } = args;
+  const greetingName = clientName.trim() || "there";
+  const startUrl = `https://gethours.org/full/${shareId}`;
+  const subject = "Payment received — start your Full Assessment";
+  const text = [
+    `Hi ${greetingName},`,
+    "",
+    "Thanks — your Full Assessment is paid and ready to begin.",
+    "",
+    `Start your 45-minute call with Sam whenever suits: ${startUrl}`,
+    "",
+    "The call covers all six workflows. Your report — visual plus a machine-readable file, with up to three priority changes and a four-day plan — lands within 24 hours of the call, and includes the 30-minute strategy call.",
+    "",
+    "— The Hours team",
+  ].join("\n");
+  const html = renderBrandedEmail({
+    preheader: "Start your 45-minute call whenever suits.",
+    body: [
+      brandH("Payment received."),
+      brandP(`Hi ${escapeHtml(greetingName)} — your Full Assessment is paid and ready to begin.`),
+      brandP(
+        "The call covers all six workflows. Your report lands within 24 hours of the call, and includes the 30-minute strategy call.",
+      ),
+      brandButton(startUrl, "Start my Full Assessment call"),
+      brandSignoff("— The Hours team"),
+    ].join("\n"),
+  });
+  try {
+    await sendViaResend({ from: fromAddress(), to, subject, text, html });
+  } catch (err) {
+    console.error("[email] sendFullIntakeInvite failed:", err);
+  }
+}
+
 export async function sendCallConfirmation(args: {
   to: string;
   clientName: string;

@@ -3,6 +3,7 @@ import { Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
 import { Report, type ReportData } from "@/components/Report";
 import { FreeReport, type FreeReportData } from "@/components/FreeReport";
+import { FullReport, type FullReportData } from "@/components/FullReport";
 import { BookingPicker } from "@/components/BookingPicker";
 import type {
   FourDayPlanItem,
@@ -98,6 +99,29 @@ export default async function PublicReportPage({ params }: PageProps) {
   }
 
   const raw = snap.exists ? (snap.data() as Record<string, unknown>) : null;
+
+  // PRD Full Assessment: renders only once approved (FR-43); before that the
+  // customer sees the standard "being prepared" state further down.
+  if (raw?.kind === "full_v1" && raw.approved === true) {
+    return (
+      <FullReport
+        data={{
+          shareId,
+          assessmentId,
+          clientName: (raw.clientName as string) ?? clientName,
+          clientEmail,
+          businessName: (raw.businessName as string) ?? businessName,
+          executiveSummary: (raw.executiveSummary as string) ?? "",
+          workflowMap: (raw.workflowMap as FullReportData["workflowMap"]) ?? [],
+          focusWorkflowIds: (raw.focusWorkflowIds as string[]) ?? [],
+          recommendations: (raw.recommendations as FullReportData["recommendations"]) ?? [],
+          fourDayPlan: (raw.fourDayPlan as FullReportData["fourDayPlan"]) ?? [],
+          guaranteeTotalUsd: (raw.guaranteeTotalUsd as number) ?? 0,
+          generatedAt: fmtDate(raw.generatedAt),
+        }}
+      />
+    );
+  }
 
   // PRD free assessment: a different, lighter document shape.
   if (raw?.kind === "free_v1") {

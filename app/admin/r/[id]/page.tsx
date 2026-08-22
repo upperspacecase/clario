@@ -285,6 +285,43 @@ export default function AdminAssessmentPage({ params }: PageProps) {
     }
   }
 
+  async function handleApproveFull() {
+    setSendError(null);
+    setSendOk(null);
+    setSending(true);
+    try {
+      const user = await new Promise<ReturnType<typeof clientAuth>["currentUser"]>(
+        (resolve) => {
+          const unsub = onAuthStateChanged(clientAuth(), (u) => {
+            unsub();
+            resolve(u);
+          });
+        },
+      );
+      if (!user) throw new Error("Not signed in");
+      const idToken = await user.getIdToken();
+      const res = await fetch("/api/admin/full/approve", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ assessmentId: id }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? `approve failed (${res.status})`);
+      setSendOk(
+        json.refunded
+          ? "Approved and delivered — guarantee not met, refund issued."
+          : "Approved and delivered.",
+      );
+    } catch (e) {
+      setSendError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSending(false);
+    }
+  }
+
   async function copyText(text: string) {
     try {
       await navigator.clipboard.writeText(text);
@@ -355,6 +392,15 @@ export default function AdminAssessmentPage({ params }: PageProps) {
 
         <Card title="Actions">
           <div className="flex flex-col gap-3">
+            {assessment.status === "manual_review" && (
+              <button
+                onClick={handleApproveFull}
+                disabled={sending}
+                className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-on-primary hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              >
+                {sending ? "Working…" : "Approve full report & deliver"}
+              </button>
+            )}
             <button
               onClick={handleSend}
               disabled={!canSend || sending}
