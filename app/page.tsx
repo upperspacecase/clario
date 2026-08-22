@@ -3,7 +3,7 @@ import { TopNav } from "@/components/site/TopNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { ProcessCards } from "@/components/site/ProcessCards";
 import { RoiCalculator } from "@/components/site/RoiCalculator";
-import { Testimonials } from "@/components/site/Testimonials";
+import { ReportPreview } from "@/components/site/ReportPreview";
 import { PricingSection } from "@/components/site/PricingSection";
 import { FAQ } from "@/components/site/FAQ";
 
@@ -16,9 +16,9 @@ export default function Page() {
       <main className="relative z-10 pt-[72px]">
         <HomeHero />
         <ProcessCards />
+        <ReportPreview />
         <RoiCalculator />
         <PricingSection />
-        <Testimonials />
         <FAQ />
       </main>
       <SiteFooter />

@@ -16,42 +16,42 @@ const STEPS: Step[] = [
     title: "Call",
     tagline: "Leave your details and your phone rings.",
     bullets: [
-      { icon: "edit_note", text: "Five fields, no scheduling" },
+      { icon: "edit_note", text: "A few fields, no scheduling" },
       { icon: "call", text: "Sam rings you straight away" },
-      { icon: "waving_hand", text: "Pick up and say hello" },
+      { icon: "record_voice_over", text: "Sam says up front that it's an AI call" },
     ],
     wash: "linear-gradient(180deg, rgba(220,233,247,0) 0%, #DCE9F7 90%)",
     visual: <CallVisual />,
   },
   {
     title: "Talk",
-    tagline: "A conversation about where your week goes.",
+    tagline: "Ten minutes on the workflow costing you most.",
     bullets: [
+      { icon: "filter_center_focus", text: "One workflow, chosen by you" },
       { icon: "hearing", text: "Sam listens more than he talks" },
-      { icon: "schedule", text: "You set the length — twenty minutes or an hour" },
-      { icon: "back_hand", text: "Say the word and Sam wraps up" },
+      { icon: "back_hand", text: "Stop, correct, or wrap up whenever you like" },
     ],
     wash: "linear-gradient(180deg, rgba(221,242,228,0) 0%, #DDF2E4 90%)",
     visual: <TalkVisual />,
   },
   {
     title: "Report",
-    tagline: "Your Hours Report lands within 24 hours.",
+    tagline: "A one-page assessment within the hour.",
     bullets: [
-      { icon: "search_insights", text: "Where your hours leak, quantified" },
-      { icon: "construction", text: "A verified tool shortlist for your stack" },
-      { icon: "event_available", text: "A 4-day quick-win install plan" },
+      { icon: "search_insights", text: "The friction, quantified as honest ranges" },
+      { icon: "psychology", text: "Assumptions and confidence shown, not hidden" },
+      { icon: "construction", text: "One recommendation you can act on" },
     ],
     wash: "linear-gradient(180deg, rgba(231,227,249,0) 0%, #E7E3F9 90%)",
     visual: <ReportVisual />,
   },
   {
     title: "Act",
-    tagline: "Get the hours back.",
+    tagline: "One clear next step — then go deeper if it earns it.",
     bullets: [
-      { icon: "co_present", text: "Free walkthrough of your report" },
-      { icon: "bolt", text: "Quick wins installed inside a week" },
-      { icon: "verified", text: "Backed by the 10× ROI guarantee" },
+      { icon: "bolt", text: "An action sequence plus an agent-ready prompt" },
+      { icon: "map", text: "Full Assessment: all six workflows, three priorities, $497" },
+      { icon: "co_present", text: "30-minute strategy call included with Full" },
     ],
     wash: "linear-gradient(180deg, rgba(251,231,218,0) 0%, #FBE7DA 90%)",
     visual: <ActVisual />,
@@ -67,11 +67,11 @@ export const ProcessCards: React.FC = () => {
             How it works
           </span>
           <h2 className="text-[clamp(28px,4.5vw,44px)] font-bold leading-[1.1] tracking-[-0.02em] text-[#0B3049]">
-            One phone call, handled end to end
+            One free assessment, handled end to end
           </h2>
           <p className="mt-4 text-base leading-[1.6] text-[#476582] md:text-lg">
-            Sam handles the conversation, the analysis, and the plan. You handle
-            picking up the phone.
+            Ten minutes on the phone, one workflow, one clear answer — free, within
+            the hour.
           </p>
         </div>
 
@@ -148,13 +148,13 @@ function TalkVisual() {
   return (
     <div className="mx-auto flex w-full max-w-[260px] flex-col gap-2">
       <div className="max-w-[85%] self-start rounded-2xl rounded-bl-md bg-white px-3.5 py-2 text-[12.5px] leading-snug text-[#0B3049] shadow-[0_10px_28px_-18px_rgba(11,48,73,0.4)]">
-        Where does the week go first?
+        Which workflow hurts most right now?
       </div>
       <div className="max-w-[85%] self-end rounded-2xl rounded-br-md bg-[#16a34a] px-3.5 py-2 text-[12.5px] leading-snug text-white shadow-[0_10px_28px_-18px_rgba(22,163,74,0.5)]">
-        Chasing paperwork, honestly.
+        Lead follow-up. It never ends.
       </div>
       <div className="max-w-[85%] self-start rounded-2xl rounded-bl-md bg-white px-3.5 py-2 text-[12.5px] leading-snug text-[#0B3049] shadow-[0_10px_28px_-18px_rgba(11,48,73,0.4)]">
-        Walk me through the last time that happened.
+        Walk me through yesterday&apos;s leads.
       </div>
     </div>
   );
@@ -164,10 +164,10 @@ function ReportVisual() {
   return (
     <div className="mx-auto w-full max-w-[240px] rounded-2xl border border-[#0B3049]/8 bg-white p-4 shadow-[0_16px_40px_-24px_rgba(11,48,73,0.35)]">
       <div className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-[#476582]">
-        Hours found
+        Recoverable (estimate)
       </div>
       <div className="mb-3 text-[22px] font-bold leading-none text-[#0B3049]">
-        11 hrs<span className="text-[13px] font-semibold text-[#476582]"> / week</span>
+        4–6 hrs<span className="text-[13px] font-semibold text-[#476582]"> / week</span>
       </div>
       <div className="space-y-2">
         <div className="h-2.5 w-[90%] rounded-full bg-[#16a34a]" />
@@ -175,14 +175,14 @@ function ReportVisual() {
         <div className="h-2.5 w-[40%] rounded-full bg-[#16a34a]/40" />
       </div>
       <div className="mt-3 text-[12px] font-semibold text-[#0B3049]">
-        $27,000<span className="font-normal text-[#476582]"> recoverable / year</span>
+        $14–21k<span className="font-normal text-[#476582]"> / year · medium confidence</span>
       </div>
     </div>
   );
 }
 
 function ActVisual() {
-  const rows = ["Inbox triage automated", "Follow-ups on autopilot", "Reporting in one click"];
+  const rows = ["Lead follow-up on autopilot", "Listing paperwork templated", "Showings self-scheduled"];
   return (
     <div className="mx-auto w-full max-w-[240px] space-y-2">
       {rows.map((r) => (

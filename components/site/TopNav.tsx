@@ -23,7 +23,7 @@ export const TopNav: React.FC = () => {
           href="#call"
           className="rounded-full bg-[#16a34a] px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#15803d]"
         >
-          Call me now
+          Get your free assessment
         </a>
       </div>
     </nav>

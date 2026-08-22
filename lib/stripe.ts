@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import { adminDb } from "@/lib/firebase-admin";
 
-const FALLBACK_PRICE_USD = 1000;
+const FALLBACK_PRICE_USD = 497;
 
 let cached: Stripe | null = null;
 

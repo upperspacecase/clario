@@ -1,16 +1,13 @@
 import { PROMISES } from "@/lib/promises";
 
-type IncludeItem = { label: string; isNew?: boolean };
-
 type Tier = {
-  id: "pulse" | "diagnosis" | "sprint";
+  id: "free" | "full";
   name: string;
   intent: string;
   price: string;
   priceSuffix: string;
   blurb: string;
-  includes: IncludeItem[];
-  excludes?: string[];
+  includes: string[];
   cta: string;
   ctaHref: string;
   popular?: boolean;
@@ -18,62 +15,38 @@ type Tier = {
 
 const tiers: Tier[] = [
   {
-    id: "pulse",
-    name: "Hours Pulse",
-    intent: "I want to feel what this is before I commit.",
-    price: "$97",
-    priceSuffix: "one-time",
-    blurb:
-      "5-minute call → automated 1-page email summary, within 1 hour.",
+    id: "free",
+    name: "Free Assessment",
+    intent: "I want one useful answer first.",
+    price: "Free",
+    priceSuffix: "one workflow",
+    blurb: `${PROMISES.freeCallSentence} ${PROMISES.freeSlaSentence}`,
     includes: [
-      { label: "Leak score (1–10)" },
-      { label: "One verified tool recommendation" },
-      { label: "One quick-win idea" },
-      { label: "Email summary within 1 hour" },
+      "About ten minutes by phone",
+      "One-page visual assessment",
+      "One priority recommendation, with assumptions and confidence shown",
+      "An agent-ready implementation prompt",
     ],
-    excludes: [
-      "Full written report",
-      "Install playbook",
-      "Follow-up call",
-      "10× ROI guarantee",
-    ],
-    cta: "Try the Pulse — $97",
-    ctaHref:
-      "mailto:tay@life-time.co?subject=Hours%20Pulse%20waitlist&body=I%27d%20like%20to%20try%20the%20%2497%20Pulse%20when%20it%20opens.",
+    cta: "Get your free assessment",
+    ctaHref: "#call",
   },
   {
-    id: "diagnosis",
-    name: "Hours Diagnosis",
-    intent: "I want a verified plan I can execute myself.",
-    price: "$1,000",
+    id: "full",
+    name: "Full Assessment",
+    intent: "I want the whole operation mapped.",
+    price: "$497",
     priceSuffix: "one-time",
-    blurb: `${PROMISES.callDurationSentence} ${PROMISES.reportSlaSentence}`,
+    blurb: `${PROMISES.fullDurationLabel}. ${PROMISES.fullSlaSentence}`,
     includes: [
-      { label: PROMISES.callDurationLabel },
-      { label: `Full verified written report ${PROMISES.reportSlaLabel}` },
-      { label: "4-day quick-win install playbook" },
-      { label: PROMISES.followUpLabel },
+      "All six workflows mapped, with ranges and confidence",
+      "No more than three priority changes",
+      "Visual report plus a machine-readable Markdown file",
+      "Four-day action plan",
+      `An ${PROMISES.followUpLabel}`,
     ],
-    cta: "Book the Diagnosis",
+    cta: "Book your Full Assessment",
     ctaHref: "/start",
     popular: true,
-  },
-  {
-    id: "sprint",
-    name: "Hours Sprint",
-    intent: "I want it done, not just told.",
-    price: "$4,997",
-    priceSuffix: "one-time",
-    blurb:
-      "Everything in Diagnosis + the Team personally implements your top quick-win in 7 days, plus 4 weekly check-ins.",
-    includes: [
-      { label: "Everything in Diagnosis" },
-      { label: "The Team implements top quick-win in 7 days" },
-      { label: "30-day outcome guarantee" },
-    ],
-    cta: "Talk to the Team first",
-    ctaHref:
-      "mailto:tay@life-time.co?subject=Hours%20Sprint%20inquiry&body=I%27d%20like%20to%20discuss%20the%20%244%2C997%20Sprint.",
   },
 ];
 
@@ -86,11 +59,11 @@ export const PricingSection: React.FC = () => {
             Investment
           </span>
           <h2 className="max-w-2xl text-[clamp(28px,4.5vw,44px)] font-bold leading-[1.1] tracking-[-0.02em] text-[#0B3049]">
-            Three ways in. Most start with the Diagnosis.
+            Start free. Go deep for $497.
           </h2>
         </div>
 
-        <div className="mb-24 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="mx-auto mb-8 grid max-w-[900px] grid-cols-1 gap-6 md:grid-cols-2">
           {tiers.map((tier) => (
             <article
               key={tier.id}
@@ -102,7 +75,7 @@ export const PricingSection: React.FC = () => {
             >
               {tier.popular && (
                 <div className="absolute right-0 top-0 rounded-bl-2xl bg-[#16a34a] px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white">
-                  Most Popular
+                  The full picture
                 </div>
               )}
 
@@ -125,10 +98,10 @@ export const PricingSection: React.FC = () => {
                 {tier.blurb}
               </p>
 
-              <ul className="mb-6 space-y-3.5">
-                {tier.includes.map((item) => (
+              <ul className="mb-8 space-y-3.5">
+                {tier.includes.map((label) => (
                   <li
-                    key={item.label}
+                    key={label}
                     className="flex items-start gap-3 text-sm leading-[1.5] text-[#0B3049]/80"
                   >
                     <span
@@ -137,56 +110,31 @@ export const PricingSection: React.FC = () => {
                     >
                       check
                     </span>
-                    <span>{item.label}</span>
+                    <span>{label}</span>
                   </li>
                 ))}
               </ul>
 
-              {tier.excludes && (
-                <ul className="mb-6 space-y-3 border-t border-[#0B3049]/8 pt-4">
-                  {tier.excludes.map((item) => (
-                    <li
-                      key={item}
-                      className="flex items-start gap-3 text-sm leading-[1.5] text-[#0B3049]/35"
-                    >
-                      <span
-                        aria-hidden
-                        className="material-symbols-outlined text-lg text-[#0B3049]/30"
-                      >
-                        close
-                      </span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              <div className="mt-auto flex flex-col gap-4">
+              <div className="mt-auto">
                 <a
                   href={tier.ctaHref}
                   className={
                     tier.popular
-                      ? "w-full rounded-full bg-[#16a34a] py-3.5 text-center text-[14px] font-semibold text-white transition-colors hover:bg-[#15803d]"
-                      : "w-full rounded-full border border-[#0B3049]/20 py-3.5 text-center text-[14px] font-semibold text-[#0B3049] transition-colors hover:bg-[#0B3049]/5"
+                      ? "block w-full rounded-full bg-[#16a34a] py-3.5 text-center text-[14px] font-semibold text-white transition-colors hover:bg-[#15803d]"
+                      : "block w-full rounded-full border border-[#0B3049]/20 py-3.5 text-center text-[14px] font-semibold text-[#0B3049] transition-colors hover:bg-[#0B3049]/5"
                   }
                 >
                   {tier.cta}
                 </a>
-
-                {tier.id === "diagnosis" && (
-                  <div className="text-center">
-                    <div className="text-sm font-semibold text-[#0B3049]">
-                      {PROMISES.guaranteeLabel}
-                    </div>
-                    <div className="mt-1 text-xs leading-[1.5] text-[#6B8199]">
-                      {PROMISES.guaranteeSentence}
-                    </div>
-                  </div>
-                )}
               </div>
             </article>
           ))}
         </div>
+
+        <p className="mx-auto mb-24 max-w-[900px] text-center text-[13px] leading-[1.6] text-[#6B8199]">
+          Implementation is scoped separately after the strategy call — it is
+          never sold inside the assessment.
+        </p>
 
         <div className="mx-auto max-w-4xl rounded-[28px] border border-[#0B3049]/8 bg-white p-12 text-center">
           <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#DDF2E4]">
@@ -198,12 +146,10 @@ export const PricingSection: React.FC = () => {
             </span>
           </div>
           <h3 className="mb-6 text-3xl font-bold tracking-[-0.01em] text-[#0B3049]">
-            The Hours Guarantee
+            {PROMISES.guaranteeLabel}
           </h3>
           <p className="mx-auto max-w-2xl text-base leading-[1.6] text-[#476582] md:text-lg">
-            If your Assessment does not identify at least 3 actionable leaks
-            worth $5K+/year, we extend the session at no extra cost until we
-            do. Precision isn&apos;t optional; it&apos;s our mandate.
+            {PROMISES.guaranteeSentence}
           </p>
         </div>
       </div>

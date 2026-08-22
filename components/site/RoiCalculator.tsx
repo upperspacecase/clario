@@ -70,8 +70,9 @@ export const RoiCalculator: React.FC = () => {
             Small businesses increasingly report that AI tools and systems help
             them save time, improve productivity, and reduce operating costs.
             Use the calculator to estimate what repetitive admin, slow
-            workflows, and poor follow-up may be costing your business each
-            month.
+            workflows, and poor follow-up may be costing your team each
+            month. All figures are estimates from your inputs, not guaranteed
+            savings.
           </p>
         </div>
 
@@ -106,7 +107,7 @@ export const RoiCalculator: React.FC = () => {
           <div className="mt-4 flex flex-col gap-4 md:col-span-7 md:mt-0">
             <div className="flex flex-col justify-center rounded-2xl bg-[#F6F4EF] p-7">
               <span className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[#6B8199]">
-                Hours / Month
+                Estimated hours / month
               </span>
               <span className="text-[36px] font-bold leading-none tracking-[-0.02em] text-[#0B3049]">
                 {Math.round(hoursPerMonth)}{" "}
@@ -115,7 +116,7 @@ export const RoiCalculator: React.FC = () => {
             </div>
             <div className="flex flex-col justify-center rounded-2xl bg-[#F6F4EF] p-7">
               <span className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[#6B8199]">
-                Cost / Month
+                Estimated cost / month
               </span>
               <span className="text-[36px] font-bold leading-none tracking-[-0.02em] text-[#0B3049]">
                 {fmtUsd(costPerMonth)}
@@ -123,7 +124,7 @@ export const RoiCalculator: React.FC = () => {
             </div>
             <div className="flex flex-col justify-center rounded-2xl bg-[#DDF2E4] p-7">
               <span className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[#15803d]">
-                Savings / Year
+                Estimated savings / year
               </span>
               <span className="text-[36px] font-bold leading-none tracking-[-0.02em] text-[#15803d]">
                 {fmtUsd(savingsPerYear)}

@@ -142,8 +142,7 @@ const Ringing: React.FC = () => (
       Your phone is ringing
     </h2>
     <p className="mt-2 max-w-[280px] text-[13px] leading-snug text-[#476582]">
-      Answer and Sam will take it from there. Your report lands in your inbox
-      within 24 hours of the call.
+      Answer and Sam will take it from there. {PROMISES.freeSlaSentence}
     </p>
   </div>
 );

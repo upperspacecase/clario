@@ -3,6 +3,7 @@
 import { PhoneStage } from "./PhoneStage";
 import { CallRequestForm } from "./CallRequestForm";
 import { useCallRequest } from "./use-call-request";
+import { PROMISES } from "@/lib/promises";
 
 // Owns the whole request-a-call flow inside the dark phone chrome. Used by
 // /start; the homepage renders the same flow via HeroCallForm.
@@ -40,8 +41,7 @@ const RingingState: React.FC = () => (
       Your phone is ringing
     </h2>
     <p className="mt-2 max-w-[260px] text-[12px] leading-snug text-white/60">
-      Answer and Sam will take it from there. Your report lands in your inbox
-      within 24 hours of the call.
+      Answer and Sam will take it from there. {PROMISES.freeSlaSentence}
     </p>
   </div>
 );

@@ -3,13 +3,13 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Hours — A phone call that finds where AI gives you your time back.",
+  title: "Hours — Find the workflow costing your real-estate team most.",
   description:
-    "Hours is a voice-driven AI opportunity assessment. Leave your number and Sam rings you. Receive a personalized report within 24 hours — tools and next steps that save you hours every week.",
+    "A free phone assessment for real-estate teams. Ten minutes on the workflow you choose, a one-page report within the hour, and a $497 Full Assessment when you want the whole operation mapped.",
   openGraph: {
-    title: "Hours — Find where AI gives you your time back.",
+    title: "Hours — Find the workflow costing your real-estate team most.",
     description:
-      "Leave your number and Sam calls you. A tailored report within 24 hours. The tools and next steps that save you hours every week.",
+      "A free phone assessment for real-estate teams. Ten minutes on one workflow, a one-page report within the hour.",
     type: "website",
   },
 };
