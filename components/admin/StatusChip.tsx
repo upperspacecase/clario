@@ -1,6 +1,7 @@
 import type { AssessmentStatus } from "@/lib/types";
 
 const STATUS_LABEL: Record<AssessmentStatus, string> = {
+  intake_started: "Form open",
   in_call: "In call",
   awaiting_details: "Awaiting info",
   pending_processing: "Pending",
@@ -11,6 +12,7 @@ const STATUS_LABEL: Record<AssessmentStatus, string> = {
 };
 
 const STATUS_CLASSES: Record<AssessmentStatus, string> = {
+  intake_started: "bg-surface-container-high text-on-surface-variant",
   in_call: "bg-secondary-container text-on-secondary-container",
   awaiting_details: "bg-surface-container-high text-on-surface-variant",
   pending_processing: "bg-tertiary-container text-on-tertiary-container",

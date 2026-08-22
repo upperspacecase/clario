@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
 import { Report, type ReportData } from "@/components/Report";
+import { FreeReport, type FreeReportData } from "@/components/FreeReport";
 import { BookingPicker } from "@/components/BookingPicker";
 import type {
   FourDayPlanItem,
@@ -97,6 +98,27 @@ export default async function PublicReportPage({ params }: PageProps) {
   }
 
   const raw = snap.exists ? (snap.data() as Record<string, unknown>) : null;
+
+  // PRD free assessment: a different, lighter document shape.
+  if (raw?.kind === "free_v1") {
+    const rec = raw.recommendation as FreeReportData["recommendation"];
+    return (
+      <FreeReport
+        data={{
+          shareId,
+          clientName: (raw.clientName as string) ?? clientName,
+          businessName: (raw.businessName as string) ?? businessName,
+          workflowLabel: (raw.workflowLabel as string) ?? "",
+          statedOutcome: (raw.statedOutcome as string | null) ?? null,
+          currentTimeRange: (raw.currentTimeRange as FreeReportData["currentTimeRange"]) ?? null,
+          recommendation: rec,
+          nextSteps: (raw.nextSteps as string[]) ?? [],
+          generatedAt: fmtDate(raw.generatedAt),
+        }}
+      />
+    );
+  }
+
   const ready = raw ? isCompleteReport(raw) : false;
 
   if (ready && raw) {

@@ -99,6 +99,12 @@ const Fields: React.FC<{
       <p className="mt-3 text-center text-[12px] leading-snug text-[#476582]">
         {PROMISES.callDurationSentence}
       </p>
+      <p className="mt-2 text-center text-[12px] text-[#6B8199]">
+        Prefer to type?{" "}
+        <a href="/assess" className="font-semibold text-[#16a34a] underline">
+          Take the written assessment
+        </a>
+      </p>
     </div>
   );
 };

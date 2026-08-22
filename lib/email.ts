@@ -118,6 +118,87 @@ function brandLink(href: string, label: string): string {
   return `<a href="${href}" style="color:${BRAND.olive};text-decoration:underline;">${escapeHtml(label)}</a>`;
 }
 
+export async function sendAssessResumeLink(args: {
+  to: string;
+  clientName: string;
+  token: string;
+}): Promise<void> {
+  const { to, clientName, token } = args;
+  const greetingName = clientName.trim() || "there";
+  const resumeUrl = `https://gethours.org/assess?token=${encodeURIComponent(token)}`;
+  const subject = "Your Hours assessment — pick up where you left off";
+  const text = [
+    `Hi ${greetingName},`,
+    "",
+    "Your free Hours assessment is underway. If you step away, this link brings you back to where you left off:",
+    "",
+    resumeUrl,
+    "",
+    "The link works for 7 days.",
+    "",
+    "— The Hours team",
+  ].join("\n");
+  const html = renderBrandedEmail({
+    preheader: "Your resume link — valid for 7 days.",
+    body: [
+      brandH("Pick up where you left off."),
+      brandP(`Hi ${escapeHtml(greetingName)} — your free Hours assessment is underway.`),
+      brandP("If you step away, this button brings you back to your saved answers."),
+      brandButton(resumeUrl, "Resume my assessment"),
+      brandMeta("The link works for 7 days."),
+      brandSignoff("— The Hours team"),
+    ].join("\n"),
+  });
+  try {
+    await sendViaResend({ from: fromAddress(), to, subject, text, html });
+  } catch (err) {
+    console.error("[email] sendAssessResumeLink failed:", err);
+  }
+}
+
+export async function sendFreeReportDelivery(args: {
+  to: string;
+  clientName: string;
+  shareId: string;
+  workflowLabel: string;
+}): Promise<void> {
+  const { to, clientName, shareId, workflowLabel } = args;
+  const greetingName = clientName.trim() || "there";
+  const reportUrl = `https://gethours.org/r/${shareId}`;
+  const subject = "Your free Hours assessment is ready";
+  const text = [
+    `Hi ${greetingName},`,
+    "",
+    `Your free assessment of ${workflowLabel} is ready: ${reportUrl}`,
+    "",
+    "One page: the friction, what it costs as an honest range, and one recommendation you can act on this week.",
+    "",
+    "Want the whole operation mapped — all six workflows, up to three priority changes, and a 30-minute strategy call? The Full Assessment is $497 and starts from the link at the bottom of your report.",
+    "",
+    "— The Hours team",
+  ].join("\n");
+  const html = renderBrandedEmail({
+    preheader: "One page. One priority. Ready now.",
+    body: [
+      brandH("Your free assessment is ready."),
+      brandP(`Hi ${escapeHtml(greetingName)},`),
+      brandP(
+        `Your free assessment of <strong>${escapeHtml(workflowLabel)}</strong> is ready — one page: the friction, what it costs as an honest range, and one recommendation you can act on this week.`,
+      ),
+      brandButton(reportUrl, "Open your assessment"),
+      brandP(
+        "Want the whole operation mapped — all six workflows, up to three priority changes, and a 30-minute strategy call? The Full Assessment is $497 and starts from your report.",
+      ),
+      brandSignoff("— The Hours team"),
+    ].join("\n"),
+  });
+  try {
+    await sendViaResend({ from: fromAddress(), to, subject, text, html });
+  } catch (err) {
+    console.error("[email] sendFreeReportDelivery failed:", err);
+  }
+}
+
 export async function sendCallConfirmation(args: {
   to: string;
   clientName: string;

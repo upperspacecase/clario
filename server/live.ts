@@ -813,3 +813,10 @@ wss.on("connection", async (ws, req) => {
 httpServer.listen(PORT, () => {
   console.log(`[SERVER] listening http+ws on :${PORT}`);
 });
+
+// The report worker shares this process: one Fly machine runs the call relay
+// and the job queue. Disable with WORKER_ENABLED=0 (e.g. local relay-only runs
+// while a separate `npm run worker` handles jobs).
+if (process.env.WORKER_ENABLED !== "0") {
+  import("./worker.js").then((m) => m.startWorker());
+}
