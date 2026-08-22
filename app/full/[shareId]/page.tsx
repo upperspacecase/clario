@@ -60,6 +60,15 @@ export default async function FullStartPage({
               nothing to prepare.
             </p>
             <FullCallButton shareId={shareId} phoneOnFile={Boolean(a.phone)} />
+            <p className="mt-4 text-[13px] text-[#6B8199]">
+              Prefer to type?{" "}
+              <a
+                href={`/assess/full/${shareId}`}
+                className="font-semibold text-[#16a34a] underline"
+              >
+                Complete it in writing
+              </a>
+            </p>
             <p className="mx-auto mt-4 max-w-[380px] text-[11px] leading-snug text-[#6B8199]">
               By tapping Call me now you request a call from Sam, an AI
               interviewer, and agree to transcription so we can prepare your

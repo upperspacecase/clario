@@ -45,8 +45,40 @@ export function startWorker(): void {
     }
   };
   void loop();
+  void retentionSweep();
+  setInterval(() => void retentionSweep(), 24 * 60 * 60 * 1000);
   console.log("[WORKER] started");
   process.on("SIGTERM", () => {
     stopped = true;
   });
+}
+
+// Published policy: transcripts and audio are deleted 12 months after the
+// call. Bounded batch per sweep; the daily interval catches up over time.
+const RETENTION_DAYS = 365;
+
+async function retentionSweep(): Promise<void> {
+  try {
+    const { adminDb } = await import("../lib/firebase-admin.js");
+    const { FieldValue, Timestamp } = await import("firebase-admin/firestore");
+    const cutoff = Timestamp.fromMillis(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000);
+    const db = adminDb();
+    const old = await db
+      .collection("assessments")
+      .where("createdAt", "<", cutoff)
+      .limit(20)
+      .get();
+    for (const doc of old.docs) {
+      if (doc.data().transcriptPurgedAt) continue;
+      const turns = await doc.ref.collection("transcript").get();
+      for (const t of turns.docs) await t.ref.delete();
+      await doc.ref.update({
+        transcriptPurgedAt: FieldValue.serverTimestamp(),
+        audioStoragePath: null,
+      });
+      console.log(`[RETENTION] purged transcript assessment=${doc.id} turns=${turns.size}`);
+    }
+  } catch (e) {
+    console.error("[RETENTION] sweep failed:", e);
+  }
 }

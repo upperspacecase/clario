@@ -213,7 +213,7 @@ export async function sendFullIntakeInvite(args: {
     "",
     "Thanks — your Full Assessment is paid and ready to begin.",
     "",
-    `Start your 45-minute call with Sam whenever suits: ${startUrl}`,
+    `Start your 45-minute call with Sam whenever suits, or complete it in writing: ${startUrl}`,
     "",
     "The call covers all six workflows. Your report — visual plus a machine-readable file, with up to three priority changes and a four-day plan — lands within 24 hours of the call, and includes the 30-minute strategy call.",
     "",

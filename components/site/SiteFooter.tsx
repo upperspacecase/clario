@@ -16,7 +16,7 @@ export const SiteFooter: React.FC = () => {
       </div>
 
       <div className="flex gap-6 font-serif text-xs uppercase tracking-widest text-[#6B8199]">
-        <a className="transition-colors hover:text-[#0B3049]" href="#">
+        <a className="transition-colors hover:text-[#0B3049]" href="/privacy">
           Privacy
         </a>
         <a className="transition-colors hover:text-[#0B3049]" href="#">
