@@ -9,13 +9,10 @@ import { PayButton } from "./PayButton";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const REQUIRED_FIELDS = [
-  "clientName",
-  "clientEmail",
-  "businessName",
-  "industry",
-  "callerRole",
-] as const;
+// Name, email, business are all checkout needs. Industry and role come out
+// of the assessment itself — demanding them here bounced every PRD upgrade
+// into the legacy confirm form.
+const REQUIRED_FIELDS = ["clientName", "clientEmail", "businessName"] as const;
 
 interface PageProps {
   params: Promise<{ assessmentId: string }>;

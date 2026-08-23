@@ -35,8 +35,9 @@ export default async function FullStartPage({
               Payment pending
             </h1>
             <p className="text-[15px] leading-[1.6] text-[#476582]">
-              Complete checkout first — the link is in your email, or head back
-              to your free report.
+              Paid a moment ago? Give it a few seconds and refresh — payment
+              confirmation is on its way. Otherwise complete checkout first;
+              the link is in your email and at the bottom of your free report.
             </p>
           </>
         ) : done ? (

@@ -22,6 +22,12 @@ export default async function PaymentSuccessPage({ params }: PageProps) {
   const data = snap.data() as Record<string, unknown>;
   const clientEmail = (data.clientEmail as string | null) ?? null;
 
+  // PRD Full Assessment: payment is the START — the 45-minute intake comes
+  // next, so send them straight there rather than promising a report.
+  if (data.tier === "full") {
+    redirect(`/full/${data.shareId as string}`);
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#121212] px-5 py-10 md:px-8">
       <div className="w-full max-w-[520px]">

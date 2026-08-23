@@ -8,7 +8,7 @@ import { adminDb } from "@/lib/firebase-admin";
 import { requireAdmin, AdminAuthError } from "@/lib/admin-auth";
 import { getStripe } from "@/lib/stripe";
 import { logEvent } from "@/lib/events";
-import { sendReportReady } from "@/lib/email";
+import { sendFreeReportDelivery, sendReportReady } from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,13 +30,32 @@ export async function POST(req: Request) {
   const snap = await ref.get();
   if (!snap.exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const a = snap.data() as Record<string, unknown>;
-  if (a.tier !== "full") return NextResponse.json({ error: "Not a full assessment" }, { status: 400 });
 
   const shareId = a.shareId as string;
   const reportRef = db.collection("publicReports").doc(shareId);
   const report = (await reportRef.get()).data();
-  if (!report || report.kind !== "full_v1") {
-    return NextResponse.json({ error: "No full report to approve" }, { status: 409 });
+  if (!report || (report.kind !== "full_v1" && report.kind !== "free_v1")) {
+    return NextResponse.json({ error: "No PRD report to approve" }, { status: 409 });
+  }
+
+  // Flagged FREE reports land here too: approving clears the flag and sends
+  // the normal free delivery.
+  if (report.kind === "free_v1") {
+    await reportRef.update({ flaggedForReview: false, approvedAt: FieldValue.serverTimestamp() });
+    await ref.update({ status: "complete", completedAt: FieldValue.serverTimestamp() });
+    const freeEmail = a.clientEmail as string | null;
+    if (freeEmail) {
+      await sendFreeReportDelivery({
+        to: freeEmail,
+        clientName: (a.clientName as string | null) ?? "",
+        shareId,
+        workflowLabel: (report.workflowLabel as string) ?? "your workflow",
+      });
+      await ref.update({ emailedAt: FieldValue.serverTimestamp() });
+      await logEvent("report_delivered", { assessmentId, meta: { kind: "free_v1" } });
+    }
+    await logEvent("report_approved", { assessmentId, meta: { kind: "free_v1" } });
+    return NextResponse.json({ ok: true, kind: "free_v1" });
   }
   if (report.approved === true) {
     return NextResponse.json({ ok: true, alreadyApproved: true });

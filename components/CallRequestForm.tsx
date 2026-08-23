@@ -60,7 +60,7 @@ export const CallRequestForm: React.FC<{
           Get your assessment
         </h2>
         <p className="mx-auto mt-1.5 max-w-[260px] text-[12px] leading-snug text-white/60">
-          Sam rings you straight away and talks through where your week goes.
+          Sam rings you straight away and digs into the one workflow you choose.
         </p>
       </div>
 

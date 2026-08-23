@@ -42,10 +42,11 @@ const tiers: Tier[] = [
       "No more than three priority changes",
       "Visual report plus a machine-readable Markdown file",
       "Four-day action plan",
+      "Upgrade from your free report — nothing asked twice",
       `An ${PROMISES.followUpLabel}`,
     ],
-    cta: "Book your Full Assessment",
-    ctaHref: "/start",
+    cta: "Start free, upgrade in one click",
+    ctaHref: "#call",
     popular: true,
   },
 ];

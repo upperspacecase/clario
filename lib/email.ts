@@ -346,9 +346,9 @@ export async function sendReportReady(args: {
     "",
     `Your Hours report is ready: ${reportUrl}`,
     "",
-    "It walks through where time is going in your business, the highest-impact tools to fix it, and a 4-day plan to get going.",
+    "It maps where time is going across your workflows, the priority changes worth making, and a four-day plan to get going.",
     "",
-    "There's a link at the bottom of the report to book a free 60-minute walkthrough where we go through it together and answer your questions.",
+    "There's a link at the bottom of the report to book your included 30-minute strategy call, where we go through it together and agree what happens next.",
     "",
     "— The Hours team",
   ].join("\n");
@@ -358,11 +358,11 @@ export async function sendReportReady(args: {
       brandH("Your report is ready."),
       brandP(`Hi ${escapeHtml(greetingName)},`),
       brandP(
-        "It walks through where time is going in your business, the highest-impact tools to fix it, and a 4-day plan to get going.",
+        "It maps where time is going across your workflows, the priority changes worth making, and a four-day plan to get going.",
       ),
       brandButton(reportUrl, "Open your report"),
       brandP(
-        "There's a link at the bottom of the report to book a free 60-minute walkthrough where we go through it together and answer your questions.",
+        "There's a link at the bottom of the report to book your included 30-minute strategy call, where we go through it together and agree what happens next.",
       ),
       brandSignoff("— The Hours team"),
     ].join("\n"),
@@ -462,7 +462,7 @@ export async function sendBookingConfirmation(args: {
     uid: args.slotId,
     start: args.start,
     end: args.end,
-    summary: "Hours implementation walkthrough + Q&A",
+    summary: "Hours strategy call",
     description: args.joinUrl
       ? `Join: ${args.joinUrl}\n\nAny questions? Reply to this email.`
       : "Tay will be in touch with the joining details before the call.\n\nAny questions? Reply to this email.",
@@ -473,7 +473,7 @@ export async function sendBookingConfirmation(args: {
   const text = [
     `Hi ${greetingName},`,
     "",
-    `You're booked in for your free 60-minute implementation walkthrough + Q&A.`,
+    `You're booked in for your 30-minute strategy call.`,
     "",
     `When: ${startSydney} – ${endSydneyTime} (Sydney time)`,
     args.joinUrl ? `Join: ${args.joinUrl}` : "Tay will email you the joining details before the call.",
@@ -492,7 +492,7 @@ export async function sendBookingConfirmation(args: {
       brandH("You're booked."),
       brandP(`Hi ${escapeHtml(greetingName)},`),
       brandP(
-        "You're booked in for your free 60-minute implementation walkthrough + Q&amp;A.",
+        "You're booked in for your 30-minute strategy call.",
       ),
       brandMeta(
         `<strong>When:</strong> ${escapeHtml(startSydney)} – ${escapeHtml(endSydneyTime)} (Sydney time)`,

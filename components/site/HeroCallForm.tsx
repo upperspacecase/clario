@@ -13,11 +13,16 @@ import {
 // Light booking-card version of the request-a-call flow, for the homepage
 // hero. Same hook and API as /start's dark phone panel.
 export const HeroCallForm: React.FC = () => {
-  const { phase, error, submit } = useCallRequest();
+  const { phase, error, submit, reset } = useCallRequest();
 
+  // Fields stay mounted (hidden) while ringing so a missed call can retry
+  // without retyping anything.
   return (
     <div className="w-full rounded-[28px] border border-[#0B3049]/8 bg-white p-6 shadow-[0_24px_60px_-30px_rgba(11,48,73,0.25)] md:p-8">
-      {phase === "ringing" ? <Ringing /> : <Fields busy={phase === "dialling"} onSubmit={submit} />}
+      {phase === "ringing" && <Ringing onRetry={reset} />}
+      <div className={phase === "ringing" ? "hidden" : undefined}>
+        <Fields busy={phase === "dialling"} onSubmit={submit} />
+      </div>
       {error && <p className="mt-3 text-[13px] text-[#C2402A]">{error}</p>}
     </div>
   );
@@ -164,7 +169,7 @@ const Field: React.FC<{
   </label>
 );
 
-const Ringing: React.FC = () => (
+const Ringing: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
   <div className="flex flex-col items-center py-10 text-center">
     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#16a34a]/10">
       <span className="h-3 w-3 animate-pulse rounded-full bg-[#16a34a]" />
@@ -175,5 +180,12 @@ const Ringing: React.FC = () => (
     <p className="mt-2 max-w-[280px] text-[13px] leading-snug text-[#476582]">
       Answer and Sam will take it from there. {PROMISES.freeSlaSentence}
     </p>
+    <button
+      type="button"
+      onClick={onRetry}
+      className="mt-4 text-[13px] font-semibold text-[#16a34a] underline"
+    >
+      Missed the call? Your details are saved — try again
+    </button>
   </div>
 );

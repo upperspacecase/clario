@@ -42,5 +42,10 @@ export function useCallRequest() {
     }
   }, []);
 
-  return { phase, error, submit };
+  const reset = useCallback(() => {
+    setPhase("idle");
+    setError(null);
+  }, []);
+
+  return { phase, error, submit, reset };
 }
