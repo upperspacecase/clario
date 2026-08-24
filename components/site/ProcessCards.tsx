@@ -13,47 +13,36 @@ type Step = {
 
 const STEPS: Step[] = [
   {
-    title: "Call",
-    tagline: "Leave your details and your phone rings.",
+    title: "Tell",
+    tagline: "Ten minutes telling Sam how the week works now.",
     bullets: [
-      { icon: "edit_note", text: "A few fields, no scheduling" },
-      { icon: "call", text: "Sam rings you straight away" },
-      { icon: "record_voice_over", text: "Sam says up front that it's an AI call" },
+      { icon: "filter_center_focus", text: "Pick the workflow costing you most" },
+      { icon: "call", text: "A few fields, then your phone rings" },
+      { icon: "record_voice_over", text: "Sam is an AI, says so up front, and hangs up when you ask" },
     ],
     wash: "linear-gradient(180deg, rgba(220,233,247,0) 0%, #DCE9F7 90%)",
-    visual: <CallVisual />,
-  },
-  {
-    title: "Talk",
-    tagline: "Ten minutes on the workflow costing you most.",
-    bullets: [
-      { icon: "filter_center_focus", text: "One workflow, chosen by you" },
-      { icon: "hearing", text: "Sam listens more than he talks" },
-      { icon: "back_hand", text: "Stop, correct, or wrap up whenever you like" },
-    ],
-    wash: "linear-gradient(180deg, rgba(221,242,228,0) 0%, #DDF2E4 90%)",
     visual: <TalkVisual />,
   },
   {
-    title: "Report",
-    tagline: "A one-page assessment within the hour.",
+    title: "Read",
+    tagline: "One page back, within the hour.",
     bullets: [
       { icon: "search_insights", text: "The friction, quantified as honest ranges" },
       { icon: "psychology", text: "Assumptions and confidence shown, not hidden" },
-      { icon: "construction", text: "One recommendation you can act on" },
+      { icon: "construction", text: "One recommendation, not homework" },
     ],
     wash: "linear-gradient(180deg, rgba(231,227,249,0) 0%, #E7E3F9 90%)",
     visual: <ReportVisual />,
   },
   {
     title: "Act",
-    tagline: "One clear next step — then go deeper if it earns it.",
+    tagline: "Make one change this week.",
     bullets: [
-      { icon: "bolt", text: "An action sequence plus an agent-ready prompt" },
-      { icon: "map", text: "Full Assessment: all six workflows, three priorities, $497" },
-      { icon: "co_present", text: "30-minute strategy call included with Full" },
+      { icon: "bolt", text: "Ordered setup steps sized to start now" },
+      { icon: "smart_toy", text: "An agent-ready prompt for the AI tool you use" },
+      { icon: "map", text: "Go Full when it earns it — three priorities, $497" },
     ],
-    wash: "linear-gradient(180deg, rgba(251,231,218,0) 0%, #FBE7DA 90%)",
+    wash: "linear-gradient(180deg, rgba(221,242,228,0) 0%, #DDF2E4 90%)",
     visual: <ActVisual />,
   },
 ];
@@ -67,11 +56,11 @@ export const ProcessCards: React.FC = () => {
             How it works
           </span>
           <h2 className="text-[clamp(28px,4.5vw,44px)] font-bold leading-[1.1] tracking-[-0.02em] text-[#0B3049]">
-            One free assessment, handled end to end
+            Tell us. Read it. Act on it.
           </h2>
           <p className="mt-4 text-base leading-[1.6] text-[#476582] md:text-lg">
-            Ten minutes on the phone, one workflow, one clear answer — free, within
-            the hour.
+            You talk for ten minutes, read one page, and make one change. That is
+            the whole product.
           </p>
         </div>
 
@@ -130,19 +119,6 @@ export const ProcessCards: React.FC = () => {
 };
 
 // ---- Miniature visuals, pure markup ----
-
-function CallVisual() {
-  return (
-    <div className="mx-auto w-full max-w-[240px] rounded-2xl border border-[#0B3049]/8 bg-white p-4 shadow-[0_16px_40px_-24px_rgba(11,48,73,0.35)]">
-      <div className="mb-2 h-2.5 w-2/3 rounded-full bg-[#0B3049]/10" />
-      <div className="mb-2 h-8 rounded-lg bg-[#F1F0EC]" />
-      <div className="mb-3 h-8 rounded-lg bg-[#F1F0EC]" />
-      <div className="flex h-9 items-center justify-center rounded-full bg-[#16a34a] text-[12px] font-semibold text-white">
-        Call me now
-      </div>
-    </div>
-  );
-}
 
 function TalkVisual() {
   return (
